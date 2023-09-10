@@ -105,7 +105,13 @@ class SftArguments:
         })
 
     # other
-    test_oom_error: bool = False
+    test_oom_error: bool = field(
+        default=False,
+        metadata={
+            'help':
+            'If set to True, the `train_dataset` will be sorted in descending order of max_length, '
+            'which will detect OOM problems faster.'
+        })
     use_flash_attn: Optional[bool] = field(
         default=None,
         metadata={
