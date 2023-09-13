@@ -88,13 +88,13 @@ bash scripts/qwen_7b_chat/lora_ddp/infer.sh
 bash scripts/qwen_7b_chat/lora_mp_ddp/sft.sh
 bash scripts/qwen_7b_chat/lora_mp_ddp/infer.sh
 
-# sft(qlora) and infer qwen-7b-chat, Requires 13GB GPU memory.
+# sft(qlora) and infer qwen-7b-chat, Requires 9GB GPU memory.
 # If you want to use quantification, you need to `pip install bitsandbytes -U`
 # Recommended experimental environment: A10, 3090
 bash scripts/qwen_7b_chat/qlora/sft.sh
 bash scripts/qwen_7b_chat/qlora/infer.sh
 
-# sft(qlora+ddp) and infer qwen-7b-chat, Requires 2*13GB GPU memory.
+# sft(qlora+ddp) and infer qwen-7b-chat, Requires 2*14GB GPU memory.
 # Recommended experimental environment: A10, 3090
 bash scripts/qwen_7b_chat/qlora_ddp/sft.sh
 bash scripts/qwen_7b_chat/qlora_ddp/infer.sh

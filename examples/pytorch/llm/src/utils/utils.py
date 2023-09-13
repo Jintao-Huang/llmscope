@@ -261,7 +261,7 @@ def process_dataset(dataset: HfDataset, dataset_test_size: float,
 
 
 def sort_by_max_length(dataset: HfDataset, num_dataset: int) -> HfDataset:
-    dataset_len = [len(d['input_ids']) for d in dataset]
+    dataset_len = [len(d['input_ids']) for d in tqdm(dataset)]
     idx = heapq.nlargest(
         num_dataset, range(len(dataset_len)), key=lambda i: dataset_len[i])
     input_ids = []

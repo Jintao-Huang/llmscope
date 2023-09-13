@@ -12,7 +12,7 @@ torchrun \
     --dtype bf16 \
     --output_dir runs \
     --dataset medical-en,medical-zh \
-    --dataset_sample 500000 \
+    --dataset_sample 200000 \
     --num_train_epochs 1 \
     --max_length 8192 \
     --gradient_checkpointing false \
