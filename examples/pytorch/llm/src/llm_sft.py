@@ -247,7 +247,7 @@ def llm_sft(args: SftArguments) -> None:
     val_dataset = val_dataset.map(preprocess_func)
     del dataset
     if args.test_oom_error:
-        train_dataset = sort_by_max_length(train_dataset)
+        train_dataset = sort_by_max_length(train_dataset, 20000)
     # Data analysis
     stat_dataset(train_dataset)
     stat_dataset(val_dataset)

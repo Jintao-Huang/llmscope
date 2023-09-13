@@ -368,13 +368,20 @@ def get_dureader_robust_qg_zh_dataset() -> HfDataset:
 
 def _preprocess_medical(dataset: HfDataset, subset_name: str) -> HfDataset:
     query = []
+    response = []
     for d in tqdm(dataset):
+        r = d['output']
+        if r is None:
+            continue
         if subset_name == 'zh':
             q = d['instruction']
         else:
             q = d['input']
+            if q is None:
+                continue
         query.append(q)
-    return HfDataset.from_dict({'query': query, 'response': dataset['output']})
+        response.append(r)
+    return HfDataset.from_dict({'query': query, 'response': response})
 
 
 def get_medical_dataset(subset_name: str,
@@ -458,6 +465,46 @@ def get_ner_jave_zh() -> HfDataset:
     })
 
 
+def _preprocess_code_python_dataset(dataset: HfDataset) -> HfDataset:
+    query = []
+    response = []
+    for d in tqdm(dataset):
+        chat_rounds = ast.literal_eval(d['chat_rounds'])
+        assert len(chat_rounds) == 2
+        query.append(chat_rounds[-2]['content'])
+        response.append(chat_rounds[-1]['content'])
+    return HfDataset.from_dict({'query': query, 'response': response})
+
+
+def get_code_python_zh_dataset() -> HfDataset:
+    dataset = MsDataset.load(
+        'codefuse-ai/CodeExercise-Python-27k').to_hf_dataset()
+    return _preprocess_code_python_dataset(dataset)
+
+
+def _preprocess_kuakua_dataset(dataset: HfDataset) -> HfDataset:
+    query = []
+    response = []
+    for d in tqdm(dataset):
+        try:
+            q, r = d['text1'].split(' | ')
+        except ValueError:
+            continue
+        query.append(q)
+        response.append(r)
+    return HfDataset.from_dict({'query': query, 'response': response})
+
+
+def get_kuakua_zh_dataset():
+    dataset_dict = MsDataset.load('damo/chinese-kuakua-collection')
+    dataset: HfDataset = concatenate_datasets([
+        dataset_dict['train'].to_hf_dataset(),
+        dataset_dict['validation'].to_hf_dataset(),
+        dataset_dict['test'].to_hf_dataset()
+    ])
+    return _preprocess_kuakua_dataset(dataset)
+
+
 DATASET_MAPPING = {
     # nlp chat
     'alpaca-en':
@@ -501,6 +548,11 @@ DATASET_MAPPING = {
     get_sharegpt_all_en_dataset,
     'sharegpt-zh':
     get_sharegpt_all_zh_dataset,
+    'code-python-zh':
+    get_code_python_zh_dataset,
+    'kuakua-zh':
+    get_kuakua_zh_dataset,
+
     # nlp text-generation (please use model:base, template:default-generation)
     'cmnli-zh':
     get_cmnli_zh_dataset,

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Part of the implementation is borrowed from huggingface/transformers.
+import heapq
 import logging
 import os
 import shutil
@@ -259,10 +260,10 @@ def process_dataset(dataset: HfDataset, dataset_test_size: float,
     return dataset['train'], dataset['test']
 
 
-def sort_by_max_length(dataset: HfDataset) -> HfDataset:
+def sort_by_max_length(dataset: HfDataset, num_dataset: int) -> HfDataset:
     dataset_len = [len(d['input_ids']) for d in dataset]
-    idx = sorted(
-        range(len(dataset)), key=lambda i: dataset_len[i], reverse=True)
+    idx = heapq.nlargest(
+        num_dataset, range(len(dataset_len)), key=lambda i: dataset_len[i])
     input_ids = []
     labels = []
     for i in tqdm(idx):
