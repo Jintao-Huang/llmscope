@@ -539,6 +539,11 @@ DATASET_MAPPING = {
     partial(get_medical_dataset, subset_name='zh'),
     'medical-mini-zh':
     partial(get_medical_dataset, subset_name='zh', dataset_sample=100000),
+    'code-python-zh':
+    get_code_python_zh_dataset,
+    'kuakua-zh':
+    get_kuakua_zh_dataset,
+
     # multi-round chat
     'damo-agent-mini-zh':
     partial(get_damo_agent_zh_dataset, use_mini=True),
@@ -548,10 +553,6 @@ DATASET_MAPPING = {
     get_sharegpt_all_en_dataset,
     'sharegpt-zh':
     get_sharegpt_all_zh_dataset,
-    'code-python-zh':
-    get_code_python_zh_dataset,
-    'kuakua-zh':
-    get_kuakua_zh_dataset,
 
     # nlp text-generation (please use model:base, template:default-generation)
     'cmnli-zh':
@@ -560,6 +561,7 @@ DATASET_MAPPING = {
     get_jd_zh_dataset,
     'dureader-robust-zh':
     get_dureader_robust_qg_zh_dataset,
+
     # multi-modal chat
     'coco-en':
     get_coco_en_dataset,

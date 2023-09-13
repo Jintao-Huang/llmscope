@@ -6,7 +6,8 @@ import os
 import shutil
 from functools import wraps
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
+                    Tuple, Union)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -372,6 +373,23 @@ def _infer_auto_device_map_patch(
         model, max_memory, low_zero=False, **kwargs)
     max_memory = {k: v for k, v in max_memory.items() if v > 0}
     return infer_auto_device_map(model, max_memory, verbose=verbose, **kwargs)
+
+
+def dataset_map(
+    dataset: HfDataset, preprocess_func: Callable[[Dict[str, Any]],
+                                                  Dict[str,
+                                                       Optional[List[int]]]]
+) -> HfDataset:
+    # faster than dataset.map
+    input_ids = []
+    labels = []
+    for d in tqdm(dataset):
+        d = preprocess_func(d)
+        if d['input_ids'] is None:
+            continue
+        input_ids.append(d['input_ids'])
+        labels.append(d['labels'])
+    return HfDataset.from_dict({'input_ids': input_ids, 'labels': labels})
 
 
 logger_format = logging.Formatter('[%(levelname)s:%(name)s] %(message)s')

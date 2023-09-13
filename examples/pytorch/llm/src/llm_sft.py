@@ -11,7 +11,7 @@ import torch
 import torch.distributed as dist
 from transformers import BitsAndBytesConfig
 from utils import (DATASET_MAPPING, MODEL_MAPPING, TEMPLATE_MAPPING,
-                   broadcast_string, check_json_format,
+                   broadcast_string, check_json_format, dataset_map,
                    find_all_linear_for_lora, get_dataset, get_dist_setting,
                    get_model_tokenizer, get_preprocess, is_ddp_plus_mp,
                    is_dist, is_master, plot_images, process_dataset,
@@ -243,8 +243,8 @@ def llm_sft(args: SftArguments) -> None:
                                                  args.dataset_seed)
     preprocess_func = get_preprocess(args.template_type, tokenizer,
                                      args.system, args.max_length)
-    train_dataset = train_dataset.map(preprocess_func)
-    val_dataset = val_dataset.map(preprocess_func)
+    train_dataset = dataset_map(train_dataset, preprocess_func)
+    val_dataset = dataset_map(val_dataset, preprocess_func)
     del dataset
     if args.test_oom_error:
         train_dataset = sort_by_max_length(train_dataset, 20000)
