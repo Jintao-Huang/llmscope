@@ -1,5 +1,5 @@
 # Experimental environment: 2 * A100
-# 2 * 20GB GPU memory
+# 2 * 60GB GPU memory
 nproc_per_node=2
 CUDA_VISIBLE_DEVICES=0,1 \
 torchrun \
@@ -20,7 +20,7 @@ torchrun \
     --lora_alpha 32 \
     --lora_dropout_p 0. \
     --lora_target_modules ALL \
-    --gradient_checkpointing false \
+    --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0. \
     --learning_rate 1e-4 \

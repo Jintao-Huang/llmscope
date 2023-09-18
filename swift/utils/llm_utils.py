@@ -64,6 +64,7 @@ def print_example(example: Dict[str, Any], tokenizer) -> None:
     input_ids, labels = example['input_ids'], example['labels']
     logger.info(f'[INPUT_IDS] {input_ids}')
     logger.info(f'[INPUT] {tokenizer.decode(input_ids)}')
+    # The lower bound of the index where the return value is not equal to -100.
     n_mask = lower_bound(0, len(labels), lambda i: labels[i] != -100)
     logger.info(f'[LABLES_IDS] {labels}')
     logger.info(
