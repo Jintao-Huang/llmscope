@@ -139,7 +139,7 @@ def llm_infer(args: InferArguments) -> None:
         _, val_dataset = get_dataset(args.dataset, args.dataset_test_ratio,
                                      args.dataset_seed)
         mini_val_dataset = val_dataset.select(
-            range(min(args.show_dataset_sample, val_dataset.shape[0])))
+            range(min(args.val_dataset_sample, val_dataset.shape[0])))
         for data in mini_val_dataset:
             inference(
                 model,
