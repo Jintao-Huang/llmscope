@@ -270,6 +270,7 @@ class InferArguments:
     dataset_seed: int = 42
     dataset_test_ratio: float = 0.01
     val_dataset_sample: int = 10
+    save_result: bool = True
     system: str = 'you are a helpful assistant!'
     max_length: int = 2048  # -1: no limit
     truncation_strategy: str = field(

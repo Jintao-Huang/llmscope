@@ -17,7 +17,7 @@ def write_to_jsonl(fpath: str,
                    encoding: str = 'utf-8') -> None:
     res: List[str] = []
     for obj in obj_list:
-        res.append(json.dumps(obj))
+        res.append(json.dumps(obj, ensure_ascii=False))
     with open(fpath, 'w', encoding=encoding) as f:
         text = '\n'.join(res)
         f.write(f'{text}\n')
@@ -25,4 +25,4 @@ def write_to_jsonl(fpath: str,
 
 def append_to_jsonl(fpath: str, obj: Any, encoding: str = 'utf-8') -> None:
     with open(fpath, 'a', encoding=encoding) as f:
-        f.write(f'{json.dumps(obj)}\n')
+        f.write(f'{json.dumps(obj, ensure_ascii=False)}\n')
