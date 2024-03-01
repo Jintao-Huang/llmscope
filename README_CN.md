@@ -206,7 +206,7 @@ torch.cuda.empty_cache()
 app_ui_main(infer_args)
 ```
 
-### Training scripts
+### 训练脚本
 你可以参考以下脚本来自定义属于你的训练脚本.
 
 - full: [qwen1half-7b-chat](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/scripts/qwen1half_7b_chat/full) (A100)

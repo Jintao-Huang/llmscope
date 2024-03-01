@@ -206,7 +206,7 @@ torch.cuda.empty_cache()
 app_ui_main(infer_args)
 ```
 
-### Training scripts
+### Training Scripts
 You can refer to the following scripts to customize your own training script.
 
 - full: [qwen1half-7b-chat](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/scripts/qwen1half_7b_chat/full) (A100)
