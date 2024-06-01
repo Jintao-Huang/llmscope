@@ -1180,7 +1180,6 @@ def get_model_tokenizer_paligemma_vision(model_dir: str,
     TemplateType.phi3_vl,
     support_flash_attn=True,
     requires=['transformers>=4.36'],
-    disable_require_grads=True,
     tags=['multi-modal', 'vision'],
     hf_model_id='microsoft/Phi-3-vision-128k-instruct')
 def get_model_tokenizer_phi3_vision(model_dir: str,
@@ -1192,6 +1191,13 @@ def get_model_tokenizer_phi3_vision(model_dir: str,
     processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
     model, tokenizer = get_model_tokenizer_with_flash_attn(model_dir, torch_dtype, model_kwargs, load_model, **kwargs)
     tokenizer.processor = processor
+
+    if load_model:
+
+        def clone_grads(module, input, output):
+            return output.requires_grad_(True).clone(True)
+
+        model.model.vision_embed_tokens.wte.register_forward_hook(clone_grads)
 
     return model, tokenizer
 
