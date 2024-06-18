@@ -129,7 +129,7 @@ class EvalModel(CustomModel):
         return res_d
 
 
-def run_eval_single_model(args: EvalArguments) -> Dict[str, Any]:
+def run_eval_single_model(args: EvalArguments) -> List[Dict[str, Any]]:
     from llmuses.run import run_task
     from llmuses.config import TaskConfig
     from llmuses.summarizer import Summarizer
@@ -165,8 +165,8 @@ def run_eval_single_model(args: EvalArguments) -> Dict[str, Any]:
         result_dir = args.ckpt_dir
         if result_dir is None:
             result_dir = eval_model.llm_engine.model_dir if args.infer_backend == 'vllm' else eval_model.model.model_dir
-        if result_dir is not None:
-            jsonl_path = os.path.join(result_dir, 'eval_result.jsonl')
+        assert result_dir is not None
+        jsonl_path = os.path.join(result_dir, 'eval_result.jsonl')
         result = {report['name']: report['score'] for report in final_report}
         logger.info(f'result: {result}')
         result_info = {
