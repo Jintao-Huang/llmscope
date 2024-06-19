@@ -22,7 +22,7 @@ from swift.utils import get_logger, get_seed, is_dist, is_local_master, read_fro
 from .media import MediaCache
 from .preprocess import (AlpacaPreprocessor, ClsPreprocessor, ComposePreprocessor, ConversationsPreprocessor,
                          ListPreprocessor, PreprocessFunc, RenameColumnsPreprocessor, SmartPreprocessor,
-                         TextGenerationPreprocessor, preprocess_sharegpt)
+                         TextGenerationPreprocessor, preprocess_sharegpt, MediaType)
 from .utils import download_dataset
 
 
@@ -417,9 +417,9 @@ def preprocess_sharegpt_4o_images(dataset):
             return {'image': [], 'conversations': []}
         return {'image': [image]}
 
-    dataset = dataset.map(preprocess_row, load_from_cache_file=False).filter(lambda row: row['conversations'])
+    dataset = dataset.map(preprocess_row).filter(lambda row: row['conversations'])
     return ConversationsPreprocessor(
-        user_role='human', assistant_role='gpt', media_type='image', error_strategy='delete')(
+        user_role='human', assistant_role='gpt', media_type=MediaType('image', 'image'), error_strategy='delete')(
             dataset)
 
 
@@ -462,7 +462,7 @@ def preprocess_mantis_image(dataset, subset):
         else:
             return {'images': []}
 
-    return dataset.map(preprocess_row, load_from_cache_file=False).filter(lambda row: row['images'])
+    return dataset.map(preprocess_row).filter(lambda row: row['images'])
 
 
 def get_mantis_dataset(dataset_id: str,
@@ -506,8 +506,7 @@ register_dataset(
         conversations_key='conversation',
         from_key='role',
         value_key='content',
-        media_type='image',
-        media_key='images',
+        media_type=MediaType('image', 'images'),
         error_strategy='delete'),
     get_mantis_dataset,
     split=['train'],
@@ -547,16 +546,14 @@ def preprocess_llava_data(dataset):
             example['images'] = []
         return example
 
-    dataset = dataset.map(preprocess_image, load_from_cache_file=False).filter(lambda row: row['images'])
+    dataset = dataset.map(preprocess_image).filter(lambda row: row['images'])
     return ConversationsPreprocessor(
         user_role='user',
         assistant_role='assistant',
         conversations_key='conversation',
         from_key='role',
         value_key='content',
-        media_type='image',
-        media_key='images')(
-            dataset)
+        media_type=MediaType('image', 'images'))(dataset)
 
 
 register_dataset(
@@ -700,7 +697,7 @@ def long_alpaca_preprocessor(dataset: HfDataset):
         return response
 
     dataset = AlpacaPreprocessor()(dataset)
-    return dataset.map(map_row, load_from_cache_file=False)
+    return dataset.map(map_row)
 
 
 register_dataset(
@@ -727,7 +724,7 @@ def _preprocess_ruozhiba(dataset: HfDataset):
             title = match.group(1)
         return {'response': title}
 
-    return dataset.map(map_row, load_from_cache_file=False).filter(lambda row: row['response'])
+    return dataset.map(map_row).filter(lambda row: row['response'])
 
 
 register_dataset(
@@ -908,7 +905,7 @@ def process_hh_rlhf(dataset):
             'history': history,
         }
 
-    return dataset.map(reorganize_row, load_from_cache_file=False).filter(lambda row: row['query'] is not None)
+    return dataset.map(reorganize_row).filter(lambda row: row['query'] is not None)
 
 
 register_dataset(
@@ -1042,9 +1039,9 @@ def _preprocess_sharegpt4v(dataset: HfDataset) -> HfDataset:
         return example
 
     dataset = dataset.map(
-        preprocess_image, load_from_cache_file=False).filter(lambda example: example['images'] is not None)
+        preprocess_image).filter(lambda example: example['images'] is not None)
     processer = ConversationsPreprocessor(
-        user_role='human', assistant_role='gpt', media_type='image', media_key='images', error_strategy='delete')
+        user_role='human', assistant_role='gpt', media_type=MediaType('image', 'images'), error_strategy='delete')
     return processer(dataset)
 
 
@@ -1087,8 +1084,7 @@ def preprocess_text_caps(dataset):
             return {'response': '', 'image': None}
 
     return dataset.map(
-        preprocess,
-        load_from_cache_file=False).filter(lambda row: row.get('response')).rename_columns({'image': 'images'})
+        preprocess).filter(lambda row: row.get('response')).rename_columns({'image': 'images'})
 
 
 register_dataset(
@@ -1104,7 +1100,7 @@ register_dataset(
 register_dataset(
     DatasetName.lnqa,
     'swift/lnqa', [],
-    preprocess_func=ListPreprocessor(query_key='question', response_key='answer', media_type='image'),
+    preprocess_func=ListPreprocessor(query_key='question', response_key='answer', media_type=MediaType('image', 'image')),
     get_function=get_dataset_from_repo,
     split=['train', 'validation'],
     hf_dataset_id='vikhyatk/lnqa',
@@ -1139,9 +1135,9 @@ def _preprocess_llava_instruct_images(dataset: HfDataset) -> HfDataset:
         return example
 
     dataset = dataset.map(
-        preprocess_image, load_from_cache_file=False).filter(lambda example: example['images'] is not None)
+        preprocess_image).filter(lambda example: example['images'] is not None)
     processer = ConversationsPreprocessor(
-        user_role='human', assistant_role='gpt', media_type='image', media_key='images', error_strategy='delete')
+        user_role='human', assistant_role='gpt', media_type=MediaType('image', 'images'), error_strategy='delete')
     return processer(dataset)
 
 
@@ -1202,9 +1198,9 @@ def _preprocess_llava_pretrain(dataset):
         else:
             return {'image': ''}
 
-    dataset = dataset.map(preprocess, load_from_cache_file=False).filter(lambda row: row['image'])
+    dataset = dataset.map(preprocess).filter(lambda row: row['image'])
     return ConversationsPreprocessor(
-        user_role='human', assistant_role='gpt', media_type='image', error_strategy='delete')(
+        user_role='human', assistant_role='gpt', media_type=MediaType('image'), error_strategy='delete')(
             dataset)
 
 
@@ -1228,7 +1224,7 @@ def process_shareai_dpo(dataset):
             'rejected_response': row['answer_en'],
         }
 
-    return dataset.map(reorganize_row, load_from_cache_file=False)
+    return dataset.map(reorganize_row)
 
 
 def process_ultrafeedback_kto(dataset: HfDataset):
@@ -1282,7 +1278,7 @@ def preprocess_guanaco(dataset):
             'response': output,
         }
 
-    return dataset.map(preprocess_row, load_from_cache_file=False).filter(lambda row: row['query'] and row['response'])
+    return dataset.map(preprocess_row).filter(lambda row: row['query'] and row['response'])
 
 
 register_dataset(
@@ -1311,7 +1307,7 @@ def preprocess_dolly_15k(dataset):
             'response': response,
         }
 
-    return dataset.map(preprocess_row, load_from_cache_file=False)
+    return dataset.map(preprocess_row)
 
 
 register_dataset(
@@ -1337,7 +1333,7 @@ register_dataset(
         query_key='question',
         response_key='answer',
         inner_key='data',
-        media_type='image'),
+        media_type=MediaType('image', 'image')),
     get_dataset_from_repo,
     hf_dataset_id='WinterSchool/MideficsDataset',
     tags=['medical', 'en', 'vqa'])
@@ -1355,7 +1351,7 @@ def preprocess_okvqa(dataset):
             'query': query,
         }
 
-    return dataset.map(preprocess, load_from_cache_file=False)
+    return dataset.map(preprocess)
 
 
 register_dataset(
@@ -1380,7 +1376,7 @@ def preprocess_a_okvqa(dataset):
             'query': query,
         }
 
-    return dataset.map(preprocess, load_from_cache_file=False)
+    return dataset.map(preprocess)
 
 
 register_dataset(
@@ -1406,7 +1402,7 @@ def preprocess_ocr_vqa(dataset):
             'query': query,
         }
 
-    return dataset.map(preprocess, load_from_cache_file=False)
+    return dataset.map(preprocess)
 
 
 register_dataset(
@@ -1428,7 +1424,7 @@ def preprocess_science_qa(dataset):
         return {'query': query, 'response': f'{solution}\nSo the final answer is:{response}'}
 
     return dataset.map(
-        preprocess_row, load_from_cache_file=False).filter(lambda row: row['image']).rename_columns({'image': 'images'})
+        preprocess_row).filter(lambda row: row['image']).rename_columns({'image': 'images'})
 
 
 register_dataset(
@@ -1482,7 +1478,7 @@ def preprocess_grit(dataset):
 
         return {'images': images, 'response': response, 'objects': json.dumps(objects or [])}
 
-    return dataset.map(preprocess_row, load_from_cache_file=False).filter(lambda row: row['objects'])
+    return dataset.map(preprocess_row).filter(lambda row: row['objects'])
 
 
 register_dataset(
@@ -1509,7 +1505,7 @@ def preprocess_gqa(dataset):
         else:
             return {'query': '', 'response': '', 'images': ''}
 
-    return dataset.map(preprocess_row, load_from_cache_file=False).filter(lambda row: row['query'])
+    return dataset.map(preprocess_row).filter(lambda row: row['query'])
 
 
 register_dataset(
@@ -1542,15 +1538,14 @@ def preprocess_llava_mix_sft(dataset):
         return {'messages': rounds}
 
     dataset = dataset.map(
-        preprocess_row, load_from_cache_file=False).map(
+        preprocess_row).map(
             ConversationsPreprocessor(
                 user_role='user',
                 assistant_role='assistant',
                 conversations_key='messages',
                 from_key='role',
                 value_key='content',
-                media_key='images',
-                media_type='image',
+                media_type=MediaType('image', 'images'),
             ).preprocess)
     return dataset
 
@@ -1608,8 +1603,7 @@ def orpo_dpo_mix_40k_preprocessor(dataset: HfDataset):
         }
 
     return dataset.map(
-        preprocess,
-        load_from_cache_file=False).filter(lambda r: r['source'] != 'toxic-dpo-v0.2' and r['query'] is not None)
+        preprocess).filter(lambda r: r['source'] != 'toxic-dpo-v0.2' and r['query'] is not None)
 
 
 register_dataset(
@@ -1635,7 +1629,7 @@ def synthetic_text_to_sql_preprocesser(dataset: HfDataset):
             'response': response,
         }
 
-    return dataset.map(preprocess, load_from_cache_file=False)
+    return dataset.map(preprocess)
 
 
 register_dataset(

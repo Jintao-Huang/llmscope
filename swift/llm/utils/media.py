@@ -1,7 +1,7 @@
 import os
 import shutil
 import time
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union, Dict, Any
 
 import numpy as np
 
@@ -49,21 +49,21 @@ class MediaTag:
     }
 
     media_keys = {
-        'audio': 'audios',
         'image': 'images',
+        'audio': 'audios',
         'video': 'videos',
     }
 
     def __init__(self,
-                 media_type: Optional[Literal['image', 'audio', 'video']],
-                 media_tag=None,
+                 media_type: Literal['image', 'audio', 'video'],
+                 media_tag: str,
                  task_type: Literal['caption_with_grounding', 'ref_grounding', 'grounding_caption', 'ocr',
                                     'vqa'] = 'vqa'):
         self.media_type = media_type
-        self.task_type = task_type
         self.media_tag = media_tag or '<unused_tag>'
+        self.task_type = task_type
 
-    def __call__(self, d: dict, medias: Union[tuple, list], objects: List = None):
+    def __call__(self, d: Dict[str, Any], medias: Union[tuple, list], objects: Optional[List] = None):
         """Format the query/response/history with medias
 
         Args:

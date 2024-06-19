@@ -12,29 +12,15 @@ from .template import History
 
 PreprocessFunc = Callable[[HfDataset], HfDataset]
 
-
-def parse_medias(d, media_key=None):
-    if isinstance(media_key, str):
-        if media_key in d:
-            medias = d[media_key]
-        else:
-            medias = None
-    elif media_key:
-        medias = media_key(d)
-    else:
-        medias = None
-    return medias
-
-
-class MediaMixin:
+class MediaType:
 
     def __init__(self,
-                 media_key: Union[str, Callable] = 'image',
-                 media_tag: str = '<image>',
-                 media_type: Literal['image', 'audio', 'video'] = None):
+                 media_type: Literal['image', 'audio', 'video'],
+                 media_key: str = 'images',
+                 media_tag: str = '<image>'):
+        self.media_type = media_type
         self.media_key = media_key
         self.media_tag = media_tag
-        self.media_type = media_type
         self.media_replacer = MediaTag(media_type, media_tag)
 
     @property
@@ -44,7 +30,16 @@ class MediaMixin:
         return self.media_replacer.media_keys[self.media_type]
 
     def parse_medias(self, d):
-        return parse_medias(d, self.media_key)
+        if isinstance(self.media_key, str):
+            if self.media_key in d:
+                medias = d[self.media_key]
+            else:
+                medias = None
+        elif media_key:
+            medias = self.media_key(d)
+        else:
+            medias = None
+        return medias
 
     @property
     def empty_row(self):
@@ -58,12 +53,6 @@ class MediaMixin:
         if self.media_type and not isinstance(self.media_key, str):
             empty_row[self.media_name] = None
         return empty_row
-
-
-class RowPreprocessMixin:
-
-    def preprocess(self, d):
-        raise NotImplementedError
 
 
 class SwiftPreprocessor:
@@ -92,13 +81,15 @@ class SwiftPreprocessor:
         return dataset
 
 
-class AlpacaPreprocessor(MediaMixin, RowPreprocessMixin):
+class AlpacaPreprocessor:
 
     def __init__(self, concat_inst_inp: Optional[Callable[[str, str], str]] = None, **kwargs):
         self.concat_inst_inp = concat_inst_inp
-        super().__init__(**kwargs)
+        media_type = kwargs.get('media_type')
+        if media_type is not None:
+            self.media_helper = MediaHelper(**kwargs)
 
-    def preprocess(self, d):
+    def row_preprocess(self, d: Dict[str, Any]) -> Dict[str, Any]:
         inst, inp = d['instruction'], d.get('input', None)
         h, output = d.pop('history', None), d['output']
         sys = d.pop('system', None)
@@ -125,7 +116,7 @@ class AlpacaPreprocessor(MediaMixin, RowPreprocessMixin):
         return row
 
     def __call__(self, dataset: HfDataset) -> HfDataset:
-        dataset = dataset.map(self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('query'))
+        dataset = dataset.map(self.row_preprocess).filter(lambda row: row.get('query'))
         if self.media_type and isinstance(self.media_key, str) and self.media_key != self.media_name:
             dataset = dataset.rename_columns({self.media_key: self.media_name})
         return dataset
@@ -137,7 +128,7 @@ def _default_repair_conversations(s: Union[str, Any]) -> Any:
     return s
 
 
-class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
+class ConversationsPreprocessor:
 
     def __init__(self,
                  user_role: str = 'user',
@@ -158,9 +149,9 @@ class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
         self.value_key = value_key
         self.repair_conversations = repair_conversations
         self.error_strategy = error_strategy
-        super().__init__(**kwargs)
 
-    def preprocess(self, d):
+
+    def row_preprocess(self, d):
         try:
             conversations = d[self.conversations_key]
             conversations = self.repair_conversations(conversations)
@@ -203,13 +194,13 @@ class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
                 return self.empty_row
 
     def __call__(self, dataset: HfDataset) -> HfDataset:
-        dataset = dataset.map(self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('query'))
+        dataset = dataset.map(self.row_preprocess).filter(lambda row: row.get('query'))
         if self.media_type and isinstance(self.media_key, str) and self.media_key != self.media_name:
             dataset = dataset.rename_columns({self.media_key: self.media_name})
         return dataset
 
 
-class ListPreprocessor(MediaMixin, RowPreprocessMixin):
+class ListPreprocessor:
 
     def __init__(self,
                  query_key: str = 'user',
@@ -228,7 +219,7 @@ class ListPreprocessor(MediaMixin, RowPreprocessMixin):
         self.error_strategy = error_strategy
         super().__init__(**kwargs)
 
-    def preprocess(self, d):
+    def row_preprocess(self, d):
         conversations = None
         try:
             conversations = d[self.conversations_key]
@@ -256,7 +247,7 @@ class ListPreprocessor(MediaMixin, RowPreprocessMixin):
         return d_dict
 
     def __call__(self, dataset: HfDataset):
-        dataset = dataset.map(self.preprocess, load_from_cache_file=False).filter(lambda d: d.get('query'))
+        dataset = dataset.map(self.row_preprocess).filter(lambda d: d.get('query'))
         if self.media_type and isinstance(self.media_key, str) and self.media_key != self.media_name:
             dataset = dataset.rename_columns({self.media_key: self.media_name})
         return dataset
