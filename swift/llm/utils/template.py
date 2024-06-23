@@ -111,7 +111,7 @@ class StopWordsCriteria(StoppingCriteria):
         self.tokenizer_kwargs = tokenizer_kwargs
         self.start_idx = -1
 
-    def __call__(self, input_ids: Tensor, scores: Tensor) -> bool:
+    def __call__(self, input_ids: Tensor, scores: Tensor, **kwargs) -> bool:
         if self.start_idx == -1:
             self.start_idx = len(input_ids[0]) - 1
         tokenizer = self.tokenizer
@@ -502,7 +502,7 @@ class Template:
         return: inputs, tokenizer_kwargs
         """
         if history_roles is None:
-            history_roles = [('user', 'assistant') for _ in range(len(history))]
+            history_roles = [['user', 'assistant'] for _ in range(len(history))]
 
         if query is not None:
             if query_role is None:
@@ -575,12 +575,20 @@ class Template:
         """
         tokenizer = self.tokenizer
         assert tokenizer.pad_token_id is not None
-        input_ids = [torch.tensor(b['input_ids']) for b in batch]
+        inputs_embeds, input_ids = None, None
+        if 'inputs_embeds' in batch[0]:
+            inputs_embeds = [b['inputs_embeds'] for b in batch]
+            attention_mask = [
+                torch.ones((inputs_embeds[i].shape[0]), dtype=torch.int64) for i in range(len(inputs_embeds))
+            ]
+        else:
+            input_ids = [torch.tensor(b['input_ids']) for b in batch]
+            attention_mask = [torch.ones(len(input_ids[i]), dtype=torch.int64) for i in range(len(input_ids))]
         labels = [torch.tensor(b['labels']) for b in batch]
         loss_scale = [torch.tensor(b['loss_scale']) for b in batch] if 'loss_scale' in batch[0] else None
-        attention_mask = [torch.ones(len(input_ids[i]), dtype=torch.int64) for i in range(len(input_ids))]
 
         if padding_to is not None:
+            assert input_ids is not None  # inputs_embeds not support padding_to
             padding_len = padding_to - input_ids[0].shape[-1]
             if padding_len > 0:
                 input_ids[0] = F.pad(input_ids[0], (0, padding_len), 'constant', tokenizer.pad_token_id)
@@ -589,7 +597,10 @@ class Template:
                 if loss_scale:
                     loss_scale[0] = F.pad(loss_scale[0], (0, padding_to - labels[0].shape[-1]), 'constant', 0.)
 
-        input_ids = pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+        if input_ids is None:
+            inputs_embeds = pad_sequence(inputs_embeds, batch_first=True, padding_value=0)
+        else:
+            input_ids = pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
         attention_mask = pad_sequence(attention_mask, batch_first=True, padding_value=0)
         if loss_scale:
             loss_scale = pad_sequence(loss_scale, batch_first=True, padding_value=0.)
@@ -600,23 +611,26 @@ class Template:
             input_ids, attention_mask, labels, loss_scale = pad_and_split_batch(padding_to, input_ids, attention_mask,
                                                                                 labels, loss_scale, self.max_length,
                                                                                 self.tokenizer, rank, world_size)
+        if input_ids is not None:
+            bs, seq_len = input_ids.shape
+            position_ids = torch.arange(seq_len).unsqueeze(0).long().repeat(bs, 1)
 
-        bs, seq_len = input_ids.shape
-        position_ids = torch.arange(seq_len).unsqueeze(0).long().repeat(bs, 1)
-
-        if self.sequence_parallel_size > 1:
-            from swift.trainers.xtuner import get_xtuner_sequence_parallel_world_size
-            if get_xtuner_sequence_parallel_world_size() > 1:
-                from swift.trainers.xtuner import pad_and_split_for_sequence_parallel
-                input_ids, labels, position_ids, attention_mask, loss_scale = \
-                    pad_and_split_for_sequence_parallel(
-                        tokenizer, input_ids, labels, position_ids, attention_mask, loss_scale)
+            if self.sequence_parallel_size > 1:
+                from swift.trainers.xtuner import get_xtuner_sequence_parallel_world_size
+                if get_xtuner_sequence_parallel_world_size() > 1:
+                    from swift.trainers.xtuner import pad_and_split_for_sequence_parallel
+                    input_ids, labels, position_ids, attention_mask, loss_scale = \
+                        pad_and_split_for_sequence_parallel(
+                            tokenizer, input_ids, labels, position_ids, attention_mask, loss_scale)
 
         res = {
-            'input_ids': input_ids,
             'attention_mask': attention_mask,
             'labels': labels,
         }
+        if inputs_embeds is not None:
+            res['inputs_embeds'] = inputs_embeds
+        else:
+            res['input_ids'] = input_ids
         if loss_scale is not None:
             res['loss_scale'] = loss_scale
         return res
@@ -629,10 +643,9 @@ class Template:
     def _is_chinese_char(cp: int) -> bool:
         """Checks whether CP is the codepoint of a CJK character."""
         # copy from transformers.generation.streamers.TextStreamer
-        if ((cp >= 0x4E00 and cp <= 0x9FFF) or (cp >= 0x3400 and cp <= 0x4DBF) or (cp >= 0x20000 and cp <= 0x2A6DF)
-                or (cp >= 0x2A700 and cp <= 0x2B73F) or (cp >= 0x2B740 and cp <= 0x2B81F)
-                or (cp >= 0x2B820 and cp <= 0x2CEAF) or (cp >= 0xF900 and cp <= 0xFAFF)
-                or (cp >= 0x2F800 and cp <= 0x2FA1F)):
+        if ((0x4E00 <= cp <= 0x9FFF) or (0x3400 <= cp <= 0x4DBF) or (0x20000 <= cp <= 0x2A6DF)
+                or (0x2A700 <= cp <= 0x2B73F) or (0x2B740 <= cp <= 0x2B81F) or (0x2B820 <= cp <= 0x2CEAF)
+                or (0xF900 <= cp <= 0xFAFF) or (0x2F800 <= cp <= 0x2FA1F)):
             return True
 
         return False
@@ -908,8 +921,8 @@ class GLMTemplate(Template):
 class GLM4VTemplate(GLMTemplate):
 
     def __init__(self):
-        return super().__init__([], ['<|user|>\n', '{{QUERY}}<|assistant|>'], [], ['<|endoftext|>'], None,
-                                ['<|system|>\n{{SYSTEM}}'])
+        super().__init__([], ['<|user|>\n', '{{QUERY}}<|assistant|>'], [], ['<|endoftext|>'], None,
+                         ['<|system|>\n{{SYSTEM}}'])
 
     def check_example(self, example):
         images = example.get('images')
@@ -941,17 +954,27 @@ class GLM4VTemplate(GLMTemplate):
             placeholder_id = self.tokenizer.encode(placeholder, add_special_tokens=False)
             input_ids = (input_ids[:idx] + placeholder_id + input_ids[idx + 1:])
             if labels is not None:
-                labels = (labels[:idx] + [-100] * len(placeholder_id) + labels[idx + 1:])
+                image_size: int = self.model.config.vision_config['image_size']
+                patch_size: int = self.model.config.vision_config['patch_size']
+                num_patches = (image_size // patch_size // 2)**2
+                labels = (labels[:idx] + [-100] * (len(placeholder_id) + num_patches - 1) + labels[idx + 1:])
             messages = history_to_messages(example.get('history', []), example['query'], example.get('system', None))
             messages[0]['image'] = image
-            inputs2 = self.tokenizer.apply_chat_template(messages, return_dict=True)
+            inputs2: Dict[str, Any] = self.tokenizer.apply_chat_template(messages, return_dict=True)
             inputs['images'] = inputs2['images']
         inputs['input_ids'] = input_ids
         inputs['labels'] = labels
         return inputs, {}
 
+    def data_collator(self, batch: List[Dict[str, Any]], padding_to: Optional[int] = None) -> Dict[str, Any]:
+        res = super().data_collator(batch, padding_to)
+        images = [b['images'] for b in batch if 'images' in b]
+        if images:
+            res['images'] = torch.concat(images)
+        return res
 
-register_template(TemplateType.glm4v, GLM4VTemplate(), infer_media_type='dialogue', lazy_tokenize=True)
+
+register_template(TemplateType.glm4v, GLM4VTemplate(), infer_media_type='dialogue', lazy_tokenize=True, use_model=True)
 
 register_template(
     TemplateType.yi_vl,
@@ -1150,22 +1173,11 @@ class InternLMXComposer2(Template):
         return {'inputs_embeds': res_inputs_embeds, 'im_mask': wrap_im_mask, 'labels': res_labels}, {}
 
     def data_collator(self, batch: List[Dict[str, Any]], padding_to: Optional[int] = None) -> Dict[str, Any]:
-        inputs_embeds = [b['inputs_embeds'] for b in batch]
-        labels = [torch.tensor(b['labels']) for b in batch]
+        res = super().data_collator(batch, padding_to)
         im_mask = [b['im_mask'][0] for b in batch]
-        attention_mask = [torch.ones(inputs_embeds[i].shape[0], dtype=torch.int64) for i in range(len(inputs_embeds))]
-
-        inputs_embeds = pad_sequence(inputs_embeds, batch_first=True, padding_value=0)
-        attention_mask = pad_sequence(attention_mask, batch_first=True, padding_value=0)
         im_mask = pad_sequence(im_mask, batch_first=True, padding_value=0)
-        labels = pad_sequence(labels, batch_first=True, padding_value=-100)
-
-        return {
-            'inputs_embeds': inputs_embeds,
-            'attention_mask': attention_mask,
-            'im_mask': im_mask,
-            'labels': labels,
-        }
+        res['im_mask'] = im_mask
+        return res
 
     @staticmethod
     def get_generate_ids(generate_ids: Tensor, input_token_len: int) -> List[int]:
@@ -1576,8 +1588,8 @@ class DeepseekVLTemplate(Template):
                           'and assist the user with a variety of tasks using natural language.')
 
     def __init__(self):
-        return super().__init__(['<｜begin▁of▁sentence｜>{{SYSTEM}}\n\n'], ['User: {{QUERY}}\n\nAssistant:'],
-                                ['<｜end▁of▁sentence｜>'], ['<｜end▁of▁sentence｜>'], self.DEEPSEEK_VL_SYSTEM)
+        super().__init__(['<｜begin▁of▁sentence｜>{{SYSTEM}}\n\n'], ['User: {{QUERY}}\n\nAssistant:'],
+                         ['<｜end▁of▁sentence｜>'], ['<｜end▁of▁sentence｜>'], self.DEEPSEEK_VL_SYSTEM)
 
     def replace_tag(self, media_type: Literal['image', 'video', 'audio'], index, example):
         assert media_type == 'image'
@@ -1633,21 +1645,6 @@ class DeepseekVLTemplate(Template):
         inputs['inputs_embeds'] = inputs_embeds
         inputs['labels'] = new_labels
         return inputs, {}
-
-    def data_collator(self, batch: List[Dict[str, Any]], padding_to: Optional[int] = None) -> Dict[str, Any]:
-        inputs_embeds = [b['inputs_embeds'] for b in batch]
-        labels = [torch.tensor(b['labels']) for b in batch]
-        attention_mask = [torch.ones(inputs_embeds[i].shape[0], dtype=torch.int64) for i in range(len(inputs_embeds))]
-
-        inputs_embeds = pad_sequence(inputs_embeds, batch_first=True, padding_value=0)
-        attention_mask = pad_sequence(attention_mask, batch_first=True, padding_value=0)
-        labels = pad_sequence(labels, batch_first=True, padding_value=-100)
-
-        return {
-            'inputs_embeds': inputs_embeds,
-            'attention_mask': attention_mask,
-            'labels': labels,
-        }
 
     @staticmethod
     def get_generate_ids(generate_ids: Tensor, input_token_len: int) -> List[int]:
@@ -1757,7 +1754,7 @@ class MiniCPMVTemplate(Template):
 
     def __init__(self, *args, **kwargs):
         self.is_v2_5 = kwargs.pop('is_v2_5', False)
-        return super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def replace_tag(self, media_type: Literal['image', 'video', 'audio'], index, example):
         assert media_type == 'image'

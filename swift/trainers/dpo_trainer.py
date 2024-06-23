@@ -1,11 +1,11 @@
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import torch
 from torch import nn
 from transformers import PreTrainedModel, trainer
 from trl import DPOTrainer as HFDPOTrainer
 
-from swift.llm.utils.template import Context, Template
+from swift.llm.utils.template import Template
 from swift.llm.utils.utils import sort_by_max_length
 from swift.utils import get_logger
 from .callback import DefaultFlowCallbackNew, PrinterCallbackNew, ProgressCallbackNew
@@ -182,7 +182,8 @@ class DPOTrainer(PushToMsHubMixin, SwiftMixin, HFDPOTrainer):
 
         if self.sft_beta > 0.:
             chosen_labels = concatenated_batch['concatenated_labels'][:batch['chosen_labels'].shape[0]]
-            sft_loss = -self.get_batch_logps(policy_chosen_logits, chosen_labels, average_log_prob=True)
+            sft_loss, size_completion = self.get_batch_logps(policy_chosen_logits, chosen_labels)
+            sft_loss = -sft_loss / size_completion
             if losses.shape[0] == 2 * sft_loss.shape[0]:
                 sft_loss = sft_loss.repeat(2, *sft_loss.shape[1:])
             losses = (1 - self.sft_beta) * losses + self.sft_beta * sft_loss
@@ -230,10 +231,9 @@ class DPOTrainer(PushToMsHubMixin, SwiftMixin, HFDPOTrainer):
             **model_kwargs,
         ).logits
 
-        all_logps = self.get_batch_logps(
+        all_logps, _ = self.get_batch_logps(
             all_logits,
             concatenated_batch['concatenated_labels'],
-            average_log_prob=False,
             is_encoder_decoder=self.is_encoder_decoder,
             label_pad_token_id=self.label_pad_token_id,
         )
@@ -244,7 +244,7 @@ class DPOTrainer(PushToMsHubMixin, SwiftMixin, HFDPOTrainer):
         chosen_logits = all_logits[:len_chosen]
         rejected_logits = all_logits[len_chosen:]
 
-        return (chosen_logps, rejected_logps, chosen_logits, rejected_logits, concatenated_batch)
+        return chosen_logps, rejected_logps, chosen_logits, rejected_logits, concatenated_batch
 
 
 # monkey patching

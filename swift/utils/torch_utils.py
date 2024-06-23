@@ -2,6 +2,8 @@
 
 import os
 import socket
+import time
+import uuid
 from bisect import bisect_right
 from typing import List, Optional, Tuple
 
@@ -30,6 +32,12 @@ def _find_free_port() -> str:
     sock.close()
     # NOTE: there is still a chance the port could be taken by other processes.
     return port
+
+
+def _find_local_mac() -> str:
+    mac = uuid.getnode()
+    mac_address = ':'.join(('%012x' % mac)[i:i + 2] for i in range(0, 12, 2))
+    return mac_address
 
 
 def get_model_info(model: Module, name: Optional[str] = None) -> str:
@@ -128,7 +136,7 @@ def freeze_model_parameters(model: Module, freeze_parameters: float) -> None:
         p.requires_grad = False
 
 
-def activate_model_parameters(model: Module, additional_trainable_parameters: List[int]) -> None:
+def activate_model_parameters(model: Module, additional_trainable_parameters: List[str]) -> None:
     if len(additional_trainable_parameters) == 0:
         return
     has_activate = False

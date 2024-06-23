@@ -7,11 +7,12 @@ from copy import deepcopy
 from functools import partial
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 
+import datasets.fingerprint
 import json
 import numpy as np
 import pandas as pd
 from datasets import Dataset as HfDataset
-from datasets import concatenate_datasets
+from datasets import Sequence, Value, concatenate_datasets
 from datasets import load_dataset as load_hf_dataset
 from numpy.random import RandomState
 from pandas import DataFrame
@@ -19,6 +20,7 @@ from tqdm.auto import tqdm
 from transformers.utils import strtobool
 
 from swift.utils import get_logger, get_seed, is_dist, is_local_master, read_from_jsonl, transform_jsonl_to_df
+from swift.utils.torch_utils import _find_local_mac
 from .media import MediaCache
 from .preprocess import (AlpacaPreprocessor, ClsPreprocessor, ComposePreprocessor, ConversationsPreprocessor,
                          ListPreprocessor, PreprocessFunc, RenameColumnsPreprocessor, SmartPreprocessor,
@@ -26,18 +28,32 @@ from .preprocess import (AlpacaPreprocessor, ClsPreprocessor, ComposePreprocesso
 from .utils import download_dataset
 
 
+def _update_fingerprint_mac(*args, **kwargs):
+    mac = _find_local_mac().replace(':', '')
+    fp = datasets.fingerprint._update_fingerprint(*args, **kwargs)
+    fp += '-' + mac
+    if len(fp) > 64:
+        fp = fp[:64]
+    return fp
+
+
+datasets.fingerprint._update_fingerprint = datasets.fingerprint.update_fingerprint
+datasets.fingerprint.update_fingerprint = _update_fingerprint_mac
+datasets.arrow_dataset.update_fingerprint = _update_fingerprint_mac
+
+
 def _remove_useless_columns(dataset: HfDataset) -> HfDataset:
     k_list = []
     for k in dataset.features.keys():
         if k in {
-                'query', 'response', 'rejected_response', 'system', 'history', 'images', 'objects', 'videos', 'audios'
+                'query', 'query_role', 'response', 'rejected_response', 'system', 'history', 'history_roles', 'images',
+                'objects', 'videos', 'audios', 'tools'
         }:
             k_list.append(k)
     dataset = dataset.select_columns(k_list)
     return dataset
 
 
-GetDatasetFunction = Callable[[], Union[HfDataset, Tuple[HfDataset, Optional[HfDataset]]]]
 SubsetSplit = Union[str, Tuple[str, str], List[str]]
 DATASET_MAPPING: Dict[str, Dict[str, Any]] = {}
 
@@ -178,14 +194,14 @@ def register_dataset(dataset_name: str,
                      dataset_id_or_path: Optional[str] = None,
                      subsets: Optional[List[str]] = None,
                      preprocess_func: Optional[PreprocessFunc] = None,
-                     get_function: Optional[GetDatasetFunction] = None,
+                     get_function: Optional[Callable] = None,
                      *,
                      split: Optional[List[str]] = None,
                      hf_dataset_id: Optional[str] = None,
                      function_kwargs: Optional[Dict[str, Any]] = None,
                      exist_ok: bool = False,
                      is_local: bool = False,
-                     **kwargs) -> Optional[Callable[[GetDatasetFunction], GetDatasetFunction]]:
+                     **kwargs) -> Optional[Callable]:
     if preprocess_func is None:
         preprocess_func = SmartPreprocessor()
     if not exist_ok and dataset_name in DATASET_MAPPING:
@@ -213,7 +229,7 @@ def register_dataset(dataset_name: str,
         DATASET_MAPPING[dataset_name] = dataset_info
         return
 
-    def _register_dataset(get_function: GetDatasetFunction) -> GetDatasetFunction:
+    def _register_dataset(get_function: Callable) -> Callable:
         _old_get_function = get_function
         if len(function_kwargs) > 0:
             get_function = partial(get_function, **function_kwargs)
@@ -245,7 +261,6 @@ def register_local_dataset(
 
 
 def register_dataset_info(dataset_name: str, d_info: Dict[str, Any], **kwargs) -> None:
-    preprocess_func = None
     if 'columns' in d_info:
         preprocess_func = RenameColumnsPreprocessor(d_info['columns'])
         d_info.pop('columns')
@@ -350,7 +365,7 @@ def _post_preprocess(
             train_sample = dataset_sample - val_sample
             assert isinstance(val_sample, int)
             train_dataset, val_dataset = train_dataset.train_test_split(
-                test_size=val_sample, seed=get_seed(random_state)).values()
+                test_size=val_sample, seed=get_seed(random_state), load_from_cache_file=False).values()
 
         assert train_sample > 0
         train_dataset = sample_dataset(train_dataset, train_sample, random_state)
@@ -514,7 +529,7 @@ register_dataset(
     hf_dataset_id='TIGER-Lab/Mantis-Instruct')
 
 
-def preprocess_llava_data(dataset):
+def preprocess_llava_data(dataset: HfDataset) -> HfDataset:
 
     all_folders = {}
     for media_type in ['coco', 'gqa', 'ocr_vqa', 'textvqa', 'VG_100K', 'VG_100K_2']:
@@ -653,7 +668,7 @@ register_dataset(
     is_main=False)
 
 
-def _repair_agent_conversations(conversations: str, use_mini: bool) -> List[Dict[str, str]]:
+def _repair_agent_conversations(conversations: str, use_mini: bool) -> Optional[List[Dict[str, str]]]:
     if use_mini:
         pattern = r'\d\. {"plugin_name": "(.+?)"'
     else:
@@ -673,10 +688,11 @@ def _repair_agent_conversations(conversations: str, use_mini: bool) -> List[Dict
     return conversations
 
 
-def _repair_ms_bench(conversations: str) -> List[Dict[str, str]]:
+def _repair_ms_bench(conversations: str) -> Optional[List[Dict[str, str]]]:
     if isinstance(conversations, str):
         conversations = ast.literal_eval(conversations)
     default_system = 'You are a helpful assistant.'
+    conversations: List[Dict[str, str]]
     if conversations[0]['from'] == 'system' and conversations[0]['value'] == default_system:
         conversations.pop(0)
     # skip MOSS
@@ -783,7 +799,7 @@ _firefly_kind_list = [
 ]
 
 
-def _preprocess_firefly(dataset: List[Dict[str, str]], kind_list: List[str]) -> HfDataset:
+def _preprocess_firefly(dataset: HfDataset, kind_list: List[str]) -> HfDataset:
     kind_set = set(kind_list)
     query: List[str] = []
     response: List[str] = []
@@ -969,7 +985,8 @@ def process_hh_rlhf_cn(dataset):
         except:  # noqa
             return False
 
-    return dataset.filter(row_can_be_parsed).map(reorganize_row).filter(lambda row: row['query'])
+    return dataset.filter(row_can_be_parsed).map(
+        reorganize_row, load_from_cache_file=False).filter(lambda row: row['query'])
 
 
 register_dataset(
@@ -1236,7 +1253,7 @@ def process_ultrafeedback_kto(dataset: HfDataset):
             'label': row['label'],
         }
 
-    return dataset.map(reorganize_row)
+    return dataset.map(reorganize_row, load_from_cache_file=False)
 
 
 register_dataset(
@@ -1342,16 +1359,15 @@ register_dataset(
 def preprocess_okvqa(dataset):
 
     def preprocess(row):
-        image = row['image']
         query = row['question']
         response = np.random.choice(row['answers'])
         return {
             'response': response,
-            'images': image,
             'query': query,
         }
 
-    return dataset.map(preprocess)
+
+    return dataset.map(preprocess, load_from_cache_file=False).rename_column('image', 'images')
 
 
 register_dataset(
@@ -1367,16 +1383,14 @@ register_dataset(
 def preprocess_a_okvqa(dataset):
 
     def preprocess(row):
-        image = row['image']
         query = row['question']
         response = np.random.choice(row['rationales'])
         return {
             'response': response,
-            'images': image,
             'query': query,
         }
 
-    return dataset.map(preprocess)
+    return dataset.map(preprocess, load_from_cache_file=False).rename_column('image', 'images')
 
 
 register_dataset(
@@ -1392,17 +1406,15 @@ register_dataset(
 def preprocess_ocr_vqa(dataset):
 
     def preprocess(row):
-        image = row['image']
         idx = np.random.choice(range(len(row['questions'])))
         query = row['questions'][idx]
         response = row['answers'][idx]
         return {
             'response': response,
-            'images': image,
             'query': query,
         }
 
-    return dataset.map(preprocess)
+    return dataset.map(preprocess, load_from_cache_file=False).rename_column('image', 'images')
 
 
 register_dataset(
@@ -1546,7 +1558,8 @@ def preprocess_llava_mix_sft(dataset):
                 from_key='role',
                 value_key='content',
                 media_type=MediaType('image', 'images'),
-            ).preprocess)
+            ).preprocess, load_from_cache_file=False)
+
     return dataset
 
 
@@ -1673,9 +1686,9 @@ register_dataset(
     tags=['chat', 'multi-modal', 'vision'])
 
 
-def _repair_toolbench(conversations: Dict[str, str]) -> Dict[str, str]:
+def _repair_toolbench(conversations: List[Dict[str, str]]) -> List[Dict[str, str]]:
     assert len(conversations) == 2
-    if (conversations[1]['from'] in {'caller', 'conclusion'}):
+    if conversations[1]['from'] in {'caller', 'conclusion'}:
         conversations[1]['from'] = 'assistant'
     return conversations
 
@@ -1795,7 +1808,7 @@ register_dataset(
 
 def preprocess_mind2web(dataset):
 
-    def preprocess_row(row):
+    def preprocess_row(row: Dict[str, Any]) -> Dict[str, Any]:
         raw_html = row['cleaned_html']
         screenshot = row['screenshot']
         row['screenshot'] = MediaCache.safe_save(screenshot, row['action_uid'] + '.jpg', 'mind2web')
@@ -1931,7 +1944,7 @@ def _preprocess_toolbench(dataset: HfDataset) -> HfDataset:
             'response': convs[-1]['value']
         }
 
-    return dataset.map(reorganize_row)
+    return dataset.map(reorganize_row, load_from_cache_file=False)
 
 
 register_dataset(
@@ -1982,8 +1995,8 @@ register_dataset(
 NoneType = type(None)
 
 
-def _check_dataset(dataset: Optional[None], check_dataset_strategy: Literal['none', 'discard', 'error',
-                                                                            'warning']) -> HfDataset:
+def _check_dataset(dataset: Optional[HfDataset], check_dataset_strategy: Literal['none', 'discard', 'error',
+                                                                                 'warning']) -> Optional[HfDataset]:
     if check_dataset_strategy == 'none' or dataset is None:
         return dataset
     idx_list = []
@@ -2035,7 +2048,10 @@ def _check_dataset(dataset: Optional[None], check_dataset_strategy: Literal['non
     return dataset
 
 
-def _safe_split(s: str, sep: str, use_0: bool, split_mode: Literal['left', 'right'] = 'left') -> Tuple[str, str]:
+def _safe_split(s: str,
+                sep: str,
+                use_0: bool,
+                split_mode: Literal['left', 'right'] = 'left') -> Tuple[Optional[str], Optional[str]]:
     # use_0: When the length of the part is 1, is it considered as part0 or part1.
     if s is None or len(s) == 0:
         return None, None
@@ -2081,7 +2097,7 @@ def parse_dataset_name(dataset_name: str) -> Tuple[bool, str, List[str], int]:
     return tuple(t.strip() if isinstance(t, str) else t for t in [use_hf, dataset_name, subset_list, dataset_sample])
 
 
-def _dataset_name_exists(dataset_list: str, dataset_name: str) -> List[int]:
+def _dataset_name_exists(dataset_list: List[str], dataset_name: str) -> List[int]:
     dataset_name = parse_dataset_name(dataset_name)[1]
     cache_name_list = [parse_dataset_name(dataset)[1] for dataset in dataset_list]
     res = []
@@ -2095,7 +2111,7 @@ def _preprocess_self_cognition_dataset(
     dataset_list: Tuple[HfDataset, Optional[HfDataset]],
     model_name: Tuple[str, Optional[str]],
     model_author: Tuple[str, Optional[str]],
-) -> Tuple[HfDataset, HfDataset]:
+) -> Tuple[HfDataset, Optional[HfDataset]]:
     # model_name: Tuple[zh, en]
     assert model_name[0] is not None
     assert model_author[0] is not None
@@ -2122,7 +2138,7 @@ def _preprocess_self_cognition_dataset(
     return tuple(res_d_list)
 
 
-def _dataset_id_to_name(dataset_name_list: List[str]) -> List[int]:
+def _dataset_id_to_name(dataset_name_list: List[str]) -> List[str]:
     # register dataset_id (ms/hf). Convert dataset_id to dataset_name.
     ms_dataset_mapping = {}
     hf_dataset_mapping = {}
@@ -2177,8 +2193,8 @@ def get_dataset(
         check_dataset_strategy: Literal['none', 'discard', 'error', 'warning'] = 'none',
         *,
         # for self-cognition
-        model_name: Optional[Tuple[str, str]] = None,
-        model_author: Optional[Tuple[str, str]] = None) -> Tuple[HfDataset, Optional[HfDataset]]:
+        model_name: Union[Tuple[str, str], List[str], None] = None,
+        model_author: Union[Tuple[str, str], List[str], None] = None) -> Tuple[HfDataset, Optional[HfDataset]]:
     """Returns train_dataset and val_dataset"""
     if isinstance(dataset_name_list, str):
         dataset_name_list = [dataset_name_list]
@@ -2199,7 +2215,7 @@ def get_dataset(
         else:
             random_state = dataset_seed
 
-        get_function: GetDatasetFunction = dataset_info['get_function']
+        get_function = dataset_info['get_function']
         is_local = dataset_info.get('is_local', False)
         dataset_id_or_path = dataset_info['dataset_id_or_path']
         remove_useless_columns = dataset_info.get('remove_useless_columns', True)
@@ -2237,7 +2253,38 @@ def get_dataset(
                 res['query'] = np.random.choice(row['query'])
             if 'response' in row and isinstance(row['response'], (list, tuple)):
                 res['response'] = np.random.choice(row['response'])
+            if 'rejected_response' in row and isinstance(row['rejected_response'], (list, tuple)):
+                res['rejected_response'] = np.random.choice(row['rejected_response'])
+            if 'history' in row:
+                if not row['history']:
+                    res['_history'] = None
+                else:
+                    res['_history'] = row['history']
+            if 'history_roles' in row:
+                if not row['history_roles']:
+                    res['_history_roles'] = None
+                else:
+                    res['_history_roles'] = row['history_roles']
+            if 'system' in row:
+                res['_system'] = row['system']
             return res
+
+        def _reduce_dataset(ds: HfDataset):
+            features = ds.features.copy()
+            if 'history' in ds.features:
+                features['_history'] = Sequence(feature=Sequence(feature=Value(dtype='string')))
+            if 'history_roles' in ds.features:
+                features['_history_roles'] = Sequence(feature=Sequence(feature=Value(dtype='string')))
+            if 'system' in ds.features:
+                features['_system'] = Value(dtype='string')
+            ds = ds.map(_reduce_column, load_from_cache_file=False, features=features)
+            if 'history' in ds.features:
+                ds = ds.remove_columns(['history']).rename_column('_history', 'history')
+            if 'history_roles' in ds.features:
+                ds = ds.remove_columns(['history_roles']).rename_column('_history_roles', 'history_roles')
+            if 'system' in ds.features:
+                ds = ds.remove_columns(['system']).rename_column('_system', 'system')
+            return ds
 
         train_d: HfDataset
         if isinstance(dataset, (list, tuple)):
@@ -2246,9 +2293,9 @@ def get_dataset(
             train_d, val_d = dataset, None
 
         if train_d:
-            train_d = train_d.map(_reduce_column)
+            train_d = _reduce_dataset(train_d)
         if val_d:
-            val_d = val_d.map(_reduce_column)
+            val_d = _reduce_dataset(val_d)
 
         assert train_d is not None or val_d is not None
         if train_d is not None:
