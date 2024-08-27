@@ -211,7 +211,11 @@ def llm_sft(args: SftArguments) -> Dict[str, Any]:
 
     if args.rope_scaling:
         kwargs['rope_scaling'] = args.rope_scaling
-
+    model_kwargs['device_map'] = {'model.embed_tokens': 0 + args.local_rank, 
+    **{f'model.layers.{i}': 2 + args.local_rank for i in range(0, 14)},
+    **{f'model.layers.{i}': 4 + args.local_rank for i in range(14, 28)},
+    'model.norm': 6 + args.local_rank, 'lm_head': 6 + args.local_rank}
+    print(f"model_kwargs['device_map']: {model_kwargs['device_map']}")
     model, tokenizer = get_model_tokenizer(
         args.model_type,
         args.torch_dtype,
@@ -221,6 +225,8 @@ def llm_sft(args: SftArguments) -> Dict[str, Any]:
         quant_method=args.quant_method,
         is_training=True,
         **kwargs)
+    if hasattr(model, 'hf_device_map'):
+        logger.info(f'model device_map {model.hf_device_map}')
     for k in ['gptq', 'awq', 'aqlm']:
         if getattr(model, f'is_{k}', None):
             args.quant_method = k

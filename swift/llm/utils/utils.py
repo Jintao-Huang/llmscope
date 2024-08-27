@@ -89,19 +89,24 @@ if not use_hf:
     MsDataset.load = _msdataset_ddp_load
 
 
-def _get_max_memory(device_ids: List[int]) -> Dict[Union[int, str], int]:
+def _get_max_memory(device_ids: List[int], max_memory: Optional[Dict[int, str]]) -> Dict[Union[int, str], int]:
     """add feat in accelerate to support DDP + MP"""
+    from accelerate.utils import convert_file_size_to_int
     import psutil
     # Make sure CUDA is initialized on each GPU to have the right memory info.
     for i in device_ids:
         _ = torch.tensor([0], device=i)
 
     device_ids_set = set(device_ids)
-    max_memory = {}
+    if max_memory is None:
+        max_memory = {}
     for i in range(torch.cuda.device_count()):
-        max_memory[i] = 0
         if i in device_ids_set:
-            max_memory[i] = torch.cuda.mem_get_info(i)[0]
+            if i not in max_memory:
+                max_memory[i] = int(1e18)
+            max_memory[i] = min(convert_file_size_to_int(max_memory[i]), torch.cuda.mem_get_info(i)[0])
+        else:
+            max_memory[i] = 0
     max_memory['cpu'] = psutil.virtual_memory().available
     return max_memory
 
@@ -247,7 +252,7 @@ class ConstantLengthDataset(IterableDataset):
 
 class LazyLLMDataset(Dataset):
 
-    def __init__(self, dataset: HfDataset, template: Template, *, try_fetch_time: int = 20) -> None:
+    def __init__(self, dataset: HfDataset, template: Template, *, try_fetch_time: int = 10) -> None:
         self.dataset = dataset
         self.template = template
         self.try_fetch_time = min(try_fetch_time, len(self.dataset))
@@ -262,15 +267,33 @@ class LazyLLMDataset(Dataset):
 
     def _try_fetch(self, first_idx: int) -> Optional[Dict[str, Any]]:
         idx = np.random.permutation(len(self))[:self.try_fetch_time - 1]
+        # 如果res_old存在, res不存在, 则返回
+        # 如果res_old存在/不存在, res存在, 则继续
+        # 如果res_old不存在, res不存在, 则继续
+        res_old = {}, {}
+        old_data = None
         for i in [first_idx] + idx.tolist():
             data = self.dataset[i]
+            if old_data is None:
+                old_data = data
+                old_data['history'] = []
+            else:
+                old_data['history'].insert(0, [data['query'], data['response']])
+                history = data.get('history')
+                if history:
+                    old_data['history'] = history + old_data['history']
             try:
-                res = self.template.encode(data)
+                res = self.template.encode(old_data)
             except Exception as e:
                 logger.error('Error occurs in lazy tokenize:', e)
                 continue
-            if len(res[0]) > 0:
-                return res
+            if len(res_old[0]) > 0 and len(res[0]) == 0:
+                return res_old
+            if len(res[0]) == 0:
+                old_data = None
+            else:
+                res_old = res
+        return res_old
 
     def __len__(self) -> int:
         return len(self.dataset)
@@ -1056,7 +1079,7 @@ def get_rope_scaling(config: PretrainedConfig):
 
 
 if is_ddp_plus_mp():
-    from accelerate.utils.modeling import (get_balanced_memory, infer_auto_device_map)
+    from accelerate.utils.modeling import get_balanced_memory, infer_auto_device_map
 
     @wraps(infer_auto_device_map)
     def _infer_auto_device_map_patch(model: Module,
@@ -1068,7 +1091,7 @@ if is_ddp_plus_mp():
         n_gpu = torch.cuda.device_count()
         _, local_rank, _, local_world_size = get_dist_setting()
         device_ids = list(range(local_rank, n_gpu, local_world_size))
-        max_memory = _get_max_memory(device_ids)
+        max_memory = _get_max_memory(device_ids, max_memory)
         max_memory = _sync_max_memory(max_memory)
         max_memory = get_balanced_memory(model, max_memory, low_zero=False, **kwargs)
         max_memory = {k: v for k, v in max_memory.items() if v > 0}
@@ -1077,7 +1100,7 @@ if is_ddp_plus_mp():
     _old_ddp_init = DDP.__init__
     accelerate.accelerator.torch.nn.parallel.DistributedDataParallel.__init__ = (
         lambda self, model, device_ids, output_device, *args, **kwargs: _old_ddp_init(self, model, *args, **kwargs))
-    transformers.modeling_utils.get_balanced_memory = lambda *args, **kwargs: None
+    transformers.modeling_utils.get_balanced_memory = lambda model, max_memory, *args, **kwargs: max_memory
     transformers.modeling_utils.infer_auto_device_map = _infer_auto_device_map_patch
 
 if is_ddp_plus_mp() or use_torchacc():
