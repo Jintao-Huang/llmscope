@@ -1317,64 +1317,6 @@ class GOT_OCR2Template(QwenTemplate):
 register_template(TemplateType.got_ocr2, GOT_OCR2Template(), lazy_tokenize=True, use_model=True)
 
 
-class OVIS1_6Template(Template):
-
-    def replace_tag(self, media_type: Literal['image', 'video', 'audio'], index: int,
-                    example: Dict[str, Any]) -> List[Context]:
-        assert media_type == 'image'
-        return [[-200], '\n']
-
-    def _encode(self, example: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        inputs, tokenizer_kwargs = super()._encode(example)
-        if len(inputs) == 0:
-            return inputs, {}
-        images = example['images']
-        input_ids = inputs['input_ids']
-        labels = inputs['labels']
-        idx_list = _findall(input_ids, [-200])
-        added_tokens_len = 0
-        pixel_values = []
-        for i, idx in enumerate(idx_list):
-            max_partition = get_env_args('max_partition', int, 9)
-            raw_pixel_values, image_placeholders = self.model.visual_tokenizer.preprocess_image(
-                images[i], max_partition=max_partition)
-            input_ids = input_ids[:idx] + image_placeholders + input_ids[idx + 1:]
-            if labels is not None:
-                labels = labels[:idx] + [-100] * len(image_placeholders) + labels[idx + 1:]
-            pixel_values.append(raw_pixel_values)
-            added_tokens_len += len(image_placeholders) - 1
-        if pixel_values:
-            pixel_values = torch.cat(pixel_values, dim=0).to(self.model.visual_tokenizer.dtype)
-        else:
-            pixel_values = None
-        inputs = {'labels': labels}
-        if labels is not None:
-            labels = torch.tensor(labels)[None]
-        inputs['_data'] = {'input_ids': torch.tensor(input_ids)[None], 'labels': labels, 'pixel_values': [pixel_values]}
-        return inputs, {}
-
-    def _post_encode(self, model, data: Any) -> Dict[str, Any]:
-        _, inputs_embeds, labels, _ = self.model.merge_multimodal(
-            text_input_ids=data['input_ids'],
-            text_attention_masks=torch.ones_like(data['input_ids']),  # not use, only compat
-            text_labels=data['labels'],
-            pixel_values=data['pixel_values'],
-            left_padding=True)
-        return {'inputs_embeds': inputs_embeds[0], 'labels': labels}
-
-    @staticmethod
-    def _get_generate_ids(generate_ids: List[int], input_token_len: int) -> List[int]:
-        return generate_ids
-
-
-register_template(
-    TemplateType.ovis1_6,
-    OVIS1_6Template(['<bos>'], ['<start_of_turn>user\n{{QUERY}}<end_of_turn>\n<start_of_turn>model\n'],
-                    ['<end_of_turn>\n'], ['<end_of_turn>'], None,
-                    ['<bos><start_of_turn>system\n{{SYSTEM}}<end_of_turn>\n']),
-    lazy_tokenize=True,
-    use_model=True)
-
 
 class _QwenVLTemplateMixin:
     load_medias = False
@@ -1424,9 +1366,6 @@ class Qwen2_5Template(QwenTemplate):
     system = 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.'
 
 
-class QwqTemplate(QwenTemplate):
-    system = ('You are a helpful and harmless assistant. You are Qwen developed by Alibaba. '
-              'You should think step-by-step.')
 
 
 register_template(TemplateType.qwen, QwenTemplate())
@@ -3203,10 +3142,6 @@ class MolmoTemplate(Template):
         generation_config = self.model.generation_config
         max_new_tokens = generation_config.max_new_tokens
         batch_size, seq_len = attention_mask.shape
-        attention_mask = torch.cat(
-            [attention_mask, attention_mask.new_ones((batch_size, max_new_tokens))],
-            dim=1,
-        )
         # prepare batchfy inputs
         keys = ['images', 'image_input_idx', 'image_masks', 'append_last_valid_logits']
         for key in keys:

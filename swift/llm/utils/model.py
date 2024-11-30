@@ -7052,33 +7052,6 @@ def get_model_tokenizer_idefics(model_dir: str, *args, **kwargs):
     support_flash_attn=True,
     tags=['multi-modal', 'vision'],
     hf_model_id='Mizukiluke/mplug_owl_2_1')
-def get_model_tokenizer_mplug_owl2(model_dir: str,
-                                   torch_dtype: torch.dtype,
-                                   model_kwargs: Dict[str, Any],
-                                   load_model: bool = True,
-                                   **kwargs):
-    if 'local_repo_path' in kwargs:
-        local_repo_path = kwargs['local_repo_path']
-    else:
-        local_repo_path = git_clone_github('https://github.com/X-PLUG/mPLUG-Owl')
-    local_repo_path = os.path.join(local_repo_path, 'mPLUG-Owl2')
-    sys.path.append(os.path.join(local_repo_path))
-
-    # register
-    # https://github.com/X-PLUG/mPLUG-Owl/blob/main/mPLUG-Owl2/mplug_owl2/model/modeling_mplug_owl2.py#L447
-    from mplug_owl2 import MPLUGOwl2LlamaForCausalLM
-    from transformers.models.clip.image_processing_clip import CLIPImageProcessor
-    model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
-    vocab_size = kwargs.pop('vocab_size', None)
-    if vocab_size is not None:
-        model_config.vocab_size = vocab_size
-    get_model_tokenizer_function = kwargs.pop('get_model_tokenizer_function')
-    model, tokenizer = get_model_tokenizer_function(
-        model_dir, torch_dtype, model_kwargs, load_model, model_config=model_config, **kwargs)
-    logger.info('Please ignore the unimported warning.')
-    processor = CLIPImageProcessor.from_pretrained(model_dir)
-    tokenizer.processor = processor
-    return model, tokenizer
 
 
 @register_model(
