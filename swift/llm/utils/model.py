@@ -36,542 +36,7 @@ MODEL_MAPPING: Dict[str, Dict[str, Any]] = {}
 
 
 class ModelType:
-    # qwen
-    qwen_1_8b = 'qwen-1_8b'
-    qwen_1_8b_chat = 'qwen-1_8b-chat'
-    qwen_1_8b_chat_int4 = 'qwen-1_8b-chat-int4'
-    qwen_1_8b_chat_int8 = 'qwen-1_8b-chat-int8'
-    qwen_7b = 'qwen-7b'
-    qwen_7b_chat = 'qwen-7b-chat'
-    qwen_7b_chat_int4 = 'qwen-7b-chat-int4'
-    qwen_7b_chat_int8 = 'qwen-7b-chat-int8'
-    qwen_14b = 'qwen-14b'
-    qwen_14b_chat = 'qwen-14b-chat'
-    qwen_14b_chat_int4 = 'qwen-14b-chat-int4'
-    qwen_14b_chat_int8 = 'qwen-14b-chat-int8'
-    qwen_72b = 'qwen-72b'
-    qwen_72b_chat = 'qwen-72b-chat'
-    qwen_72b_chat_int4 = 'qwen-72b-chat-int4'
-    qwen_72b_chat_int8 = 'qwen-72b-chat-int8'
-    # modelscope_agent
-    modelscope_agent_7b = 'modelscope-agent-7b'
-    modelscope_agent_14b = 'modelscope-agent-14b'
-    # qwen1.5
-    qwen1half_0_5b = 'qwen1half-0_5b'
-    qwen1half_1_8b = 'qwen1half-1_8b'
-    qwen1half_4b = 'qwen1half-4b'
-    qwen1half_7b = 'qwen1half-7b'
-    qwen1half_14b = 'qwen1half-14b'
-    qwen1half_32b = 'qwen1half-32b'
-    qwen1half_72b = 'qwen1half-72b'
-    qwen1half_110b = 'qwen1half-110b'
-    codeqwen1half_7b = 'codeqwen1half-7b'
-    qwen1half_moe_a2_7b = 'qwen1half-moe-a2_7b'
-    qwen1half_0_5b_chat = 'qwen1half-0_5b-chat'
-    qwen1half_1_8b_chat = 'qwen1half-1_8b-chat'
-    qwen1half_4b_chat = 'qwen1half-4b-chat'
-    qwen1half_7b_chat = 'qwen1half-7b-chat'
-    qwen1half_14b_chat = 'qwen1half-14b-chat'
-    qwen1half_32b_chat = 'qwen1half-32b-chat'
-    qwen1half_72b_chat = 'qwen1half-72b-chat'
-    qwen1half_110b_chat = 'qwen1half-110b-chat'
-    qwen1half_moe_a2_7b_chat = 'qwen1half-moe-a2_7b-chat'
-    codeqwen1half_7b_chat = 'codeqwen1half-7b-chat'
 
-    # qwen1.5 gptq
-    qwen1half_0_5b_chat_int4 = 'qwen1half-0_5b-chat-int4'
-    qwen1half_1_8b_chat_int4 = 'qwen1half-1_8b-chat-int4'
-    qwen1half_4b_chat_int4 = 'qwen1half-4b-chat-int4'
-    qwen1half_7b_chat_int4 = 'qwen1half-7b-chat-int4'
-    qwen1half_14b_chat_int4 = 'qwen1half-14b-chat-int4'
-    qwen1half_32b_chat_int4 = 'qwen1half-32b-chat-int4'
-    qwen1half_72b_chat_int4 = 'qwen1half-72b-chat-int4'
-    qwen1half_110b_chat_int4 = 'qwen1half-110b-chat-int4'
-    qwen1half_0_5b_chat_int8 = 'qwen1half-0_5b-chat-int8'
-    qwen1half_1_8b_chat_int8 = 'qwen1half-1_8b-chat-int8'
-    qwen1half_4b_chat_int8 = 'qwen1half-4b-chat-int8'
-    qwen1half_7b_chat_int8 = 'qwen1half-7b-chat-int8'
-    qwen1half_14b_chat_int8 = 'qwen1half-14b-chat-int8'
-    qwen1half_72b_chat_int8 = 'qwen1half-72b-chat-int8'
-    qwen1half_moe_a2_7b_chat_int4 = 'qwen1half-moe-a2_7b-chat-int4'
-
-    # qwen1.5 awq
-    qwen1half_0_5b_chat_awq = 'qwen1half-0_5b-chat-awq'
-    qwen1half_1_8b_chat_awq = 'qwen1half-1_8b-chat-awq'
-    qwen1half_4b_chat_awq = 'qwen1half-4b-chat-awq'
-    qwen1half_7b_chat_awq = 'qwen1half-7b-chat-awq'
-    qwen1half_14b_chat_awq = 'qwen1half-14b-chat-awq'
-    qwen1half_32b_chat_awq = 'qwen1half-32b-chat-awq'
-    qwen1half_72b_chat_awq = 'qwen1half-72b-chat-awq'
-    qwen1half_110b_chat_awq = 'qwen1half-110b-chat-awq'
-    codeqwen1half_7b_chat_awq = 'codeqwen1half-7b-chat-awq'
-
-    # qwen2
-    qwen2_0_5b = 'qwen2-0_5b'
-    qwen2_0_5b_instruct = 'qwen2-0_5b-instruct'
-    qwen2_0_5b_instruct_int4 = 'qwen2-0_5b-instruct-int4'
-    qwen2_0_5b_instruct_int8 = 'qwen2-0_5b-instruct-int8'
-    qwen2_0_5b_instruct_awq = 'qwen2-0_5b-instruct-awq'
-    qwen2_1_5b = 'qwen2-1_5b'
-    qwen2_1_5b_instruct = 'qwen2-1_5b-instruct'
-    qwen2_1_5b_instruct_int4 = 'qwen2-1_5b-instruct-int4'
-    qwen2_1_5b_instruct_int8 = 'qwen2-1_5b-instruct-int8'
-    qwen2_1_5b_instruct_awq = 'qwen2-1_5b-instruct-awq'
-    qwen2_7b = 'qwen2-7b'
-    qwen2_7b_instruct = 'qwen2-7b-instruct'
-    qwen2_7b_instruct_int4 = 'qwen2-7b-instruct-int4'
-    qwen2_7b_instruct_int8 = 'qwen2-7b-instruct-int8'
-    qwen2_7b_instruct_awq = 'qwen2-7b-instruct-awq'
-    qwen2_72b = 'qwen2-72b'
-    qwen2_72b_instruct = 'qwen2-72b-instruct'
-    qwen2_72b_instruct_int4 = 'qwen2-72b-instruct-int4'
-    qwen2_72b_instruct_int8 = 'qwen2-72b-instruct-int8'
-    qwen2_72b_instruct_awq = 'qwen2-72b-instruct-awq'
-    qwen2_57b_a14b = 'qwen2-57b-a14b'
-    qwen2_57b_a14b_instruct = 'qwen2-57b-a14b-instruct'
-    qwen2_57b_a14b_instruct_int4 = 'qwen2-57b-a14b-instruct-int4'
-
-    qwen2_math_1_5b = 'qwen2-math-1_5b'
-    qwen2_math_1_5b_instruct = 'qwen2-math-1_5b-instruct'
-    qwen2_math_7b = 'qwen2-math-7b'
-    qwen2_math_7b_instruct = 'qwen2-math-7b-instruct'
-    qwen2_math_72b = 'qwen2-math-72b'
-    qwen2_math_72b_instruct = 'qwen2-math-72b-instruct'
-
-    # qwen2.5
-    qwen2_5_0_5b = 'qwen2_5-0_5b'
-    qwen2_5_1_5b = 'qwen2_5-1_5b'
-    qwen2_5_3b = 'qwen2_5-3b'
-    qwen2_5_7b = 'qwen2_5-7b'
-    qwen2_5_14b = 'qwen2_5-14b'
-    qwen2_5_32b = 'qwen2_5-32b'
-    qwen2_5_72b = 'qwen2_5-72b'
-    qwen2_5_0_5b_instruct = 'qwen2_5-0_5b-instruct'
-    qwen2_5_1_5b_instruct = 'qwen2_5-1_5b-instruct'
-    qwen2_5_3b_instruct = 'qwen2_5-3b-instruct'
-    qwen2_5_7b_instruct = 'qwen2_5-7b-instruct'
-    qwen2_5_14b_instruct = 'qwen2_5-14b-instruct'
-    qwen2_5_32b_instruct = 'qwen2_5-32b-instruct'
-    qwen2_5_72b_instruct = 'qwen2_5-72b-instruct'
-    qwen2_5_0_5b_instruct_gptq_int4 = 'qwen2_5-0_5b-instruct-gptq-int4'
-    qwen2_5_1_5b_instruct_gptq_int4 = 'qwen2_5-1_5b-instruct-gptq-int4'
-    qwen2_5_3b_instruct_gptq_int4 = 'qwen2_5-3b-instruct-gptq-int4'
-    qwen2_5_7b_instruct_gptq_int4 = 'qwen2_5-7b-instruct-gptq-int4'
-    qwen2_5_14b_instruct_gptq_int4 = 'qwen2_5-14b-instruct-gptq-int4'
-    qwen2_5_32b_instruct_gptq_int4 = 'qwen2_5-32b-instruct-gptq-int4'
-    qwen2_5_72b_instruct_gptq_int4 = 'qwen2_5-72b-instruct-gptq-int4'
-    qwen2_5_0_5b_instruct_gptq_int8 = 'qwen2_5-0_5b-instruct-gptq-int8'
-    qwen2_5_1_5b_instruct_gptq_int8 = 'qwen2_5-1_5b-instruct-gptq-int8'
-    qwen2_5_3b_instruct_gptq_int8 = 'qwen2_5-3b-instruct-gptq-int8'
-    qwen2_5_7b_instruct_gptq_int8 = 'qwen2_5-7b-instruct-gptq-int8'
-    qwen2_5_14b_instruct_gptq_int8 = 'qwen2_5-14b-instruct-gptq-int8'
-    qwen2_5_32b_instruct_gptq_int8 = 'qwen2_5-32b-instruct-gptq-int8'
-    qwen2_5_72b_instruct_gptq_int8 = 'qwen2_5-72b-instruct-gptq-int8'
-    qwen2_5_0_5b_instruct_awq = 'qwen2_5-0_5b-instruct-awq'
-    qwen2_5_1_5b_instruct_awq = 'qwen2_5-1_5b-instruct-awq'
-    qwen2_5_3b_instruct_awq = 'qwen2_5-3b-instruct-awq'
-    qwen2_5_7b_instruct_awq = 'qwen2_5-7b-instruct-awq'
-    qwen2_5_14b_instruct_awq = 'qwen2_5-14b-instruct-awq'
-    qwen2_5_32b_instruct_awq = 'qwen2_5-32b-instruct-awq'
-    qwen2_5_72b_instruct_awq = 'qwen2_5-72b-instruct-awq'
-    # qwen2.5 math
-    qwen2_5_math_1_5b = 'qwen2_5-math-1_5b'
-    qwen2_5_math_7b = 'qwen2_5-math-7b'
-    qwen2_5_math_72b = 'qwen2_5-math-72b'
-    qwen2_5_math_1_5b_instruct = 'qwen2_5-math-1_5b-instruct'
-    qwen2_5_math_7b_instruct = 'qwen2_5-math-7b-instruct'
-    qwen2_5_math_72b_instruct = 'qwen2_5-math-72b-instruct'
-    # qwen2.5 coder
-    qwen2_5_coder_0_5b = 'qwen2_5-coder-0_5b'
-    qwen2_5_coder_0_5b_instruct = 'qwen2_5-coder-0_5b-instruct'
-    qwen2_5_coder_0_5b_instruct_gptq_int4 = 'qwen2_5-coder-0_5b-instruct-gptq-int4'
-    qwen2_5_coder_0_5b_instruct_gptq_int8 = 'qwen2_5-coder-0_5b-instruct-gptq-int8'
-    qwen2_5_coder_0_5b_instruct_awq = 'qwen2_5-coder-0_5b-instruct-awq'
-
-    qwen2_5_coder_1_5b = 'qwen2_5-coder-1_5b'
-    qwen2_5_coder_1_5b_instruct = 'qwen2_5-coder-1_5b-instruct'
-    qwen2_5_coder_1_5b_instruct_gptq_int4 = 'qwen2_5-coder-1_5b-instruct-gptq-int4'
-    qwen2_5_coder_1_5b_instruct_gptq_int8 = 'qwen2_5-coder-1_5b-instruct-gptq-int8'
-    qwen2_5_coder_1_5b_instruct_awq = 'qwen2_5-coder-1_5b-instruct-awq'
-
-    qwen2_5_coder_3b = 'qwen2_5-coder-3b'
-    qwen2_5_coder_3b_instruct = 'qwen2_5-coder-3b-instruct'
-    qwen2_5_coder_3b_instruct_gptq_int4 = 'qwen2_5-coder-3b-instruct-gptq-int4'
-    qwen2_5_coder_3b_instruct_gptq_int8 = 'qwen2_5-coder-3b-instruct-gptq-int8'
-    qwen2_5_coder_3b_instruct_awq = 'qwen2_5-coder-3b-instruct-awq'
-
-    qwen2_5_coder_7b = 'qwen2_5-coder-7b'
-    qwen2_5_coder_7b_instruct = 'qwen2_5-coder-7b-instruct'
-    qwen2_5_coder_7b_instruct_gptq_int4 = 'qwen2_5-coder-7b-instruct-gptq-int4'
-    qwen2_5_coder_7b_instruct_gptq_int8 = 'qwen2_5-coder-7b-instruct-gptq-int8'
-    qwen2_5_coder_7b_instruct_awq = 'qwen2_5-coder-7b-instruct-awq'
-
-    qwen2_5_coder_14b = 'qwen2_5-coder-14b'
-    qwen2_5_coder_14b_instruct = 'qwen2_5-coder-14b-instruct'
-    qwen2_5_coder_14b_instruct_gptq_int4 = 'qwen2_5-coder-14b-instruct-gptq-int4'
-    qwen2_5_coder_14b_instruct_gptq_int8 = 'qwen2_5-coder-14b-instruct-gptq-int8'
-    qwen2_5_coder_14b_instruct_awq = 'qwen2_5-coder-14b-instruct-awq'
-
-    qwen2_5_coder_32b = 'qwen2_5-coder-32b'
-    qwen2_5_coder_32b_instruct = 'qwen2_5-coder-32b-instruct'
-    qwen2_5_coder_32b_instruct_gptq_int4 = 'qwen2_5-coder-32b-instruct-gptq-int4'
-    qwen2_5_coder_32b_instruct_gptq_int8 = 'qwen2_5-coder-32b-instruct-gptq-int8'
-    qwen2_5_coder_32b_instruct_awq = 'qwen2_5-coder-32b-instruct-awq'
-
-    qwq_32b_preview = 'qwq-32b-preview'
-
-    marco_o1 = 'marco-o1'
-
-    # qwen-vl
-    qwen_vl = 'qwen-vl'
-    qwen_vl_chat = 'qwen-vl-chat'
-    qwen_vl_chat_int4 = 'qwen-vl-chat-int4'
-    # qwen-audio
-    qwen_audio = 'qwen-audio'
-    qwen_audio_chat = 'qwen-audio-chat'
-    qwen2_audio_7b = 'qwen2-audio-7b'
-    qwen2_audio_7b_instruct = 'qwen2-audio-7b-instruct'
-    qwen2_vl_2b = 'qwen2-vl-2b'
-    qwen2_vl_2b_instruct = 'qwen2-vl-2b-instruct'
-    qwen2_vl_2b_instruct_gptq_int4 = 'qwen2-vl-2b-instruct-gptq-int4'
-    qwen2_vl_2b_instruct_gptq_int8 = 'qwen2-vl-2b-instruct-gptq-int8'
-    qwen2_vl_2b_instruct_awq = 'qwen2-vl-2b-instruct-awq'
-    qwen2_vl_7b = 'qwen2-vl-7b'
-    qwen2_vl_7b_instruct = 'qwen2-vl-7b-instruct'
-    qwen2_vl_7b_instruct_gptq_int4 = 'qwen2-vl-7b-instruct-gptq-int4'
-    qwen2_vl_7b_instruct_gptq_int8 = 'qwen2-vl-7b-instruct-gptq-int8'
-    qwen2_vl_7b_instruct_awq = 'qwen2-vl-7b-instruct-awq'
-    qwen2_vl_72b = 'qwen2-vl-72b'
-    qwen2_vl_72b_instruct = 'qwen2-vl-72b-instruct'
-    qwen2_vl_72b_instruct_gptq_int4 = 'qwen2-vl-72b-instruct-gptq-int4'
-    qwen2_vl_72b_instruct_gptq_int8 = 'qwen2-vl-72b-instruct-gptq-int8'
-    qwen2_vl_72b_instruct_awq = 'qwen2-vl-72b-instruct-awq'
-    # chatglm
-    chatglm2_6b = 'chatglm2-6b'
-    chatglm2_6b_32k = 'chatglm2-6b-32k'
-    chatglm3_6b_base = 'chatglm3-6b-base'
-    chatglm3_6b = 'chatglm3-6b'
-    chatglm3_6b_32k = 'chatglm3-6b-32k'
-    chatglm3_6b_128k = 'chatglm3-6b-128k'
-    codegeex2_6b = 'codegeex2-6b'
-    glm4v_9b_chat = 'glm4v-9b-chat'
-    glm4_9b = 'glm4-9b'
-    glm4_9b_chat = 'glm4-9b-chat'
-    glm4_9b_chat_1m = 'glm4-9b-chat-1m'
-    codegeex4_9b_chat = 'codegeex4-9b-chat'
-    # llama2
-    llama2_7b = 'llama2-7b'
-    llama2_7b_chat = 'llama2-7b-chat'
-    llama2_13b = 'llama2-13b'
-    llama2_13b_chat = 'llama2-13b-chat'
-    llama2_70b = 'llama2-70b'
-    llama2_70b_chat = 'llama2-70b-chat'
-    llama2_7b_aqlm_2bit_1x16 = 'llama2-7b-aqlm-2bit-1x16'  # aqlm
-    # llama3
-    llama3_8b = 'llama3-8b'
-    llama3_8b_instruct = 'llama3-8b-instruct'
-    llama3_8b_instruct_int4 = 'llama3-8b-instruct-int4'
-    llama3_8b_instruct_int8 = 'llama3-8b-instruct-int8'
-    llama3_8b_instruct_awq = 'llama3-8b-instruct-awq'
-    llama3_70b = 'llama3-70b'
-    llama3_70b_instruct = 'llama3-70b-instruct'
-    llama3_70b_instruct_int4 = 'llama3-70b-instruct-int4'
-    llama3_70b_instruct_int8 = 'llama3-70b-instruct-int8'
-    llama3_70b_instruct_awq = 'llama3-70b-instruct-awq'
-    # llama3.1
-    llama3_1_8b = 'llama3_1-8b'
-    llama3_1_8b_instruct = 'llama3_1-8b-instruct'
-    llama3_1_8b_instruct_awq = 'llama3_1-8b-instruct-awq'
-    llama3_1_8b_instruct_gptq_int4 = 'llama3_1-8b-instruct-gptq-int4'
-    llama3_1_8b_instruct_bnb = 'llama3_1-8b-instruct-bnb'
-    llama3_1_70b = 'llama3_1-70b'
-    llama3_1_70b_instruct = 'llama3_1-70b-instruct'
-    llama3_1_70b_instruct_fp8 = 'llama3_1-70b-instruct-fp8'
-    llama3_1_70b_instruct_awq = 'llama3_1-70b-instruct-awq'
-    llama3_1_70b_instruct_gptq_int4 = 'llama3_1-70b-instruct-gptq-int4'
-    llama3_1_70b_instruct_bnb = 'llama3_1-70b-instruct-bnb'
-    llama3_1_405b = 'llama3_1-405b'
-    llama3_1_405b_instruct = 'llama3_1-405b-instruct'
-    llama3_1_405b_instruct_fp8 = 'llama3_1-405b-instruct-fp8'
-    llama3_1_405b_instruct_awq = 'llama3_1-405b-instruct-awq'
-    llama3_1_405b_instruct_gptq_int4 = 'llama3_1-405b-instruct-gptq-int4'
-    llama3_1_405b_instruct_bnb = 'llama3_1-405b-instruct-bnb'
-    # llama3.1-nemotron
-    llama3_1_nemotron_70B_instruct_hf = 'llama-3.1-nemotron-70B-instruct-hf'
-    # llama3.2
-    llama3_2_1b = 'llama3_2-1b'
-    llama3_2_1b_instruct = 'llama3_2-1b-instruct'
-    llama3_2_3b = 'llama3_2-3b'
-    llama3_2_3b_instruct = 'llama3_2-3b-instruct'
-    # llama3.2-vision
-    llama3_2_11b_vision = 'llama3_2-11b-vision'
-    llama3_2_11b_vision_instruct = 'llama3_2-11b-vision-instruct'
-    llama3_2_90b_vision = 'llama3_2-90b-vision'
-    llama3_2_90b_vision_instruct = 'llama3_2-90b-vision-instruct'
-
-    # omni
-    llama3_1_8b_omni = 'llama3_1-8b-omni'
-    # reflection
-    reflection_llama_3_1_70b = 'reflection-llama_3_1-70b'
-    # long writer
-    longwriter_glm4_9b = 'longwriter-glm4-9b'
-    longwriter_llama3_1_8b = 'longwriter-llama3_1-8b'
-    # chinese-llama-alpaca
-    chinese_llama_2_1_3b = 'chinese-llama-2-1_3b'
-    chinese_llama_2_7b = 'chinese-llama-2-7b'
-    chinese_llama_2_7b_16k = 'chinese-llama-2-7b-16k'
-    chinese_llama_2_7b_64k = 'chinese-llama-2-7b-64k'
-    chinese_llama_2_13b = 'chinese-llama-2-13b'
-    chinese_llama_2_13b_16k = 'chinese-llama-2-13b-16k'
-    chinese_alpaca_2_1_3b = 'chinese-alpaca-2-1_3b'
-    chinese_alpaca_2_7b = 'chinese-alpaca-2-7b'
-    chinese_alpaca_2_7b_16k = 'chinese-alpaca-2-7b-16k'
-    chinese_alpaca_2_7b_64k = 'chinese-alpaca-2-7b-64k'
-    chinese_alpaca_2_13b = 'chinese-alpaca-2-13b'
-    chinese_alpaca_2_13b_16k = 'chinese-alpaca-2-13b-16k'
-    llama_3_chinese_8b = 'llama-3-chinese-8b'
-    llama_3_chinese_8b_instruct = 'llama-3-chinese-8b-instruct'
-    # idefics
-    idefics3_8b_llama3 = 'idefics3-8b-llama3'
-    # atom
-    atom_7b = 'atom-7b'
-    atom_7b_chat = 'atom-7b-chat'
-    # llava-hf
-    llava1_5_7b_instruct = 'llava1_5-7b-instruct'
-    llava1_5_13b_instruct = 'llava1_5-13b-instruct'
-    llava1_6_mistral_7b_instruct = 'llava1_6-mistral-7b-instruct'
-    llava1_6_vicuna_7b_instruct = 'llava1_6-vicuna-7b-instruct'
-    llava1_6_vicuna_13b_instruct = 'llava1_6-vicuna-13b-instruct'
-    llava1_6_llama3_1_8b_instruct = 'llava1_6-llama3_1-8b-instruct'
-    llava1_6_yi_34b_instruct = 'llava1_6-yi-34b-instruct'
-    llama3_llava_next_8b_hf = 'llama3-llava-next-8b-hf'
-    llava_next_72b_hf = 'llava-next-72b-hf'
-    llava_next_110b_hf = 'llava-next-110b-hf'
-
-    llava_onevision_qwen2_0_5b_ov = 'llava-onevision-qwen2-0_5b-ov'
-    llava_onevision_qwen2_7b_ov = 'llava-onevision-qwen2-7b-ov'
-    llava_onevision_qwen2_72b_ov = 'llava-onevision-qwen2-72b-ov'
-    # llava
-    llama3_llava_next_8b = 'llama3-llava-next-8b'
-    llava_next_72b = 'llava-next-72b'
-    llava_next_110b = 'llava-next-110b'
-    # llava_next_video-hf
-    llava_next_video_7b_instruct = 'llava-next-video-7b-instruct'
-    llava_next_video_7b_32k_instruct = 'llava-next-video-7b-32k-instruct'
-    llava_next_video_7b_dpo_instruct = 'llava-next-video-7b-dpo-instruct'
-    llava_next_video_34b_instruct = 'llava-next-video-34b-instruct'
-    # yi
-    yi_6b = 'yi-6b'
-    yi_6b_200k = 'yi-6b-200k'
-    yi_6b_chat = 'yi-6b-chat'
-    yi_6b_chat_awq = 'yi-6b-chat-awq'
-    yi_6b_chat_int8 = 'yi-6b-chat-int8'
-    yi_9b = 'yi-9b'
-    yi_9b_200k = 'yi-9b-200k'
-    yi_34b = 'yi-34b'
-    yi_34b_200k = 'yi-34b-200k'
-    yi_34b_chat = 'yi-34b-chat'
-    yi_34b_chat_awq = 'yi-34b-chat-awq'
-    yi_34b_chat_int8 = 'yi-34b-chat-int8'
-    # yi1.5
-    yi_1_5_6b = 'yi-1_5-6b'
-    yi_1_5_6b_chat = 'yi-1_5-6b-chat'
-    yi_1_5_9b = 'yi-1_5-9b'
-    yi_1_5_9b_chat = 'yi-1_5-9b-chat'
-    yi_1_5_9b_chat_16k = 'yi-1_5-9b-chat-16k'
-    yi_1_5_34b = 'yi-1_5-34b'
-    yi_1_5_34b_chat = 'yi-1_5-34b-chat'
-    yi_1_5_34b_chat_16k = 'yi-1_5-34b-chat-16k'
-    yi_1_5_6b_chat_awq_int4 = 'yi-1_5-6b-chat-awq-int4'
-    yi_1_5_6b_chat_gptq_int4 = 'yi-1_5-6b-chat-gptq-int4'
-    yi_1_5_9b_chat_awq_int4 = 'yi-1_5-9b-chat-awq-int4'
-    yi_1_5_9b_chat_gptq_int4 = 'yi-1_5-9b-chat-gptq-int4'
-    yi_1_5_34b_chat_awq_int4 = 'yi-1_5-34b-chat-awq-int4'
-    yi_1_5_34b_chat_gptq_int4 = 'yi-1_5-34b-chat-gptq-int4'
-    # yi-coder
-    yi_coder_1_5b = 'yi-coder-1_5b'
-    yi_coder_1_5b_chat = 'yi-coder-1_5b-chat'
-    yi_coder_9b = 'yi-coder-9b'
-    yi_coder_9b_chat = 'yi-coder-9b-chat'
-    # yi-vl
-    yi_vl_6b_chat = 'yi-vl-6b-chat'
-    yi_vl_34b_chat = 'yi-vl-34b-chat'
-    # llava-llama (xtuner)
-    llava_llama3_8b_v1_1 = 'llava-llama3-8b-v1_1'
-    # internlm
-    internlm_7b = 'internlm-7b'
-    internlm_7b_chat = 'internlm-7b-chat'
-    internlm_7b_chat_8k = 'internlm-7b-chat-8k'
-    internlm_20b = 'internlm-20b'
-    internlm_20b_chat = 'internlm-20b-chat'
-    # internlm2
-    internlm2_1_8b = 'internlm2-1_8b'
-    internlm2_1_8b_sft_chat = 'internlm2-1_8b-sft-chat'
-    internlm2_1_8b_chat = 'internlm2-1_8b-chat'
-    internlm2_7b_base = 'internlm2-7b-base'
-    internlm2_7b = 'internlm2-7b'
-    internlm2_7b_sft_chat = 'internlm2-7b-sft-chat'
-    internlm2_7b_chat = 'internlm2-7b-chat'
-    internlm2_20b_base = 'internlm2-20b-base'
-    internlm2_20b = 'internlm2-20b'
-    internlm2_20b_sft_chat = 'internlm2-20b-sft-chat'
-    internlm2_20b_chat = 'internlm2-20b-chat'
-    # internlm2.5
-    internlm2_5_1_8b = 'internlm2_5-1_8b'
-    internlm2_5_1_8b_chat = 'internlm2_5-1_8b-chat'
-    internlm2_5_7b = 'internlm2_5-7b'
-    internlm2_5_7b_chat = 'internlm2_5-7b-chat'
-    internlm2_5_7b_chat_1m = 'internlm2_5-7b-chat-1m'
-    internlm2_5_20b = 'internlm2_5-20b'
-    internlm2_5_20b_chat = 'internlm2_5-20b-chat'
-    # internlm2-math
-    internlm2_math_7b = 'internlm2-math-7b'
-    internlm2_math_7b_chat = 'internlm2-math-7b-chat'
-    internlm2_math_20b = 'internlm2-math-20b'
-    internlm2_math_20b_chat = 'internlm2-math-20b-chat'
-    # internlm-xcomposer2
-    internlm_xcomposer2_7b_chat = 'internlm-xcomposer2-7b-chat'
-    internlm_xcomposer2_4khd_7b_chat = 'internlm-xcomposer2-4khd-7b-chat'
-    internlm_xcomposer2_5_7b_chat = 'internlm-xcomposer2_5-7b-chat'
-    # internvl
-    internvl_chat_v1_5 = 'internvl-chat-v1_5'
-    internvl_chat_v1_5_int8 = 'internvl-chat-v1_5-int8'
-    mini_internvl_chat_2b_v1_5 = 'mini-internvl-chat-2b-v1_5'
-    mini_internvl_chat_4b_v1_5 = 'mini-internvl-chat-4b-v1_5'
-    internvl2_1b = 'internvl2-1b'
-    internvl2_2b = 'internvl2-2b'
-    internvl2_4b = 'internvl2-4b'
-    internvl2_8b = 'internvl2-8b'
-    internvl2_26b = 'internvl2-26b'
-    internvl2_40b = 'internvl2-40b'
-    internvl2_llama3_76b = 'internvl2-llama3-76b'
-    internvl2_2b_awq = 'internvl2-2b-awq'
-    internvl2_8b_awq = 'internvl2-8b-awq'
-    internvl2_26b_awq = 'internvl2-26b-awq'
-    internvl2_40b_awq = 'internvl2-40b-awq'
-    internvl2_llama3_76b_awq = 'internvl2-llama3-76b-awq'
-    # deepseek
-    deepseek_7b = 'deepseek-7b'
-    deepseek_7b_chat = 'deepseek-7b-chat'
-    deepseek_moe_16b = 'deepseek-moe-16b'
-    deepseek_moe_16b_chat = 'deepseek-moe-16b-chat'
-    deepseek_67b = 'deepseek-67b'
-    deepseek_67b_chat = 'deepseek-67b-chat'
-    # deepseek-coder
-    deepseek_coder_1_3b = 'deepseek-coder-1_3b'
-    deepseek_coder_1_3b_instruct = 'deepseek-coder-1_3b-instruct'
-    deepseek_coder_6_7b = 'deepseek-coder-6_7b'
-    deepseek_coder_6_7b_instruct = 'deepseek-coder-6_7b-instruct'
-    deepseek_coder_33b = 'deepseek-coder-33b'
-    deepseek_coder_33b_instruct = 'deepseek-coder-33b-instruct'
-    # deepseek2-coder
-    deepseek_coder_v2_instruct = 'deepseek-coder-v2-instruct'
-    deepseek_coder_v2_lite_instruct = 'deepseek-coder-v2-lite-instruct'
-    deepseek_coder_v2 = 'deepseek-coder-v2'
-    deepseek_coder_v2_lite = 'deepseek-coder-v2-lite'
-    # deepseek-math
-    deepseek_math_7b = 'deepseek-math-7b'
-    deepseek_math_7b_instruct = 'deepseek-math-7b-instruct'
-    deepseek_math_7b_chat = 'deepseek-math-7b-chat'
-    # numina-math
-    numina_math_7b = 'numina-math-7b'
-    # deepseek-vl
-    deepseek_janus_1_3b = 'deepseek-janus-1_3b'
-    deepseek_vl_1_3b_chat = 'deepseek-vl-1_3b-chat'
-    deepseek_vl_7b_chat = 'deepseek-vl-7b-chat'
-    # deepseek-v2
-    deepseek_v2 = 'deepseek-v2'
-    deepseek_v2_chat = 'deepseek-v2-chat'
-    deepseek_v2_lite = 'deepseek-v2-lite'
-    deepseek_v2_lite_chat = 'deepseek-v2-lite-chat'
-    # deepseek-v2.5
-    deepseek_v2_5 = 'deepseek-v2_5'
-    # gemma
-    gemma_2b = 'gemma-2b'
-    gemma_7b = 'gemma-7b'
-    gemma_2b_instruct = 'gemma-2b-instruct'
-    gemma_7b_instruct = 'gemma-7b-instruct'
-    gemma2_2b = 'gemma2-2b'
-    gemma2_9b = 'gemma2-9b'
-    gemma2_27b = 'gemma2-27b'
-    gemma2_2b_instruct = 'gemma2-2b-instruct'
-    gemma2_9b_instruct = 'gemma2-9b-instruct'
-    gemma2_27b_instruct = 'gemma2-27b-instruct'
-
-    ovis1_6_gemma2_9b = 'ovis1_6-gemma2-9b'
-    # paligemma
-    paligemma_3b_pt_224 = 'paligemma-3b-pt-224'
-    paligemma_3b_pt_448 = 'paligemma-3b-pt-448'
-    paligemma_3b_pt_896 = 'paligemma-3b-pt-896'
-    paligemma_3b_mix_224 = 'paligemma-3b-mix-224'
-    paligemma_3b_mix_448 = 'paligemma-3b-mix-448'
-    # minicpm
-    minicpm_1b_sft_chat = 'minicpm-1b-sft-chat'
-    minicpm_2b_sft_chat = 'minicpm-2b-sft-chat'
-    minicpm_2b_chat = 'minicpm-2b-chat'
-    minicpm_2b_128k = 'minicpm-2b-128k'
-    minicpm_moe_8x2b = 'minicpm-moe-8x2b'
-    minicpm3_4b = 'minicpm3-4b'
-    # minicpm-v
-    minicpm_v_3b_chat = 'minicpm-v-3b-chat'
-    minicpm_v_v2_chat = 'minicpm-v-v2-chat'
-    minicpm_v_v2_5_chat = 'minicpm-v-v2_5-chat'
-    minicpm_v_v2_6_chat = 'minicpm-v-v2_6-chat'
-    # openbuddy
-    openbuddy_llama_65b_chat = 'openbuddy-llama-65b-chat'
-    openbuddy_llama2_13b_chat = 'openbuddy-llama2-13b-chat'
-    openbuddy_llama2_70b_chat = 'openbuddy-llama2-70b-chat'
-    openbuddy_llama3_8b_chat = 'openbuddy-llama3-8b-chat'
-    openbuddy_llama3_70b_chat = 'openbuddy-llama3-70b-chat'
-    openbuddy_mistral_7b_chat = 'openbuddy-mistral-7b-chat'
-    openbuddy_zephyr_7b_chat = 'openbuddy-zephyr-7b-chat'
-    openbuddy_deepseek_67b_chat = 'openbuddy-deepseek-67b-chat'
-    openbuddy_mixtral_moe_7b_chat = 'openbuddy-mixtral-moe-7b-chat'
-    openbuddy_llama3_1_8b_chat = 'openbuddy-llama3_1-8b-chat'
-    # mistral
-    mistral_7b = 'mistral-7b'
-    mistral_7b_v2 = 'mistral-7b-v2'
-    mistral_7b_instruct = 'mistral-7b-instruct'
-    mistral_7b_instruct_v2 = 'mistral-7b-instruct-v2'
-    mistral_7b_instruct_v3 = 'mistral-7b-instruct-v3'
-    mistral_nemo_base_2407 = 'mistral-nemo-base-2407'
-    mistral_nemo_instruct_2407 = 'mistral-nemo-instruct-2407'
-    mistral_large_instruct_2407 = 'mistral-large-instruct-2407'
-    mistral_small_instruct_2409 = 'mistral-small-instruct-2409'
-    mixtral_moe_7b = 'mixtral-moe-7b'
-    mixtral_moe_7b_instruct = 'mixtral-moe-7b-instruct'
-    mixtral_moe_7b_aqlm_2bit_1x16 = 'mixtral-moe-7b-aqlm-2bit-1x16'  # aqlm
-    mixtral_moe_8x22b_v1 = 'mixtral-moe-8x22b-v1'
-    ministral_8b_instruct_2410 = 'ministral-8b-instruct-2410'
-
-    pixtral_12b = 'pixtral-12b'
-    # wizardlm
-    wizardlm2_7b_awq = 'wizardlm2-7b-awq'
-    wizardlm2_8x22b = 'wizardlm2-8x22b'
-    # baichuan
-    baichuan_7b = 'baichuan-7b'
-    baichuan_13b = 'baichuan-13b'
-    baichuan_13b_chat = 'baichuan-13b-chat'
-    # baichuan2
-    baichuan2_7b = 'baichuan2-7b'
-    baichuan2_7b_chat = 'baichuan2-7b-chat'
-    baichuan2_7b_chat_int4 = 'baichuan2-7b-chat-int4'
-    baichuan2_13b = 'baichuan2-13b'
-    baichuan2_13b_chat = 'baichuan2-13b-chat'
-    baichuan2_13b_chat_int4 = 'baichuan2-13b-chat-int4'
-    # owl
-    mplug_owl2_chat = 'mplug-owl2-chat'  # llama
-    mplug_owl2_1_chat = 'mplug-owl2_1-chat'  # qwen
-    mplug_owl3_1b_chat = 'mplug-owl3-1b-chat'
-    mplug_owl3_2b_chat = 'mplug-owl3-2b-chat'
-    mplug_owl3_7b_chat = 'mplug-owl3-7b-chat'
-    mplug_owl3v_7b_chat = 'mplug-owl3v-7b-chat'
-    # yuan
-    yuan2_2b_instruct = 'yuan2-2b-instruct'
-    yuan2_2b_janus_instruct = 'yuan2-2b-janus-instruct'
-    yuan2_51b_instruct = 'yuan2-51b-instruct'
-    yuan2_102b_instruct = 'yuan2-102b-instruct'
-    yuan2_m32 = 'yuan2-m32'
     # xverse
     xverse_7b = 'xverse-7b'
     xverse_7b_chat = 'xverse-7b-chat'
@@ -625,13 +90,6 @@ class ModelType:
 
     phi3_vision_128k_instruct = 'phi3-vision-128k-instruct'
     phi3_5_vision_instruct = 'phi3_5-vision-instruct'
-    # cogagent
-    cogvlm_17b_chat = 'cogvlm-17b-chat'
-    cogvlm2_19b_chat = 'cogvlm2-19b-chat'  # chinese
-    cogvlm2_en_19b_chat = 'cogvlm2-en-19b-chat'
-    cogvlm2_video_13b_chat = 'cogvlm2-video-13b-chat'
-    cogagent_18b_chat = 'cogagent-18b-chat'
-    cogagent_18b_instruct = 'cogagent-18b-instruct'
     # molmo
     molmoe_1b = 'molmoe-1b'
     molmo_7b_o = 'molmo-7b-o'
@@ -665,15 +123,12 @@ class ModelType:
     # aya
     aya_expanse_8b = 'aya-expanse-8b'
     aya_expanse_32b = 'aya-expanse-32b'
-    # codestral
-    codestral_22b = 'codestral-22b'
+
     # florence
     florence_2_base = 'florence-2-base'
     florence_2_base_ft = 'florence-2-base-ft'
     florence_2_large = 'florence-2-large'
     florence_2_large_ft = 'florence-2-large-ft'
-
-    got_ocr2 = 'got-ocr2'
 
     @classmethod
     def get_model_name_list(cls) -> List[str]:
@@ -955,60 +410,6 @@ def _check_gptq_model(bits: int, model_config, model_kwargs: Dict[str, Any]) -> 
     tags=['moe'],
     hf_model_id='xverse/XVERSE-MoE-A4.2B')
 @register_model(
-    ModelType.baichuan_13b_chat,
-    'baichuan-inc/Baichuan-13B-Chat',
-    LoRATM.baichuan,
-    TemplateType.baichuan,
-    requires=['transformers<4.34'],
-    support_vllm=True,
-    support_lmdeploy=True,
-    hf_model_id='baichuan-inc/Baichuan-13B-Chat')
-@register_model(
-    ModelType.baichuan_7b,
-    'baichuan-inc/baichuan-7B',
-    LoRATM.baichuan,
-    TemplateType.default_generation,
-    requires=['transformers<4.34'],
-    support_vllm=True,
-    support_lmdeploy=True,
-    hf_model_id='baichuan-inc/Baichuan-7B')
-@register_model(
-    ModelType.c4ai_command_r_v01,
-    'AI-ModelScope/c4ai-command-r-v01',
-    LoRATM.llama,
-    TemplateType.c4ai,
-    requires=['transformers>=4.39.1'],
-    support_vllm=True,
-    support_flash_attn=True,
-    hf_model_id='CohereForAI/c4ai-command-r-v01')
-@register_model(
-    ModelType.c4ai_command_r_plus,
-    'AI-ModelScope/c4ai-command-r-plus',
-    LoRATM.llama,
-    TemplateType.c4ai,
-    requires=['transformers>4.39'],
-    support_vllm=True,
-    support_flash_attn=True,
-    hf_model_id='CohereForAI/c4ai-command-r-plus')
-@register_model(
-    ModelType.aya_expanse_8b,
-    'AI-ModelScope/aya-expanse-8b',
-    LoRATM.llama,
-    TemplateType.aya,
-    requires=['transformers>=4.44.0'],
-    support_vllm=True,
-    support_flash_attn=True,
-    hf_model_id='CohereForAI/aya-expanse-8b')
-@register_model(
-    ModelType.aya_expanse_32b,
-    'AI-ModelScope/aya-expanse-32b',
-    LoRATM.llama,
-    TemplateType.aya,
-    requires=['transformers>=4.44.0'],
-    support_vllm=True,
-    support_flash_attn=True,
-    hf_model_id='CohereForAI/aya-expanse-32b')
-@register_model(
     ModelType.telechat2_115b,
     'TeleAI/TeleChat2-115B',
     LoRATM.telechat,
@@ -1136,7 +537,6 @@ def _output_device_map_hook(module, input, output):
     TemplateType.pixtral,
     # torch_dtype=torch.float16,  # Please do not use bf16.
     requires=['transformers>=4.45'],
-    placeholder_tokens=['[IMG]'],
     tags=['multi-modal', 'vision'],
     hf_model_id='mistral-community/pixtral-12b')
 def get_model_tokenizer_pixtral(model_dir: str, *args, **kwargs):
@@ -1157,7 +557,6 @@ def get_model_tokenizer_pixtral(model_dir: str, *args, **kwargs):
     TemplateType.cogvlm2_video,
     support_gradient_checkpointing=False,
     requires=['decord', 'pytorchvideo', 'transformers>=4.42'],
-    placeholder_tokens=['<|reserved_special_token_0|>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='THUDM/cogvlm2-video-llama3-chat')
 @register_model(
@@ -1168,7 +567,6 @@ def get_model_tokenizer_pixtral(model_dir: str, *args, **kwargs):
     support_gradient_checkpointing=False,
     support_lmdeploy=True,
     requires=['transformers<4.42'],
-    placeholder_tokens=['<|reserved_special_token_0|>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='THUDM/cogvlm2-llama3-chat-19B')
 @register_model(
@@ -1179,7 +577,6 @@ def get_model_tokenizer_pixtral(model_dir: str, *args, **kwargs):
     support_gradient_checkpointing=False,
     support_lmdeploy=True,
     requires=['transformers<4.42'],
-    placeholder_tokens=['<|reserved_special_token_0|>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='THUDM/cogvlm2-llama3-chinese-chat-19B')
 def get_model_tokenizer_cogvlm2(*args, **kwargs):
@@ -1365,9 +762,7 @@ def get_model_tokenizer_cogagent(model_dir: str,
     support_vllm=False,
     support_lmdeploy=False,
     support_gradient_checkpointing=False,
-    eos_token='<|endoftext|>',
     requires=['transformers>=4.45.0'],
-    placeholder_tokens=['<|image|>'],
     torch_dtype=torch.float32,
     tags=['multi-modal', 'vision'],
     hf_model_id='allenai/MolmoE-1B-0924')
@@ -1418,9 +813,7 @@ def get_model_tokenizer_molmoe_1b(model_dir: str,
     support_vllm=False,
     support_lmdeploy=False,
     support_gradient_checkpointing=False,
-    eos_token='<|endoftext|>',
     requires=['transformers>=4.45.0'],
-    placeholder_tokens=['<|image|>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='allenai/Molmo-7B-O-0924')
 @register_model(
@@ -1432,9 +825,7 @@ def get_model_tokenizer_molmoe_1b(model_dir: str,
     support_vllm=False,
     support_lmdeploy=False,
     support_gradient_checkpointing=False,
-    eos_token='<|endoftext|>',
     requires=['transformers>=4.45.0'],
-    placeholder_tokens=['<|image|>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='allenai/Molmo-7B-D-0924')
 @register_model(
@@ -1446,9 +837,7 @@ def get_model_tokenizer_molmoe_1b(model_dir: str,
     support_vllm=False,
     support_lmdeploy=False,
     support_gradient_checkpointing=False,
-    eos_token='<|endoftext|>',
     requires=['transformers>=4.45.0'],
-    placeholder_tokens=['<|image|>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='allenai/Molmo-72B-0924')
 def get_model_tokenizer_molmo(model_dir: str,
@@ -1484,7 +873,6 @@ def get_model_tokenizer_molmo(model_dir: str,
     TemplateType.emu3_chat,
     support_flash_attn=True,
     support_gradient_checkpointing=True,
-    eos_token='<|extra_204|>',
     requires=['transformers>=4.44.0'],
     tags=['multi-modal', 'vision'],
     hf_model_id='BAAI/Emu3-Chat')
@@ -1594,7 +982,6 @@ def get_model_tokenizer_baichuan_13b(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.41'],
-    placeholder_tokens=['<image>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='google/paligemma-3b-pt-224')
 @register_model(
@@ -1605,7 +992,6 @@ def get_model_tokenizer_baichuan_13b(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.41'],
-    placeholder_tokens=['<image>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='google/paligemma-3b-pt-448')
 @register_model(
@@ -1616,7 +1002,6 @@ def get_model_tokenizer_baichuan_13b(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.41'],
-    placeholder_tokens=['<image>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='google/paligemma-3b-pt-896')
 @register_model(
@@ -1627,7 +1012,6 @@ def get_model_tokenizer_baichuan_13b(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.41'],
-    placeholder_tokens=['<image>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='google/paligemma-3b-mix-224')
 @register_model(
@@ -1638,7 +1022,6 @@ def get_model_tokenizer_baichuan_13b(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.41'],
-    placeholder_tokens=['<image>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='google/paligemma-3b-mix-448')
 def get_model_tokenizer_paligemma_vision(model_dir: str,
@@ -2003,7 +1386,6 @@ def get_model_tokenizer_glm4(model_dir: str,
     'ZhipuAI/glm-4v-9b',
     LoRATM.glm4v,
     TemplateType.glm4v,
-    eos_token='<|endoftext|>',
     requires=['transformers>=4.42'],
     tags=['multi-modal', 'vision'],
     hf_model_id='THUDM/glm-4v-9b')
@@ -2280,7 +1662,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     'AI-ModelScope/gemma-2b-it',
     LoRATM.llama,
     TemplateType.gemma,
-    eos_token='<eos>',
     requires=['transformers>=4.38'],
     ignore_file_pattern=[r'.+\.gguf$'],
     support_flash_attn=True,
@@ -2291,7 +1672,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     'AI-ModelScope/gemma-7b-it',
     LoRATM.llama,
     TemplateType.gemma,
-    eos_token='<eos>',
     requires=['transformers>=4.38'],
     ignore_file_pattern=[r'.+\.gguf$'],
     support_flash_attn=True,
@@ -2477,7 +1857,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     'deepseek-ai/deepseek-coder-1.3b-instruct',
     LoRATM.llama,
     TemplateType.deepseek_coder,
-    eos_token='<|EOT|>',
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
@@ -2488,7 +1867,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     'deepseek-ai/deepseek-coder-6.7b-instruct',
     LoRATM.llama,
     TemplateType.deepseek_coder,
-    eos_token='<|EOT|>',
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
@@ -2499,7 +1877,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     'deepseek-ai/deepseek-coder-33b-instruct',
     LoRATM.llama,
     TemplateType.deepseek_coder,
-    eos_token='<|EOT|>',
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
@@ -2620,7 +1997,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-6B-Chat',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
@@ -2630,7 +2006,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-6B-Chat-4bits',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     requires=['autoawq'],
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
@@ -2643,7 +2018,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-6B-Chat-8bits',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     requires=['auto_gptq'],
     torch_dtype=torch.float16,
     function_kwargs={'gptq_bits': 8},
@@ -2655,7 +2029,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-34B-Chat',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
@@ -2665,7 +2038,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-34B-Chat-4bits',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     requires=['autoawq'],
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
@@ -2678,7 +2050,6 @@ def get_model_tokenizer_glm4v(model_dir: str,
     '01ai/Yi-34B-Chat-8bits',
     LoRATM.llama,
     TemplateType.chatml,
-    eos_token='<|im_end|>',
     requires=['auto_gptq'],
     torch_dtype=torch.float16,
     function_kwargs={'gptq_bits': 8},
@@ -3348,17 +2719,6 @@ def get_model_tokenizer_phi3_small(model_dir: str,
 
 
 @register_model(
-    ModelType.qwq_32b_preview,
-    'Qwen/QwQ-32B-Preview',
-    LoRATM.llama,
-    TemplateType.qwq,
-    support_flash_attn=True,
-    support_vllm=True,
-    support_lmdeploy=True,
-    support_megatron=True,
-    requires=['transformers>=4.37'],
-    hf_model_id='Qwen/QwQ-32B-Preview')
-@register_model(
     ModelType.qwen2_math_1_5b_instruct,
     'qwen/Qwen2-Math-1.5B-Instruct',
     LoRATM.llama,
@@ -3597,16 +2957,6 @@ def get_model_tokenizer_phi3_small(model_dir: str,
     support_megatron=True,
     requires=['transformers>=4.37'],
     hf_model_id='Qwen/Qwen2-0.5B-Instruct')
-@register_model(
-    ModelType.marco_o1,
-    'AIDC-AI/Marco-o1',
-    LoRATM.llama,
-    TemplateType.marco_o1,
-    support_flash_attn=True,
-    support_vllm=True,
-    support_lmdeploy=True,
-    requires=['transformers>=4.37'],
-    hf_model_id='AIDC-AI/Marco-o1')
 @register_model(
     ModelType.qwen2_1_5b_instruct,
     'qwen/Qwen2-1.5B-Instruct',
@@ -4015,7 +3365,6 @@ for model_size in ['0.5B', '1.5B', '3B', '7B', '14B', '32B']:
     TemplateType.qwen2_audio_generation,
     support_flash_attn=True,
     requires=['librosa', 'transformers>=4.45'],
-    eos_token='<|endoftext|>',
     tags=['multi-modal', 'audio'],
     hf_model_id='Qwen/Qwen2-Audio-7B')
 def get_model_tokenizer_qwen2_audio(model_dir: str,
@@ -4077,7 +3426,6 @@ for model_size in ['2B', '7B', '72B']:
         get_model_tokenizer_qwen2_vl,
         support_flash_attn=True,
         support_vllm=True,
-        placeholder_tokens=['<|image_pad|>', '<|video_pad|>'],
         requires=['transformers>=4.45.dev.0', 'qwen_vl_utils'],
         tags=['multi-modal', 'vision', 'video'],
         hf_model_id=f'Qwen/Qwen2-VL-{model_size}')
@@ -4089,7 +3437,6 @@ for model_size in ['2B', '7B', '72B']:
         get_model_tokenizer_qwen2_vl,
         support_flash_attn=True,
         support_vllm=True,
-        placeholder_tokens=['<|image_pad|>', '<|video_pad|>'],
         requires=['transformers>=4.45.dev.0', 'qwen_vl_utils'],  # 'pyav'
         tags=['multi-modal', 'vision', 'video'],
         hf_model_id=f'Qwen/Qwen2-VL-{model_size}-Instruct')
@@ -4104,7 +3451,6 @@ for model_size in ['2B', '7B', '72B']:
             get_model_tokenizer_qwen2_vl,
             support_flash_attn=True,
             support_vllm=True,
-            placeholder_tokens=['<|image_pad|>', '<|video_pad|>'],
             requires=['transformers>=4.45.dev.0', 'qwen_vl_utils', 'auto_gptq>=0.5'],
             tags=['multi-modal', 'vision', 'video'],
             function_kwargs={'gptq_bits': quant_bits},
@@ -4119,7 +3465,6 @@ for model_size in ['2B', '7B', '72B']:
         get_model_tokenizer_qwen2_vl,
         support_flash_attn=True,
         support_vllm=True,
-        placeholder_tokens=['<|image_pad|>', '<|video_pad|>'],
         requires=['transformers>=4.45.dev.0', 'qwen_vl_utils', 'autoawq'],
         tags=['multi-modal', 'vision', 'video'],
         function_kwargs={'is_awq': True},
@@ -4324,7 +3669,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2_5-1_8b-chat',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4345,7 +3689,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2_5-7b-chat',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4356,7 +3699,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4377,7 +3719,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2_5-20b-chat',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4398,7 +3739,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-1_8b-sft',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4409,7 +3749,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-1_8b',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4442,7 +3781,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-math-7b',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4454,7 +3792,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-math-20b',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4466,7 +3803,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-7b-sft',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4477,7 +3813,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-7b',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4488,7 +3823,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-20b-sft',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4499,7 +3833,6 @@ def get_model_tokenizer_qwen2_intx(model_dir: str,
     'Shanghai_AI_Laboratory/internlm2-chat-20b',
     LoRATM.internlm2,
     TemplateType.internlm2,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.38'],
     support_flash_attn=True,
     support_vllm=True,
@@ -4678,7 +4011,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='OpenGVLab/InternVL-Chat-V1-5')
 @register_model(
@@ -4688,7 +4020,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     TemplateType.internvl,
     requires=['transformers>=4.35', 'timm'],
     support_flash_attn=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='OpenGVLab/InternVL-Chat-V1-5-int8')
 @register_model(
@@ -4700,7 +4031,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='OpenGVLab/Mini-InternVL-Chat-2B-V1-5')
 @register_model(
@@ -4711,8 +4041,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     requires=['transformers>=4.35,<4.42', 'timm'],
     support_flash_attn=True,
     support_vllm=True,
-    eos_token='<|end|>',
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='OpenGVLab/Mini-InternVL-Chat-4B-V1-5')
 @register_model(
@@ -4725,7 +4053,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-1B')
 @register_model(
@@ -4738,7 +4065,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-2B')
 @register_model(
@@ -4751,8 +4077,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    eos_token='<|end|>',
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-4B')
 @register_model(
@@ -4765,7 +4089,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_lmdeploy=True,
     support_vllm=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-8B')
 @register_model(
@@ -4778,7 +4101,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-26B')
 @register_model(
@@ -4791,7 +4113,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-40B')
 @register_model(
@@ -4804,7 +4125,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_flash_attn=True,
     support_vllm=True,
     support_lmdeploy=True,
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-Llama3-76B')
 @register_model(
@@ -4819,7 +4139,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_vllm=True,
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-2B-AWQ')
 @register_model(
@@ -4834,7 +4153,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_vllm=True,
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-8B-AWQ')
 @register_model(
@@ -4849,7 +4167,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_vllm=True,
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-26B-AWQ')
 @register_model(
@@ -4864,7 +4181,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_vllm=True,
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-40B-AWQ')
 @register_model(
@@ -4879,7 +4195,6 @@ def get_model_tokenizer_deepseek2(model_dir: str,
     support_vllm=True,
     torch_dtype=torch.float16,
     function_kwargs={'is_awq': True},
-    placeholder_tokens=['<IMG_CONTEXT>'],
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='OpenGVLab/InternVL2-Llama3-76B-AWQ')
 def get_model_tokenizer_internvl(model_dir: str,
@@ -4938,7 +4253,6 @@ def get_model_tokenizer_internvl(model_dir: str,
     'Shanghai_AI_Laboratory/internlm-xcomposer2d5-7b',
     LoRATM.internlm_xcomposer,
     TemplateType.internlm_xcomposer2_5,
-    eos_token='<|im_end|>',
     support_flash_attn=True,
     support_lmdeploy=True,
     # requires=['decord'],
@@ -4952,7 +4266,6 @@ def get_model_tokenizer_internvl(model_dir: str,
     TemplateType.internlm_xcomposer2,
     support_flash_attn=True,
     support_lmdeploy=True,
-    eos_token='[UNUSED_TOKEN_145]',
     tags=['multi-modal', 'vision'],
     hf_model_id='internlm/internlm-xcomposer2-7b')
 @register_model(
@@ -4962,7 +4275,6 @@ def get_model_tokenizer_internvl(model_dir: str,
     TemplateType.internlm_xcomposer2_4khd,
     support_flash_attn=True,
     support_lmdeploy=True,
-    eos_token='<|im_end|>',
     function_kwargs={'version': 'v2-4khd'},
     tags=['multi-modal', 'vision'],
     hf_model_id='internlm/internlm-xcomposer2-4khd-7b')
@@ -5075,7 +4387,6 @@ def _use_submodel_func(model, submodel_name: str, func_list: List[str]) -> None:
     TemplateType.deepseek_janus,
     support_flash_attn=True,
     tags=['multi-modal', 'vision'],
-    placeholder_tokens=['<image_placeholder>'],
     hf_model_id='deepseek-ai/Janus-1.3B')
 def get_model_tokenizer_deepseek_janus(model_dir: str, *args, **kwargs):
     if 'local_repo_path' in kwargs:
@@ -5107,7 +4418,6 @@ def get_model_tokenizer_deepseek_janus(model_dir: str, *args, **kwargs):
     support_flash_attn=True,
     support_lmdeploy=True,
     tags=['multi-modal', 'vision'],
-    placeholder_tokens=['<image_placeholder>'],
     hf_model_id='deepseek-ai/deepseek-vl-7b-chat')
 @register_model(
     ModelType.deepseek_vl_1_3b_chat,
@@ -5117,7 +4427,6 @@ def get_model_tokenizer_deepseek_janus(model_dir: str, *args, **kwargs):
     support_flash_attn=True,
     support_lmdeploy=True,
     tags=['multi-modal', 'vision'],
-    placeholder_tokens=['<image_placeholder>'],
     hf_model_id='deepseek-ai/deepseek-vl-1.3b-chat')
 def get_model_tokenizer_deepseek_vl(model_dir: str,
                                     torch_dtype: torch.dtype,
@@ -6283,7 +5592,6 @@ def get_model_tokenizer_codellama(model_dir: str,
     'TeleAI/TeleChat-12B-v2',
     LoRATM.telechat,
     TemplateType.telechat,
-    eos_token=2,
     support_flash_attn=True,
     hf_model_id='Tele-AI/TeleChat-12B-v2')
 @register_model(
@@ -6291,7 +5599,6 @@ def get_model_tokenizer_codellama(model_dir: str,
     'swift/TeleChat-12B-V2-GPTQ-Int4',
     LoRATM.telechat,
     TemplateType.telechat,
-    eos_token=2,
     requires=['auto_gptq>=0.5'],
     torch_dtype=torch.float16,
     support_flash_attn=True,
@@ -6592,7 +5899,6 @@ def ignore_check_imports():
     support_flash_attn=True,
     support_vllm=True,
     requires=['timm', 'transformers>=4.36'],  # 'decord'
-    placeholder_tokens=['<unk>'],
     function_kwargs={'version': 'v2.6'},
     tags=['multi-modal', 'vision', 'video'],
     hf_model_id='openbmb/MiniCPM-V-2_6')
@@ -6604,7 +5910,6 @@ def ignore_check_imports():
     support_flash_attn=True,
     support_vllm=True,
     requires=['timm', 'transformers>=4.36'],
-    placeholder_tokens=['<unk>'],
     tags=['multi-modal', 'vision'],
     hf_model_id='openbmb/MiniCPM-Llama3-V-2_5')
 def get_model_tokenizer_minicpm_v_2_x(model_dir: str,
@@ -6708,7 +6013,6 @@ def get_model_tokenizer_llama3_2_vision(*args, **kwargs):
     'swift/llava-1.5-13b-hf',
     LoRATM.llava,
     TemplateType.llava1_5,
-    eos_token='</s>',
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.36'],
@@ -6719,7 +6023,6 @@ def get_model_tokenizer_llama3_2_vision(*args, **kwargs):
     'swift/llava-1.5-7b-hf',
     LoRATM.llava,
     TemplateType.llava1_5,
-    eos_token='</s>',
     support_flash_attn=True,
     support_vllm=True,
     requires=['transformers>=4.36'],
@@ -6741,7 +6044,6 @@ def get_model_tokenizer_llava_1_5(*args, **kwargs):
     requires=['transformers>=4.45'],
     tags=['multi-modal', 'vision', 'video'],
     ignore_file_pattern=['onnx'],
-    placeholder_tokens=['<image>'],
     hf_model_id='llava-hf/llava-onevision-qwen2-0.5b-ov-hf')
 @register_model(
     ModelType.llava_onevision_qwen2_7b_ov,
@@ -6751,7 +6053,6 @@ def get_model_tokenizer_llava_1_5(*args, **kwargs):
     support_flash_attn=True,
     requires=['transformers>=4.45'],
     tags=['multi-modal', 'vision', 'video'],
-    placeholder_tokens=['<image>'],
     hf_model_id='llava-hf/llava-onevision-qwen2-7b-ov-hf')
 @register_model(
     ModelType.llava_onevision_qwen2_72b_ov,
@@ -6761,7 +6062,6 @@ def get_model_tokenizer_llava_1_5(*args, **kwargs):
     support_flash_attn=True,
     requires=['transformers>=4.45'],
     tags=['multi-modal', 'vision', 'video'],
-    placeholder_tokens=['<image>'],
     hf_model_id='llava-hf/llava-onevision-qwen2-72b-ov-hf')
 def get_model_tokenizer_llava_onevision(*args, **kwargs):
     from transformers import LlavaOnevisionForConditionalGeneration
@@ -6853,7 +6153,6 @@ def get_model_tokenizer_llava_next(*args, **kwargs):
     TemplateType.llava_yi,
     support_flash_attn=True,
     support_vllm=True,
-    eos_token='<|im_end|>',
     requires=['transformers>=4.39'],
     tags=['multi-modal', 'vision'],
     hf_model_id='llava-hf/llava-v1.6-34b-hf')
@@ -7013,7 +6312,6 @@ def get_model_tokenizer_llava(model_dir: str,
     LoRATM.idefics3,
     TemplateType.idefics3,
     support_flash_attn=True,
-    placeholder_tokens=['<image>'],
     requires=['transformers>=4.45'],
     tags=['multi-modal', 'vision'],
     hf_model_id='HuggingFaceM4/Idefics3-8B-Llama3')
@@ -7033,7 +6331,6 @@ def get_model_tokenizer_idefics(model_dir: str, *args, **kwargs):
     LoRATM.mplug_owl2,
     TemplateType.mplug_owl2,
     requires=['transformers<4.35', 'icecream'],
-    eos_token='</s>',
     function_kwargs={'get_model_tokenizer_function': get_model_tokenizer_with_flash_attn},
     support_flash_attn=True,
     tags=['multi-modal', 'vision'],
@@ -7044,7 +6341,6 @@ def get_model_tokenizer_idefics(model_dir: str, *args, **kwargs):
     LoRATM.mplug_owl2_1,
     TemplateType.mplug_owl2,
     requires=['transformers<4.35', 'icecream'],
-    eos_token='<|endoftext|>',
     function_kwargs={
         'vocab_size': 151851,
         'get_model_tokenizer_function': get_model_tokenizer_qwen
@@ -7104,8 +6400,6 @@ def get_model_tokenizer_omnli(model_dir: str,
     LoRATM.got_ocr2,
     TemplateType.got_ocr2,
     support_flash_attn=True,
-    placeholder_tokens=['<imgpad>'],
-    eos_token='<|im_end|>',
     tags=['multi-modal', 'audio'],
     hf_model_id='stepfun-ai/GOT-OCR2_0')
 def get_model_tokenizer_got_ocr2(*args, **kwargs):
