@@ -129,7 +129,7 @@ swift sft \
     --warmup_ratio 0.05 \
     --dataloader_num_workers 4 \
     --model_author swift \
-    --model_name swift-robot
+    --model_name 小黄 XiaoHuang
 ```
 
 训练完成后，使用以下命令对训练后的权重进行推理，这里的`--adapters`替换成训练生成的last checkpoint文件夹. 由于adapters文件夹中包含了训练的参数文件，因此不需要额外指定`--model`, `--system`.
