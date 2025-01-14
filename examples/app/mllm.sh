@@ -1,3 +1,4 @@
+MAX_PIXELS=1003520 \
 CUDA_VISIBLE_DEVICES=0 swift app \
     --model Qwen/Qwen2-VL-7B-Instruct \
     --stream true \
