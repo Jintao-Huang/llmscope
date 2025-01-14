@@ -4,11 +4,10 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 if __name__ == '__main__':
-    from swift.llm import InferRequest, RequestConfig
+    from swift.llm import InferRequest, RequestConfig, VllmEngine
 
     # test env: vllm==0.6.5, transformers==4.47.1
     os.environ['MAX_PIXELS'] = '1003520'
-    from swift.llm import VllmEngine
     model = 'Qwen/Qwen2-VL-2B-Instruct'
     # If you encounter insufficient GPU memory, please reduce `max_model_len` and set `max_num_seqs=5`.
     engine = VllmEngine(model, max_model_len=32768, limit_mm_per_prompt={'image': 5, 'video': 2})
