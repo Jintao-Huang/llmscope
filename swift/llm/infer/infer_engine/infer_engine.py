@@ -60,7 +60,7 @@ class InferEngine(BaseInferEngine, ProcessorMixin):
             else:
                 queue.put(None)
 
-        thread = Thread(target=lambda: asyncio.run(_run_async_iter()))
+        thread = Thread(target=lambda: self.safe_asyncio_run(_run_async_iter()))
         thread.start()
         pre_output = None
         while True:
