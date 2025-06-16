@@ -149,8 +149,21 @@ register_model(
         LLMModelType.minimax, [
             ModelGroup([
                 Model('MiniMax/MiniMax-Text-01', 'MiniMaxAI/MiniMax-Text-01'),
+                Model('MiniMax/MiniMax-Text-01-hf', 'MiniMaxAI/MiniMax-Text-01-hf'),
             ]),
         ],
         TemplateType.minimax,
         get_model_tokenizer_minimax_text,
         architectures=['MiniMaxText01ForCausalLM']))
+
+register_model(
+    ModelMeta(
+        LLMModelType.minimax_m1, [
+            ModelGroup([
+                Model('MiniMax/MiniMax-M1-40k', 'MiniMaxAI/MiniMax-M1-40k'),
+                Model('MiniMax/MiniMax-M1-80k', 'MiniMaxAI/MiniMax-M1-80k'),
+            ]),
+        ],
+        TemplateType.minimax_m1,
+        get_model_tokenizer_minimax_text,
+        architectures=['MiniMaxM1ForCausalLM']))
