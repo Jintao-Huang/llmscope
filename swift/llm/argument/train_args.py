@@ -131,7 +131,6 @@ class TrainArguments(SwanlabArguments, TunerArguments, BaseArguments, Seq2SeqTra
 
     # zero++
     zero_hpz_partition_size: Optional[int] = None
-    deepspeed_autotp_size: Optional[int] = None
 
     def _init_lazy_tokenize(self):
         if self.streaming and self.lazy_tokenize:
@@ -178,8 +177,6 @@ class TrainArguments(SwanlabArguments, TunerArguments, BaseArguments, Seq2SeqTra
         self._init_device()
         self._init_lazy_tokenize()
 
-        if getattr(self, 'accelerator_config', None) is None:
-            self.accelerator_config = {'dispatch_batches': False}
         if self.split_dataset_ratio == 0 and not self.val_dataset and not self.eval_dataset:
             self.eval_strategy = 'no'
         self.training_args = TrainerFactory.get_training_args(self)

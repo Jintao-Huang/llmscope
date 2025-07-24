@@ -52,6 +52,8 @@ class TrainArgumentsMixin:
     ds3_gather_for_generation: bool = True
     resume_only_model: bool = False
 
+    deepspeed_autotp_size: Optional[int] = None
+
     # torchacc
     metric_warmup_step: Optional[float] = 0
     fsdp_num: int = 1
