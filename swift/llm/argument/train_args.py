@@ -131,6 +131,7 @@ class TrainArguments(SwanlabArguments, TunerArguments, BaseArguments, Seq2SeqTra
 
     # zero++
     zero_hpz_partition_size: Optional[int] = None
+    deepspeed_autotp_size: Optional[int] = None
 
     def _init_lazy_tokenize(self):
         if self.streaming and self.lazy_tokenize:
@@ -212,6 +213,8 @@ class TrainArguments(SwanlabArguments, TunerArguments, BaseArguments, Seq2SeqTra
                 self.deepspeed['zero_optimization']['zero_hpz_partition_size'] = self.zero_hpz_partition_size
                 logger.warn('If `zero_hpz_partition_size`(ZeRO++) causes grad_norm NaN, please'
                             ' try `--torch_dtype float16`')
+            if self.deepspeed_autotp_size is not None:
+                self.deepspeed['tensor_parallel'] = {'autotp_size': self.deepspeed_autotp_size}
             logger.info(f'Using deepspeed: {self.deepspeed}')
 
     def _handle_pai_compat(self) -> None:
