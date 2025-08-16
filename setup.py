@@ -136,11 +136,7 @@ if __name__ == '__main__':
         author_email='contact@modelscope.cn',
         keywords='python, petl, efficient tuners',
         url='https://github.com/modelscope/swift',
-        packages=find_packages(exclude=('configs', 'demo')),
-        include_package_data=True,
-        package_data={
-            '': ['*.h', '*.cpp', '*.cu'],
-        },
+        packages=find_packages(include=['swift', 'swift.*']),
         classifiers=[
             'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',
