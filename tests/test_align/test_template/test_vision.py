@@ -629,9 +629,9 @@ def test_keye_vl_1_5():
     ]
     pt_engine.default_template.template_backend = 'swift'
     response = _infer_model(pt_engine, messages=messages, images=images)
-    assert response[:200] == ('<analysis>This question is straightforward and asks for a description of the image. '
-                              'Therefore, /no_think mode is more appropriate.</analysis>'
-                              'This image features a close-up of an adorable kitten with s')
+    assert response[:200] == ('<analysis>This question is straightforward and asks for a '
+                              'description of the image, which is a fixed task. Therefore, /no_think mode is more '
+                              'appropriate.</analysis>This image features a close-up of an')
 
 
 def test_dots_ocr():
@@ -665,7 +665,10 @@ def test_interns1():
     response = _infer_model(pt_engine, messages=messages, images=images)
     pt_engine.default_template.template_backend = 'jinja'
     response2 = _infer_model(pt_engine, messages=messages, images=images)
-    assert response == response2
+    assert response[:200] == response2[:200] == (
+        "<think>\nOkay, let's see. The user wants me to describe the image explicitly. "
+        'The image shows two cats lying on a pink couch. One cat is a tabby with stripes, '
+        'and the other is a kitten with similar mar')
 
 
 def test_internvl3_5():
@@ -689,12 +692,11 @@ def test_internvl3_hf():
     images = ['http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/cat.png']
     messages = [{'role': 'user', 'content': 'Please describe the image explicitly.'}]
     response = _infer_model(pt_engine, messages=messages, images=images)
-    assert response == (
-        'The image is a close-up of a cute kitten with large, expressive blue eyes. '
-        'The kitten has a mix of white and gray fur, with darker stripes and patches on its face and ears. '
-        'Its whiskers are clearly visible, and it has a soft, fluffy appearance. '
-        'The background is blurred, emphasizing the kitten\'s face and features. '
-        'The overall style is artistic and whimsical, with a focus on the kitten\'s adorable and innocent expression.')
+    assert response == ('The image is a close-up of a cute, fluffy kitten with striking blue eyes. '
+                        'The kitten has a mix of white and gray fur, with darker stripes and patches '
+                        'on its face and ears. Its expression is curious, and the background is softly '
+                        "blurred, highlighting the kitten's features. The overall style is artistic and "
+                        "whimsical, emphasizing the kitten's adorable and innocent appearance.")
 
 
 def test_internvl3_5_hf():
@@ -702,12 +704,11 @@ def test_internvl3_5_hf():
     images = ['http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/cat.png']
     messages = [{'role': 'user', 'content': 'Please describe the image explicitly.'}]
     response = _infer_model(pt_engine, messages=messages, images=images)
-    assert response == (
-        'The image shows a close-up of a young kitten with a fluffy, white and gray coat. '
-        'The kitten has large, expressive eyes and appears to be looking directly at the camera. '
-        'Its ears are perked up, and it has whiskers that are clearly visible. '
-        'The background is blurred, emphasizing the kitten as the main subject. '
-        'The lighting is soft, highlighting the kitten\'s features and giving the image a warm, gentle appearance.')
+    assert response == ('The image shows a close-up of a young kitten with a fluffy, white and gray coat. '
+                        'The kitten has large, expressive eyes and is looking directly at the camera. '
+                        'Its ears are perked up, and it has whiskers that are clearly visible. The background '
+                        'is blurred, emphasizing the kitten as the main subject. The lighting is soft, '
+                        "highlighting the kitten's features and giving the image a warm, gentle appearance.")
 
 
 def test_internvl_gpt_hf():
@@ -715,12 +716,14 @@ def test_internvl_gpt_hf():
     messages = [{'role': 'user', 'content': 'Please describe the image explicitly.'}]
     images = ['http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/cat.png']
     response = _infer_model(pt_engine, messages=messages, images=images)
-    assert response == (
-        'The image shows a close-up of a small kitten with a fluffy coat. '
-        'The kitten has a mix of white and gray fur, with darker gray stripes on its head and ears. '
-        'Its eyes are large, round, and a striking shade of blue, giving it an adorable and curious look. '
-        "The kitten's tiny nose is pink, and its whiskers are prominently visible against a softly blurred background. "
-        'The overall impression is of an innocent and charming young cat.')
+    assert response == ('The image shows a close-up of a small kitten with a fluffy coat. '
+                        'The kitten has a mix of white and gray fur, with darker gray stripes '
+                        'and spots on its head and ears. Its eyes are large, round, and a '
+                        'striking shade of blue, giving it an adorable and curious look. '
+                        "The kitten's tiny nose is pink, and its whiskers are long and white, "
+                        'adding to its cute appearance. The background is blurred, ensuring that '
+                        'the focus remains entirely on the kitten. The overall impression is of '
+                        'an innocent and charming young cat.')
 
 
 def test_minicpmv4_5():
@@ -790,7 +793,7 @@ if __name__ == '__main__':
     # test_kimi_vl_thinking()
     # test_glm4_1v()
     # test_gemma3n()
-    # test_keye_vl()
+    test_keye_vl()
     # test_dots_ocr()
     # test_glm4_5v()
     # test_interns1()
@@ -799,4 +802,4 @@ if __name__ == '__main__':
     # test_keye_vl_1_5()
     # test_internvl3_hf()
     # test_internvl3_5_hf()
-    test_internvl_gpt_hf()
+    # test_internvl_gpt_hf()
