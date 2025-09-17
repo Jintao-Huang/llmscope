@@ -799,7 +799,7 @@ if __name__ == '__main__':
     # test_interns1()
     # test_internvl3_5()
     # test_minicpmv4_5()
-    # test_keye_vl_1_5()
+    test_keye_vl_1_5()
     # test_internvl3_hf()
     # test_internvl3_5_hf()
     # test_internvl_gpt_hf()

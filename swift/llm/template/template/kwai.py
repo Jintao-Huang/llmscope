@@ -46,9 +46,7 @@ class KeyeVLTemplate(Template):
                 video = video.to(torch.uint8)
             inputs.videos[index] = video
             for k, v in video_kwargs.items():
-                if k not in inputs.mm_processor_kwargs:
-                    inputs.mm_processor_kwargs[k] = []
-                inputs.mm_processor_kwargs[k].append(v)
+                inputs.mm_processor_kwargs.setdefault(k, []).append(v)
             return ['<|vision_start|><|video_pad|><|vision_end|>']
 
     def _encode(self, inputs: StdTemplateInputs) -> Dict[str, Any]:
@@ -293,6 +291,14 @@ class KeyeVLTemplate(Template):
 
 # Register the Keye VL template
 register_template(KeyeTemplateMeta(MLLMTemplateType.keye_vl, template_cls=KeyeVLTemplate))
+
+
+class KeyeVL1_5Template(KeyeVLTemplate):
+
+    def _post_encode(self, model, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return super(KeyeVLTemplate, self)._post_encode(model, inputs)
+
+
 register_template(
     KeyeTemplateMeta(
-        MLLMTemplateType.keye_vl_1_5, template_cls=KeyeVLTemplate, default_system='You are a helpful assistant.'))
+        MLLMTemplateType.keye_vl_1_5, template_cls=KeyeVL1_5Template, default_system='You are a helpful assistant.'))

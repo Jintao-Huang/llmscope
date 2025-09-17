@@ -252,7 +252,7 @@ if __name__ == '__main__':
     # test_qwen2_5_omni()
     # test_glm4_1v()  # bug now, wait model fix
     test_keye_vl()
-    # test_keye_vl_1_5()
+    test_keye_vl_1_5()
     # test_glm4_5v()
     # test_ovis2_5()
     # test_interns1()
