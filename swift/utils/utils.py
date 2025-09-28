@@ -367,7 +367,7 @@ def json_parse_to_dict(value: Union[str, Dict, None], strict: bool = True) -> Un
         else:  # json str
             try:
                 value = json.loads(value)
-            except json.JSONDecodeError:
+            except Exception:
                 if strict:
                     try:
                         # fix malformed json string, e.g., incorrect quotation marks
