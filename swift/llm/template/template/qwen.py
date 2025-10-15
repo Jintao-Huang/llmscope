@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Dict, List, Literal, Optional
@@ -13,7 +11,7 @@ from PIL import Image
 from torch import nn
 from transformers.integrations import is_deepspeed_zero3_enabled
 
-from swift.llm import get_packed_seq_params, to_float_dtype
+from swift.llm import get_packed_seq_params, to_device, to_float_dtype
 from swift.utils import get_env_args, is_deepspeed_enabled
 from ..base import Template
 from ..constant import LLMTemplateType, MLLMTemplateType
@@ -492,7 +490,33 @@ class Qwen3VLTemplate(Qwen2VLTemplate):
         encoded['loss_scale'] = loss_scale
         return encoded
 
+    @staticmethod
+    def _forward_vit_with_dummy_image(processor, inputs_embeds, visual):
+        images = [Image.new('RGB', (32, 32), (0, 0, 0))]
+        media_inputs = processor.image_processor(images=images, return_tensors='pt')
+        media_inputs = to_device(media_inputs, visual.device)
+        pixel_values = media_inputs['pixel_values'].type(visual.dtype)
+        image_embeds, _ = visual(pixel_values, grid_thw=media_inputs['image_grid_thw'])
+        inputs_embeds = inputs_embeds + image_embeds.mean().to(device=inputs_embeds.device) * 0.
+        return inputs_embeds
+
     def _post_encode(self, model, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        if not self.is_training:
+            return inputs
+
+        input_ids = inputs['input_ids']
+        pixel_values = inputs.get('pixel_values')
+        pixel_values_videos = inputs.get('pixel_values_videos')
+
+        base_model = self.get_base_model(model)
+        inputs_embeds = base_model.model.language_model.embed_tokens(input_ids)
+
+        # Here, text & image; text & video can be properly trained with ZeRO-2/ZeRO-3
+        # However, mixed-modal training with text & image & video combined may still hang when using ZeRO-3
+        # In such cases, please use Megatron-SwIFT for training, or modify the Transformers library code accordingly
+        if pixel_values is None and pixel_values_videos is None:
+            inputs_embeds = self._forward_vit_with_dummy_image(self.processor, inputs_embeds, model.visual)
+        inputs['inputs_embeds'] = inputs_embeds
         return inputs
 
 

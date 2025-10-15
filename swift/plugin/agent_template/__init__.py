@@ -31,7 +31,7 @@ agent_templates = {
     'llama4': Llama4AgentTemplate,
     # ref: https://huggingface.co/deepseek-ai/DeepSeek-V3.1
     'deepseek_v3_1': DeepSeekV31AgentTemplate,
+    'mistral': MistralAgentTemplate,
     # extra
     'react_grpo': ReactGRPOAgentTemplate,
-    'mistral': MistralAgentTemplate
 }

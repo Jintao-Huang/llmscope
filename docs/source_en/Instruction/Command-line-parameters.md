@@ -740,7 +740,7 @@ These parameters have the same meaning as in `qwen_vl_utils<0.0.12` or the `qwen
 - SAMPLING_RATE: Default is 16000
 
 ### qwen2_5_omni, qwen3_omni
-qwen2_5_omni not only includes the model-specific parameters of qwen2_5_vl and qwen2_audio, but also contains the following parameter:
+not only includes the model-specific parameters of qwen2_5_vl and qwen2_audio, but also contains the following parameter:
 - USE_AUDIO_IN_VIDEO: Whether to use audio information from video. Default is `False`.
 - 🔥ENABLE_AUDIO_OUTPUT: Defaults to None, which means the value from `config.json` will be used. If training with zero3, please set it to False.
   - Tip: ms-swift only fine-tunes the "thinker" component; it is recommended to set this to `False` to reduce GPU memory usage (only the thinker part of the model structure will be created).
