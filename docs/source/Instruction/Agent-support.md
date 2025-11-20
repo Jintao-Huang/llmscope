@@ -104,6 +104,34 @@ For each function call, return a json object with function name and arguments wi
 </tool_call><|im_end|>[-100 * 759]成功打开日历App，现在的时间为中午11点<|im_end|>
 ```
 
+```text
+[INPUT_IDS] <｜begin▁of▁sentence｜>
+
+## Tools
+You have access to the following tools:
+
+### click
+Description: 点击屏幕中的某个位置
+
+Parameters: {"type": "object", "properties": {"x": {"type": "integer", "description": "横坐标，表示屏幕上的水平位置"}, "y": {"type": "integer", "description": "纵坐标，表示屏幕上的垂直位置"}}, "required": ["x", "y"]}
+
+IMPORTANT: ALWAYS adhere to this exact format for tool use:
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>tool_call_name<｜tool▁sep｜>tool_call_arguments<｜tool▁call▁end｜>{additional_tool_calls}<｜tool▁calls▁end｜>
+
+Where:
+- `tool_call_name` must be an exact match to one of the available tools
+- `tool_call_arguments` must be valid JSON that strictly follows the tool's Parameters Schema
+- For multiple tool calls, chain them directly without separators or spaces<｜User｜><image>现在几点了？<｜Assistant｜><think>
+我可以通过打开日历App来获取当前时间。
+</think>
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>click<｜tool▁sep｜>{"x": 105, "y": 132}<｜tool▁call▁end｜><｜tool▁calls▁end｜><｜end▁of▁sentence｜><｜tool▁output▁begin｜>{"images": "<image>", "status": "success"}<｜tool▁output▁end｜>成功打开日历App，现在的时间为中午11点<｜end▁of▁sentence｜>
+
+[LABELS] [-100 * 189]<think>
+我可以通过打开日历App来获取当前时间。
+</think>
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>click<｜tool▁sep｜>{"x": 105, "y": 132}<｜tool▁call▁end｜><｜tool▁calls▁end｜><｜end▁of▁sentence｜>[-100 * 15]成功打开日历App，现在的时间为中午11点<｜end▁of▁sentence｜>
+```
+
 **react_en**是常用的agent template格式之一，以下为样本一由qwen2_5使用`agent_template='react_en'`进行encode后的input_ids和labels：
 
 ```text
