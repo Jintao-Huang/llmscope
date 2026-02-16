@@ -1122,7 +1122,9 @@ class Qwen3_5MoeLoader(Qwen3VLLoader):
 register_model(
     ModelMeta(
         MLLMModelType.qwen3_5_moe, [
-            ModelGroup([], TemplateType.qwen3_5),
+            ModelGroup([
+                Model('Qwen/Qwen3.5-397B-A17B', 'Qwen/Qwen3.5-397B-A17B'),
+            ], TemplateType.qwen3_5),
         ],
         Qwen3_5MoeLoader,
         model_arch=ModelArch.qwen2_vl,
