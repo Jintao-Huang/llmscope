@@ -737,13 +737,18 @@ class GPTBridge:
     def _get_hf_grouped(self, is_mtp_layer: bool = False):
         if self.model_type in {
                 'qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'deepseek_v3', 'dots1', 'ernie4_5_moe', 'glm4_moe',
-                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe',
-                'qwen3_vl_moe'
+                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe'
         }:
             return False, False
         elif self.model_type == 'qwen3_5_moe' and is_mtp_layer:
             return False, False
         return None, None
+
+    def _get_transpose(self):
+        if self.model_type in {'qwen3_vl_moe', 'gpt_oss', 'llama4'}:
+            return True
+        else:
+            return False
 
     def _set_mlp_state(
         self,
@@ -774,6 +779,9 @@ class GPTBridge:
                 hf_grouped = _hf_grouped
             if _is_gate_up is not None:
                 is_gate_up = _is_gate_up
+        need_transpose = True
+        if self.is_transformers_5:
+            need_transpose = self._get_transpose()
 
         if to_mcore or hf_grouped:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
@@ -848,11 +856,14 @@ class GPTBridge:
                                 gate_up_proj_weight = self.mxfp4_quantizer.convert(blocks, scales)
                             else:
                                 gate_up_proj_weight = hf_state_dict['gate_up_proj'].load()
-                            gate_up_proj_weight = gate_up_proj_weight.transpose(1, 2)
+                            if need_transpose:
+                                gate_up_proj_weight = gate_up_proj_weight.transpose(1, 2)
                             gate_up_proj_weight = gate_up_proj_weight[ep_rank * num_local_experts:(ep_rank + 1)
                                                                       * num_local_experts]
                             if has_scale_inv:
-                                gate_up_scale_inv = hf_state_dict['gate_up_proj_scale_inv'].load().transpose(1, 2)
+                                gate_up_scale_inv = hf_state_dict['gate_up_proj_scale_inv'].load()
+                                if need_transpose:
+                                    gate_up_scale_inv = gate_up_scale_inv.transpose(1, 2)
                                 gate_up_scale_inv = gate_up_scale_inv[ep_rank * num_local_experts:(ep_rank + 1)
                                                                       * num_local_experts]
                             if fc1_bias is not None:
@@ -1008,7 +1019,8 @@ class GPTBridge:
                     if is_gate_up:
                         if is_expert:
                             if hf_grouped:
-                                gate_up_proj_weight = gate_up_proj_weight.transpose(1, 2)
+                                if need_transpose:
+                                    gate_up_proj_weight = gate_up_proj_weight.transpose(1, 2)
                                 if 'gate_up_proj' in hf_state_dict:
                                     gate_up_proj_weight = torch.concat(
                                         [hf_state_dict['gate_up_proj'], gate_up_proj_weight], dim=0)
@@ -1022,7 +1034,8 @@ class GPTBridge:
                                     del new_gate_up_proj_weight, gate_proj_weight, up_proj_weight
                                 hf_state_dict['gate_up_proj'] = gate_up_proj_weight.clone()
                                 if scale_inv is not None:
-                                    scale_inv = scale_inv.transpose(1, 2)
+                                    if need_transpose:
+                                        scale_inv = scale_inv.transpose(1, 2)
                                     if 'gate_up_proj_scale_inv' in hf_state_dict:
                                         scale_inv = torch.concat([hf_state_dict['gate_up_proj_scale_inv'], scale_inv],
                                                                  dim=0)
@@ -1114,12 +1127,15 @@ class GPTBridge:
                             down_proj_weight = self.mxfp4_quantizer.convert(blocks, scales)
                         else:
                             down_proj_weight = hf_state_dict['down_proj'].load()
-                        down_proj_weight = down_proj_weight.transpose(1, 2)
+                        if need_transpose:
+                            down_proj_weight = down_proj_weight.transpose(1, 2)
                         down_proj_weight = down_proj_weight[ep_rank * num_local_experts:(ep_rank + 1)
                                                             * num_local_experts].reshape(
                                                                 -1, down_proj_weight.shape[-1])
                         if has_scale_inv:
-                            down_scale_inv = hf_state_dict['down_proj_scale_inv'].load().transpose(1, 2)
+                            down_scale_inv = hf_state_dict['down_proj_scale_inv'].load()
+                            if need_transpose:
+                                down_scale_inv = down_scale_inv.transpose(1, 2)
                             down_scale_inv = down_scale_inv[ep_rank * num_local_experts:(ep_rank + 1)
                                                             * num_local_experts].reshape(-1, down_scale_inv.shape[-1])
                         if fc2_bias is not None:
@@ -1199,12 +1215,14 @@ class GPTBridge:
                     del fc2_weight, fc2_bias
                     if down_proj_weight is not None:
                         if hf_grouped:
-                            down_proj_weight = down_proj_weight.transpose(1, 2)
+                            if need_transpose:
+                                down_proj_weight = down_proj_weight.transpose(1, 2)
                             if 'down_proj' in hf_state_dict:
                                 down_proj_weight = torch.concat([hf_state_dict['down_proj'], down_proj_weight], dim=0)
                             hf_state_dict['down_proj'] = down_proj_weight.clone()
                             if scale_inv is not None:
-                                scale_inv = scale_inv.transpose(1, 2)
+                                if need_transpose:
+                                    scale_inv = scale_inv.transpose(1, 2)
                                 if 'down_proj_scale_inv' in hf_state_dict:
                                     scale_inv = torch.concat([hf_state_dict['down_proj_scale_inv'], scale_inv], dim=0)
                                 hf_state_dict['down_proj_scale_inv'] = scale_inv.clone()
