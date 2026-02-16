@@ -674,6 +674,7 @@ class GPTBridge:
         hf_prefix: str,
         layer_idx: int,
         to_mcore: bool,
+        is_mtp_layer: bool = False,
     ):
         if to_mcore:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
@@ -719,30 +720,42 @@ class GPTBridge:
                 else:
                     mg_experts = None
             hf_state_dict.update(
-                self._set_mlp_state(mg_experts, hf_state_dict, 'experts.', layer_idx, to_mcore, ep_rank=ep_rank))
+                self._set_mlp_state(
+                    mg_experts,
+                    hf_state_dict,
+                    'experts.',
+                    layer_idx,
+                    to_mcore,
+                    ep_rank=ep_rank,
+                    is_mtp_layer=is_mtp_layer))
         if to_mcore:
             hf_state_dict = {}
         else:
             hf_state_dict = self._add_prefix(hf_state_dict, hf_prefix)
         return hf_state_dict
 
-    def _get_hf_grouped(self):
+    def _get_hf_grouped(self, is_mtp_layer: bool = False):
         if self.model_type in {
                 'qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'deepseek_v3', 'dots1', 'ernie4_5_moe', 'glm4_moe',
                 'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe',
-                'qwen3_vl_moe', 'qwen3_5_moe'
+                'qwen3_vl_moe'
         }:
+            return False, False
+        elif self.model_type == 'qwen3_5_moe' and is_mtp_layer:
             return False, False
         return None, None
 
-    def _set_mlp_state(self,
-                       mg_mlp,
-                       hf_state_dict,
-                       hf_prefix: str,
-                       layer_idx: int,
-                       to_mcore: bool,
-                       ep_rank: Optional[int] = None,
-                       hf_mlp=None):
+    def _set_mlp_state(
+        self,
+        mg_mlp,
+        hf_state_dict,
+        hf_prefix: str,
+        layer_idx: int,
+        to_mcore: bool,
+        ep_rank: Optional[int] = None,
+        hf_mlp=None,
+        is_mtp_layer: bool = False,
+    ):
         if hf_mlp is None:
             hf_mlp = self._get_hf_mlp(layer_idx)
         is_expert = ep_rank is not None
@@ -756,7 +769,7 @@ class GPTBridge:
         is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
         # transformers 5.0 compatibility
         if self.is_transformers_5:
-            _hf_grouped, _is_gate_up = self._get_hf_grouped()
+            _hf_grouped, _is_gate_up = self._get_hf_grouped(is_mtp_layer)
             if _hf_grouped is not None:
                 hf_grouped = _hf_grouped
             if _is_gate_up is not None:
@@ -1259,13 +1272,15 @@ class GPTBridge:
                                  'input_layernorm.weight', to_mcore)
         return hf_state_dict
 
-    def _set_layer_mlp(self, mg_layer, hf_state_dict, layer_idx: int, to_mcore: bool):
+    def _set_layer_mlp(self, mg_layer, hf_state_dict, layer_idx: int, to_mcore: bool, is_mtp_layer: bool = False):
         hf_mlp_prefix = self.get_hf_mlp_prefix(layer_idx)
         hf_mlp = self._get_hf_mlp(layer_idx)
         is_moe = self._is_moe(hf_mlp.state_dict())
         mg_mlp = None if mg_layer is None else mg_layer.mlp
         if is_moe:
-            hf_state_dict.update(self._set_moe_state(mg_mlp, hf_state_dict, f'{hf_mlp_prefix}.', layer_idx, to_mcore))
+            hf_state_dict.update(
+                self._set_moe_state(
+                    mg_mlp, hf_state_dict, f'{hf_mlp_prefix}.', layer_idx, to_mcore, is_mtp_layer=is_mtp_layer))
             self._set_state_dict(mg_layer, 'pre_mlp_layernorm.weight', hf_state_dict, 'post_attention_layernorm.weight',
                                  to_mcore)
         else:
@@ -1453,7 +1468,7 @@ class GPTBridge:
                 self._set_state_dict(lm_model, 'output_layer.weight', hf_state_dict, 'shared_head.head.weight',
                                      to_mcore)
         hf_state_dict.update(self._set_layer_attn(transformer_layer, hf_state_dict, -1, to_mcore))
-        hf_state_dict.update(self._set_layer_mlp(transformer_layer, hf_state_dict, -1, to_mcore))
+        hf_state_dict.update(self._set_layer_mlp(transformer_layer, hf_state_dict, -1, to_mcore, is_mtp_layer=True))
         if to_mcore:
             hf_state_dict = {}
         else:
