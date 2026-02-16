@@ -465,6 +465,9 @@ def create_mcore_model_config(args, hf_config):
         kwargs['bias_activation_fusion'] = False
     if add_bias_linear and num_moe_experts and args.moe_grouped_gemm:
         kwargs['bias_dropout_fusion'] = False
+    if num_moe_experts is None:
+        kwargs['expert_model_parallel_size'] = 1
+        kwargs['expert_tensor_parallel_size'] = 1
     config = MegatronModelConfig(**kwargs)
     config.hf_config = hf_config
     config.args = args
