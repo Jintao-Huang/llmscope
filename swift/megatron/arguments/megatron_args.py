@@ -401,6 +401,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     finetune: bool = True
     perform_initialization: bool = False
     use_cpu_initialization: bool = False
+    save_total_limit: Optional[int] = None
     async_save: bool = False  # TODO
 
     # dist
