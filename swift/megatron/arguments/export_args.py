@@ -34,8 +34,8 @@ class MegatronExportArguments(MegatronBaseArguments):
             raise FileExistsError(f'args.output_dir: `{self.output_dir}` already exists.')
         logger.info(f'args.output_dir: `{self.output_dir}`')
 
-    def __post_init__(self):
-        super().__post_init__()
+    def _init_megatron_args(self):
+        self._init_output_dir()
         self.test_convert_dtype = HfConfigFactory.to_torch_dtype(self.test_convert_dtype)
         extra_config = MegatronArguments.load_args_config(self.ckpt_dir)
         extra_config['mcore_adapter'] = self.mcore_adapter
@@ -50,6 +50,7 @@ class MegatronExportArguments(MegatronBaseArguments):
                 logger.info('Settting args.sequence_parallel: True')
             if self.merge_lora is None:
                 self.merge_lora = self.to_hf
+        super()._init_megatron_args()
 
     def _init_convert(self):
         convert_kwargs = {
