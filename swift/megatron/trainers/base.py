@@ -555,12 +555,8 @@ class BaseMegatronTrainer(ABC):
                 origin_output_dir = output_dir
                 output_dir = f'{output_dir}-merged'
                 os.makedirs(output_dir, exist_ok=True)
-                self.copy_path(src_path, os.path.join(output_dir, 'args.json'))
-                save_mcore_checkpoint(
-                    args, [],
-                    iteration=iteration,
-                    output_dir=output_dir,
-                    async_save=False)
+                self.copy_path(os.path.join(origin_output_dir, 'args.json'), os.path.join(output_dir, 'args.json'))
+                save_mcore_checkpoint(args, [], iteration=iteration, output_dir=output_dir, async_save=False)
             self.bridge.save_weights(
                 self.unwrapped_models,
                 output_dir,
