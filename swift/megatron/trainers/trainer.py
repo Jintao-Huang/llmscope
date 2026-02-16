@@ -76,7 +76,6 @@ class MegatronTrainer(BaseMegatronTrainer):
             # https://github.com/NVIDIA/Megatron-LM/blob/core_r0.12.0/megatron/core/pipeline_parallel/schedules.py#L291
             torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
             lm_loss = lm_loss / mpu.get_context_parallel_world_size()
-            reporting_loss = (reporting_loss[0], reporting_loss[1])
         else:
             lm_loss = lm_loss.clone()
         local_num_tokens = loss[1].detach().clone().to(torch.int)
