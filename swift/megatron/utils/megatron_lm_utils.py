@@ -222,7 +222,7 @@ def _preprocess_common_before_consistancy_check(common_state_dict):
 
 def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None, iteration=1):
     models = unwrap_model(models)
-    rng_state = _get_rng_state()
+    rng_state = _get_rng_state() if models else None
     checkpoint_dir = os.path.join(args.output_dir, f'iter_{iteration:07d}')
     sharded_sd_metadata = {
         'distrib_optim_sharding_type': 'dp_reshardable',
