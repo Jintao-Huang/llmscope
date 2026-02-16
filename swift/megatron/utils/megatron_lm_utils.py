@@ -220,10 +220,20 @@ def _preprocess_common_before_consistancy_check(common_state_dict):
     return preprocessed_common_state_dict
 
 
-def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None, iteration=1):
+def save_mcore_checkpoint(args,
+                          models,
+                          optimizer=None,
+                          opt_param_scheduler=None,
+                          iteration=1,
+                          output_dir=None,
+                          async_save=None):
+    if output_dir is None:
+        output_dir = args.output_dir
+    if async_save is None:
+        async_save = args.async_save
     models = unwrap_model(models)
     rng_state = _get_rng_state()
-    checkpoint_dir = os.path.join(args.output_dir, f'iter_{iteration:07d}')
+    checkpoint_dir = os.path.join(output_dir, f'iter_{iteration:07d}')
     sharded_sd_metadata = {
         'distrib_optim_sharding_type': 'dp_reshardable',
         'singleton_local_shards': False,
@@ -255,13 +265,12 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
         state_dict,
         checkpoint_dir,
         save_strategy,
-        async_sharded_save=args.async_save,
+        async_sharded_save=async_save,
         validate_access_integrity=True,
         preprocess_common_before_consistancy_check=_preprocess_common_before_consistancy_check,
         **kwargs)
 
-    if not args.async_save:
-        # TODO: test async_save
+    if not async_save:
         assert async_save_request is None
         # Wait so everyone is done (necessary)
         if torch.distributed.is_initialized():
@@ -271,7 +280,7 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
 
         def iter_finalize_fn():
             # TODO: save_total_limit
-            tracker_path = os.path.join(args.output_dir, 'latest_checkpointed_iteration.txt')
+            tracker_path = os.path.join(output_dir, 'latest_checkpointed_iteration.txt')
             try:
                 from megatron.core.msc_utils import open_file
             except ImportError:
@@ -279,9 +288,9 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
             with open_file(tracker_path, 'w') as f:
                 f.write(str(iteration))
             if models:
-                logger.info(f'Successfully saved Megatron model weights in `{args.output_dir}`.')
+                logger.info(f'Successfully saved Megatron model weights in `{output_dir}`.')
 
-        if args.async_save:
+        if async_save:
             assert async_save_request is not None
             async_save_request.add_finalize_fn(iter_finalize_fn)
         else:
