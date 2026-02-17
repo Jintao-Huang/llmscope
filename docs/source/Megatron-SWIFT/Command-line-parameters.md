@@ -108,6 +108,7 @@
 - perform_initialization: 对权重进行初始化，默认为False。
 - use_cpu_initialization: 在cpu上初始化权重，默认为False。在进行HF和MCore权重转换时会被使用。通常不需要修改该值。
 - 🔥async_save: 使用异步检查点保存。目前仅适用于`torch_dist`分布式检查点格式。默认为False。
+- use_persistent_ckpt_worker: 为异步保存启动持久化检查点工作进程。默认为False。
 - dist_ckpt_save_pre_mcore_014: 使用 Megatron-Core 0.14 之前的格式存储。默认为False。
 - dist_ckpt_optim_fully_reshardable: 使优化器分布式检查点完全可重分片（TP/PP/EP/DP），而不是仅支持普通的DP重分片。默认为False。
 - distrib_optim_fully_reshardable_mem_efficient: 在分布式优化器检查点保存和加载过程中，通过使用Gloo（而非NCCL），并仅使用单个rank进行保存，以尽可能减少内存使用。仅在遇到主机或设备内存问题时启用，仅在设置了`--dist-ckpt-optim-fully-reshardable`标志时生效。默认为False。

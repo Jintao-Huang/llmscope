@@ -25,8 +25,9 @@ from swift.megatron.callbacks import megatron_callbacks_map
 from swift.megatron.model import get_mcore_model
 from swift.megatron.tuners import LoraParallelLinear
 from swift.megatron.utils import (copy_original_module_weight, get_optimizer_param_scheduler, get_padding_to,
-                                  load_mcore_checkpoint, prepare_mcore_model,
-                                  reduce_max_stat_across_model_parallel_group, save_mcore_checkpoint, wrap_model)
+                                  init_persistent_async_worker, load_mcore_checkpoint, maybe_finalize_async_save,
+                                  prepare_mcore_model, reduce_max_stat_across_model_parallel_group,
+                                  save_mcore_checkpoint, wrap_model)
 from swift.template import Template
 from swift.trainers import dynamic_gradient_checkpointing
 from swift.trainers.utils import patch_modelscope_hub_timeout
@@ -487,6 +488,9 @@ class BaseMegatronTrainer(ABC):
                 self._prepare_vit_gradient_checkpointing(m)
 
         self.config.finalize_model_grads_func = finalize_model_grads
+        if args.async_save and args.use_persistent_ckpt_worker:
+            init_persistent_async_worker()
+
         self.call_event('on_train_begin')
         train_metrics = {}
         if self.args.virtual_pipeline_model_parallel_size is not None:
@@ -501,6 +505,7 @@ class BaseMegatronTrainer(ABC):
         while state.iteration < args.train_iters:
             self.call_event('on_step_begin')
             metrics, grad_norm = self.train_step(train_data_iterator)
+            maybe_finalize_async_save(args, blocking=False)
             state.iteration += 1
             self.call_event('on_step_end')
             if mpu.is_pipeline_last_stage(ignore_virtual=True):
@@ -529,6 +534,7 @@ class BaseMegatronTrainer(ABC):
                 self.save_checkpoint()
 
         self.call_event('on_train_end')
+        maybe_finalize_async_save(args, blocking=True, terminate=True)
 
     def save_checkpoint(self):
         args = self.args
