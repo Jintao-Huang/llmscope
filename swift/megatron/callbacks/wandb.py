@@ -27,6 +27,5 @@ class WandbCallback(MegatronCallback):
 
     def on_log(self, logs):
         logs = rewrite_logs(logs)
-        logs['iteration'] = self.state.iteration
         if is_last_rank():
             self.writer.log(logs, step=self.state.iteration)

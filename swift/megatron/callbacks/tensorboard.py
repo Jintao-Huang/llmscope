@@ -22,7 +22,6 @@ class TensorboardCallback(MegatronCallback):
 
     def on_log(self, logs):
         logs = rewrite_logs(logs)
-        logs['iteration'] = self.state.iteration
         if self.writer:
             for k, v in logs.items():
                 self.writer.add_scalar(k, v, self.state.iteration)
