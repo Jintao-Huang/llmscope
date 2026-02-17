@@ -224,11 +224,13 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
     models = unwrap_model(models)
     rng_state = _get_rng_state() if models else None
     checkpoint_dir = os.path.join(args.output_dir, f'iter_{iteration:07d}')
-    sharded_sd_metadata = {
-        'distrib_optim_sharding_type': 'dp_reshardable',
-        'singleton_local_shards': False,
-        'chained_optim_avoid_prefix': True
-    }
+    sharded_sd_metadata = {'singleton_local_shards': False, 'chained_optim_avoid_prefix': True}
+    if args.dist_ckpt_optim_fully_reshardable:
+        sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_reshardable'
+        sharded_sd_metadata[
+            'distrib_optim_fully_reshardable_mem_efficient'] = args.distrib_optim_fully_reshardable_mem_efficient
+    else:
+        sharded_sd_metadata['distrib_optim_sharding_type'] = 'dp_reshardable'
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     state_dict = _generate_state_dict(
@@ -344,7 +346,7 @@ def load_mcore_checkpoint(args,
         gen_sd_rng_state = None
         if ckpt_tp_pp != run_tp_pp:
             logger.info(f'{mismatch_msg}: RNG state will be ignored')
-    sharded_sd_metadata = dist_checkpointing.load_content_metadata(preloaded_state_dict=state_dict)
+    sharded_sd_metadata = state_dict.get('content_metadata')
     if (not finetune and not no_load_optim and not getattr(state_dict['args'], 'no_save_optim', False)):
         gen_sd_optim = optimizer
         gen_sd_opt_param_scheduler = opt_param_scheduler

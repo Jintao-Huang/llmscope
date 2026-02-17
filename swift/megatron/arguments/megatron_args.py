@@ -402,6 +402,8 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     perform_initialization: bool = False
     use_cpu_initialization: bool = False
     async_save: bool = False  # TODO
+    dist_ckpt_optim_fully_reshardable: bool = True
+    distrib_optim_fully_reshardable_mem_efficient: bool = False
 
     # dist
     local_rank: Optional[int] = None  # Compatible with DeepSpeed launch
@@ -581,7 +583,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
         if self.megatron_model_meta is None:
             raise ValueError(f'Model: {self.model} is not supported.')
         self._init_teacher_model()
-        if self.apply_wd_to_qk_layernorm and self.model_type != 'qwen3_next':
+        if self.apply_wd_to_qk_layernorm and self.model_type not in {'qwen3_next', 'qwen3_5'}:
             raise ValueError('apply_wd_to_qk_layernorm is only supported for qwen3_next')
         if self.pipeline_model_parallel_size == 1 and (self.decoder_first_pipeline_num_layers is not None
                                                        or self.decoder_last_pipeline_num_layers is not None):
