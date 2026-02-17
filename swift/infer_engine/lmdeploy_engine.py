@@ -69,8 +69,8 @@ class LmdeployEngine(InferEngine):
         self.quant_policy = quant_policy
         self.vision_batch_size = vision_batch_size
         self.devices = devices
+        processor = self._get_processor()
         if template is None:
-            processor = self._get_processor()
             template = self._get_template(processor)
         super().__init__(template)
 

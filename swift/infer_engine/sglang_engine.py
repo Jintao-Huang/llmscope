@@ -82,8 +82,8 @@ class SglangEngine(InferEngine):
         self.speculative_eagle_topk = speculative_eagle_topk
         self.speculative_num_draft_tokens = speculative_num_draft_tokens
         self.log_level = log_level
+        processor = self._get_processor()
         if template is None:
-            processor = self._get_processor()
             template = self._get_template(processor)
         super().__init__(template)
         self._prepare_server_args(engine_kwargs)

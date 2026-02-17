@@ -138,8 +138,8 @@ class VllmEngine(InferEngine):
 
         patch_vllm_memory_leak()
         self._adapters_pool = {}
+        processor = self._get_processor()
         if template is None:
-            processor = self._get_processor()
             template = self._get_template(processor)
         super().__init__(template)
         if max_model_len is not None:
@@ -165,6 +165,7 @@ class VllmEngine(InferEngine):
             model_type=self.model_type,
             use_hf=self.use_hf,
             hub_token=self.hub_token,
+
             revision=self.revision,
             num_labels=self.num_labels,
             task_type=self.task_type)
