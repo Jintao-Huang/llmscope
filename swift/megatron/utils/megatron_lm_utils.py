@@ -7,6 +7,7 @@ import random
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import timedelta
+from typing import Optional
 
 import megatron.core
 import numpy as np
@@ -21,6 +22,7 @@ from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.distributed import DistributedDataParallelConfig
 from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
+from megatron.core.utils import get_torch_version, is_torch_min_version
 from packaging import version
 
 from swift.utils import check_json_format, get_logger, init_process_group, is_master, seed_everything, set_device
@@ -220,17 +222,36 @@ def _preprocess_common_before_consistancy_check(common_state_dict):
     return preprocessed_common_state_dict
 
 
-def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None, iteration=1):
+def get_sharded_sd_metadata(args):
+    sharded_sd_metadata = {'singleton_local_shards': False, 'chained_optim_avoid_prefix': True}
+    force_pre_mcore_014 = not is_torch_min_version('2.6a0')
+    if force_pre_mcore_014 and not args.dist_ckpt_save_pre_mcore_014:
+        args.dist_ckpt_save_pre_mcore_014 = True
+        logger.warning(f'PyTorch version {get_torch_version()} below 2.6 detected.'
+                       f' Forcing dist_ckpt_save_pre_mcore_014 behavior.')
+
+    if args.dist_ckpt_save_pre_mcore_014:
+        sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_sharded_model_space'
+    else:
+        if args.dist_ckpt_optim_fully_reshardable:
+            sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_reshardable'
+            sharded_sd_metadata[
+                'distrib_optim_fully_reshardable_mem_efficient'] = args.distrib_optim_fully_reshardable_mem_efficient
+        else:
+            sharded_sd_metadata['distrib_optim_sharding_type'] = 'dp_reshardable'
+    return sharded_sd_metadata
+
+
+def save_mcore_checkpoint(args,
+                          models,
+                          optimizer=None,
+                          opt_param_scheduler=None,
+                          iteration=1,
+                          is_peft_format: bool = False):
     models = unwrap_model(models)
     rng_state = _get_rng_state() if models else None
     checkpoint_dir = os.path.join(args.output_dir, f'iter_{iteration:07d}')
-    sharded_sd_metadata = {'singleton_local_shards': False, 'chained_optim_avoid_prefix': True}
-    if args.dist_ckpt_optim_fully_reshardable:
-        sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_reshardable'
-        sharded_sd_metadata[
-            'distrib_optim_fully_reshardable_mem_efficient'] = args.distrib_optim_fully_reshardable_mem_efficient
-    else:
-        sharded_sd_metadata['distrib_optim_sharding_type'] = 'dp_reshardable'
+    sharded_sd_metadata = get_sharded_sd_metadata(args)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     state_dict = _generate_state_dict(
@@ -243,9 +264,7 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
         model_sd_kwargs={'metadata': sharded_sd_metadata},
         optim_sd_kwargs={'metadata': sharded_sd_metadata},
     )
-
-    if args.tuner_type == 'lora':
-        _filter_adapter_state_dict(state_dict, not args.merge_lora)
+    _filter_adapter_state_dict(state_dict, is_peft_format)
 
     save_strategy = get_default_save_sharded_strategy()
     save_strategy = FullyParallelSaveStrategyWrapper(

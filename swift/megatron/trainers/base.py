@@ -545,7 +545,13 @@ class BaseMegatronTrainer(ABC):
             model = []
         else:
             model = self.wrapped_models
-        save_mcore_checkpoint(args, model, self.optimizer, self.opt_param_scheduler, iteration=iteration)
+        save_mcore_checkpoint(
+            args,
+            model,
+            self.optimizer,
+            self.opt_param_scheduler,
+            iteration=iteration,
+            is_peft_format=args.tuner_type == 'lora')
         args.output_dir = origin_output_dir
         # safetensors
         if args.save_safetensors:
