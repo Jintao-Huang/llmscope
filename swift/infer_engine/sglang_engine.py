@@ -86,8 +86,8 @@ class SglangEngine(InferEngine):
             processor = self._get_processor()
             template = self._get_template(processor)
         else:
-            get_model_info_meta(model_id_or_path, hub_token=hub_token, use_hf=use_hf, revision=revision,
-                                download_model=True)
+            get_model_info_meta(
+                model_id_or_path, hub_token=hub_token, use_hf=use_hf, revision=revision, download_model=True)
         super().__init__(template)
         self._prepare_server_args(engine_kwargs)
         self.engine = sgl.Engine(server_args=self.server_args)
