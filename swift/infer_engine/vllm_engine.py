@@ -165,7 +165,6 @@ class VllmEngine(InferEngine):
             model_type=self.model_type,
             use_hf=self.use_hf,
             hub_token=self.hub_token,
-
             revision=self.revision,
             num_labels=self.num_labels,
             task_type=self.task_type)
