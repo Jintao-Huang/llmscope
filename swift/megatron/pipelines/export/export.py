@@ -109,7 +109,8 @@ class MegatronExport(SwiftPipeline):
         if not _test_convert_precision:
             args.save_args(args.output_dir)
             logger.info('Saving the model...')
-            save_mcore_checkpoint(args, [mg_model])
+            save_peft_format = args.tuner_type == 'lora' and not args.merge_lora
+            save_mcore_checkpoint(args, [mg_model], is_peft_format=save_peft_format)
         # hf_model does not support loading args.mcore_adapter, so test_convert_precision cannot be performed
         support_convert_precision = args.mcore_adapter is None
         if args.test_convert_precision:

@@ -439,12 +439,13 @@ def convert_hf_config(config) -> Dict[str, Any]:
     return res
 
 
-def create_mcore_model_config(args, hf_config):
+def get_mcore_model_config(args, hf_config):
     kwargs = convert_hf_config(hf_config)
     for f in fields(MegatronModelConfig):
         key, value = f.name, getattr(args, f.name, None)
-        if value:
-            kwargs[key] = value
+        if value is None or isinstance(value, (list, tuple)) and len(value) == 0:
+            continue
+        kwargs[key] = value
 
     if args.task_type == 'seq_cls':
         args.problem_type = args.problem_type or getattr(hf_config, 'problem_type', None)

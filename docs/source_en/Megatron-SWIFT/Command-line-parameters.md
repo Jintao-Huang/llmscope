@@ -114,6 +114,9 @@
 - perform_initialization: Initialize the weights. Defaults to False.
 - use_cpu_initialization: Initialize weights on the CPU. Defaults to `False`. This option is used during weight conversion between Hugging Face (HF) and MCore formats. The value typically does not need to be modified.
 - 🔥async_save: Use asynchronous checkpoint saving. Currently only applicable to the `torch_dist` distributed checkpoint format. Defaults to False.
+- dist_ckpt_save_pre_mcore_014: Save in the format prior to Megatron-Core 0.14. Defaults to False.
+- dist_ckpt_optim_fully_reshardable: Make optimizer distributed checkpoint fully reshardable (TP/PP/EP/DP) as opposed to plain DP reshardability. Defaults to False.
+- distrib_optim_fully_reshardable_mem_efficient: During distributed optimizer checkpoint save and load, tries to use as little memory as possible by using Gloo (instead of NCCL) and only one rank for saving. Turn on only if experiencing host or device memory issues. Has effect only when `--dist-ckpt-optim-fully-reshardable` flag is set. Defaults to False.
 
 
 **Distributed Parameters**:
@@ -233,7 +236,7 @@ LoRA Training:
 
 - model: The model_id or model_path of safetensors weights. Default is None. Supports resume training from checkpoint using `--no_load_optim false --no_load_rng false`.
 - model_type: Model type. For details, refer to [ms-swift command-line parameters documentation](../Instruction/Command-line-parameters.md).
-- 🔥save_safetensors: Defaults to True, whether to directly save as safetensors weights. If `--no_save_optim false` is set, additional mcore format weights and optimizer weights will be saved. When resuming from checkpoint, use `--mcore_model/--mcore_adapter/--no_load_optim/--no_load_rng` parameters to load mcore format weights.
+- 🔥save_safetensors: Defaults to True, whether to directly save as safetensors weights. If `--no_save_optim false` is set, additional mcore format weights and optimizer weights will be saved (also saved in `output_dir`). When resuming from checkpoint, use `--mcore_model/--mcore_adapter/--no_load_optim/--no_load_rng` parameters to load mcore format weights.
 - adapters: adapter_id or adapter_path of LoRA incremental weights in safetensors format. Default is `[]`.
 - ref_model: model_id or model_path of ref_model safetensors weights. Required when using DPO/GRPO/KTO algorithms with full-parameter training. Default is None, set to `--model`.
 - ref_adapters: List of adapter_id or adapter_path of ref_adapters safetensors weights (currently only supports length of 1). Default is `[]`.
@@ -257,7 +260,7 @@ LoRA Training:
 - check_model: Check local model files for corruption or modifications and provide prompts. Defaults to True. **If in an offline environment, please set to False**.
 - rope_scaling: Parameters related to rope_scaling. Defaults to None. For format reference, see [llama3.1 config.json](https://modelscope.cn/models/LLM-Research/Meta-Llama-3.1-8B-Instruct/file/view/master?fileName=config.json&status=1), pass as a JSON string.
   - **Currently the rope_scaling module uses transformers implementation and supports all rope_scaling supported by transformers.**
-- apply_wd_to_qk_layernorm: Used for Qwen3-Next full-parameter training to apply weight decay to qk layernorm. Defaults to False.
+- apply_wd_to_qk_layernorm: Used for Qwen3-Next/Qwen3.5 full-parameter training to apply weight decay to qk layernorm. Defaults to False.
 - enable_dft_loss: Whether to use [DFT](https://arxiv.org/abs/2508.05629) (Dynamic Fine-Tuning) loss in SFT training. Defaults to False.
 - enable_channel_loss: Enable channel loss. Defaults to `False`. You need to prepare a "channel" field in the dataset, and ms-swift will group and calculate loss based on this field (if the "channel" field is not prepared, it will be classified under the default `None` channel). For dataset format, refer to [channel loss](../Customization/Custom-dataset.md#channel-loss). Channel loss is compatible with techniques such as packing/padding_free/loss_scale.
 - 🔥task_type: Defaults to 'causal_lm'. Options are 'causal_lm', 'seq_cls', 'embedding', and 'generative_reranker'.

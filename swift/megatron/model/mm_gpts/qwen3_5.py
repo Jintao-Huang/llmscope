@@ -78,7 +78,7 @@ class Qwen3_5Vit(HuggingFaceModule):
         super().__init__(config, [Qwen3_5TextModel, Qwen3_5MoeTextModel])
 
     def get_inputs_embeds(self, inputs_embeds, **kwargs):
-        return Template._get_inputs_embeds_hf(inputs_embeds, kwargs, self.visual, self.processor, self.model_config)
+        return Template._get_inputs_embeds_hf(inputs_embeds, kwargs, self.visual, self.processor, self.hf_config)
 
 
 class Qwen3_5Bridge(Qwen3NextBridge):

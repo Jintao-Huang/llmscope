@@ -108,6 +108,10 @@
 - perform_initialization: 对权重进行初始化，默认为False。
 - use_cpu_initialization: 在cpu上初始化权重，默认为False。在进行HF和MCore权重转换时会被使用。通常不需要修改该值。
 - 🔥async_save: 使用异步检查点保存。目前仅适用于`torch_dist`分布式检查点格式。默认为False。
+- dist_ckpt_save_pre_mcore_014: 使用 Megatron-Core 0.14 之前的格式存储。默认为False。
+- dist_ckpt_optim_fully_reshardable: 使优化器分布式检查点完全可重分片（TP/PP/EP/DP），而不是仅支持普通的DP重分片。默认为False。
+- distrib_optim_fully_reshardable_mem_efficient: 在分布式优化器检查点保存和加载过程中，通过使用Gloo（而非NCCL），并仅使用单个rank进行保存，以尽可能减少内存使用。仅在遇到主机或设备内存问题时启用，仅在设置了`--dist-ckpt-optim-fully-reshardable`标志时生效。默认为False。
+
 
 **分布式参数**:
 并行技术的选择请参考[训练技巧文档](Quick-start.md#训练技巧)。
@@ -216,7 +220,7 @@ lora训练：
 **Mcore-Bridge参数**
 - model: safetensors权重的model_id或者model_path。默认为None。
 - model_type: 模型类型。介绍参考[ms-swift命令行参数文档](../Instruction/Command-line-parameters.md)。
-- 🔥save_safetensors: 默认为True，是否直接保存成safetensors权重。若设置了`--no_save_optim false`则额外mcore格式权重和优化器权重。断点续训时使用`--mcore_model/--mcore_adapter/--no_load_optim/--no_load_rng`参数加载mcore格式权重。
+- 🔥save_safetensors: 默认为True，是否直接保存成safetensors权重。若设置了`--no_save_optim false`则额外mcore格式权重和优化器权重（也保存在output_dir中）。断点续训时使用`--mcore_model/--mcore_adapter/--no_load_optim/--no_load_rng`参数加载mcore格式权重。
 - adapters: safetensors格式的LoRA增量权重的adapter_id或者adapter_path。默认为`[]`。
 - ref_model: ref_model safetensors权重的model_id或者model_path。采用grpo、dpo、kto算法且使用全参数训练时需要传入。默认为None，设置为`--model`。
 - ref_adapters: ref_adapters safetensors权重的adapter_id或者adapter_path的列表（目前只支持长度为1），默认为`[]`。
@@ -238,7 +242,7 @@ lora训练：
 - check_model: 检查本地模型文件有损坏或修改并给出提示，默认为True。**如果是断网环境，请设置为False**。
 - rope_scaling: rope_scaling相关参数，默认为None。格式参考[llama3.1 config.json](https://modelscope.cn/models/LLM-Research/Meta-Llama-3.1-8B-Instruct/file/view/master?fileName=config.json&status=1)，传入json字符串。
   - **目前rope_scaling模块使用transformers实现，支持transformers支持的所有rope_scaling。**
-- apply_wd_to_qk_layernorm: 用于Qwen3-Next全参数训练，对 qk layernorm 应用权重衰减。默认为False。
+- apply_wd_to_qk_layernorm: 用于Qwen3-Next/Qwen3.5全参数训练，对 qk layernorm 应用权重衰减。默认为False。
 - enable_dft_loss: 是否在SFT训练中使用[DFT](https://arxiv.org/abs/2508.05629) (Dynamic Fine-Tuning) loss，默认为False。
 - enable_channel_loss: 启用channel loss，默认为`False`。你需要在数据集中准备"channel"字段，ms-swift会根据该字段分组统计loss（若未准备"channel"字段，则归为默认`None` channel）。数据集格式参考[channel loss](../Customization/Custom-dataset.md#channel-loss)。channel loss兼容packing/padding_free/loss_scale等技术。
 - 🔥task_type: 默认为'causal_lm'。可选为'causal_lm'、'seq_cls'、'embedding'和'generative_reranker'。

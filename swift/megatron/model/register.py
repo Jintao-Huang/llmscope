@@ -15,7 +15,7 @@ from swift.model import MODEL_MAPPING
 from swift.utils import get_logger
 from .constant import MLLMMegatronModelType
 from .gpt_bridge import GPTBridge
-from .model_config import create_mcore_model_config
+from .model_config import get_mcore_model_config
 
 if TYPE_CHECKING:
     from .gpt_model import GPTModel
@@ -74,7 +74,7 @@ class MegatronModelLoader:
         from swift.megatron.model import GPTModel, MultimodalGPTModel
         self.args = args
         self.hf_config = hf_config
-        self.config = create_mcore_model_config(args, hf_config)
+        self.config = get_mcore_model_config(args, hf_config)
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
         if self.model_cls is None:
             self.model_cls = MultimodalGPTModel if self.args.is_multimodal else GPTModel
