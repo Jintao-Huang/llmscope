@@ -353,11 +353,7 @@ def maybe_finalize_async_save(args, blocking: bool = False, terminate=False):
 
 
 def is_empty_async_queue() -> bool:
-    """Check if async calls queue is empty. This result is consistent across ranks.
-
-    Returns:
-        bool: True if there is any ongoing async call.
-    """
+    """Check if async calls queue is empty. This result is consistent across ranks."""
     return _async_calls_queue.get_num_unfinalized_calls() == 0
 
 
