@@ -13,7 +13,7 @@ import torch
 import torch.nn
 from megatron.core import mpu
 from megatron.core.distributed import finalize_model_grads
-from megatron.core.optimizer import OptimizerConfig, _update_min_and_max_lr_in_param_groups, get_megatron_optimizer
+from megatron.core.optimizer import OptimizerConfig, get_megatron_optimizer
 from megatron.core.pipeline_parallel import get_forward_backward_func
 from megatron.core.transformer.module import MegatronModule
 from megatron.core.transformer.moe.moe_utils import track_moe_metrics
@@ -243,7 +243,7 @@ class BaseMegatronTrainer(ABC):
         Returns:
             List of parameter groups.
         """
-        args = self.args
+        from megatron.core.optimizer import _update_min_and_max_lr_in_param_groups
         is_multimodal = args.megatron_model_meta.is_multimodal
         if args.vit_lr is not None or args.aligner_lr is not None:
             assert is_multimodal, 'vit_lr and aligner_lr are only supported for multimodal models.'
