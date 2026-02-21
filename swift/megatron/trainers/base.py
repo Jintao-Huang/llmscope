@@ -609,7 +609,8 @@ class BaseMegatronTrainer(ABC):
             if args.tuner_type == 'lora' and args.merge_lora:
                 self.unmerge_lora_adapters()
 
-        self._rotate_checkpoints(args.output_dir)
+        if is_last_rank():
+            self._rotate_checkpoints(args.output_dir)
 
     def _rotate_checkpoints(self, output_dir: str):
         # Code borrowed from huggingface/transformers
@@ -643,7 +644,7 @@ class BaseMegatronTrainer(ABC):
         ]
 
         # Make sure we don't delete the best model.
-        if (state.best_model_checkpoint is not None and state.best_model_checkpoint in checkpoints_sorted):
+        if state.best_model_checkpoint is not None and state.best_model_checkpoint in checkpoints_sorted:
             best_model_index = checkpoints_sorted.index(state.best_model_checkpoint)
             checkpoints_sorted.pop(best_model_index)
             checkpoints_sorted.append(state.best_model_checkpoint)
