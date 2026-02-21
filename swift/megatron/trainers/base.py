@@ -633,16 +633,11 @@ class BaseMegatronTrainer(ABC):
     def _sorted_checkpoints(self, output_dir: str):
         # Code borrowed from huggingface/transformers
         state = self.state
-        ordering_and_checkpoint_path = []
-
-        glob_checkpoints = [str(x) for x in Path(output_dir).glob('checkpoint-*') if os.path.isdir(x)]
-
-        for path in glob_checkpoints:
-            ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
-        checkpoints_sorted = sorted(ordering_and_checkpoint_path)
-        checkpoints_sorted = [
-            checkpoint[1] for checkpoint in checkpoints_sorted if not checkpoint[1].endswith('-merged')
+        glob_checkpoints = [
+            str(p) for p in Path(output_dir).glob('checkpoint-*') if p.is_dir() and not p.name.endswith('-merged')
         ]
+        # Sort by modification time
+        checkpoints_sorted = sorted(glob_checkpoints, key=os.path.getmtime)
 
         # Make sure we don't delete the best model.
         if state.best_model_checkpoint is not None and state.best_model_checkpoint in checkpoints_sorted:

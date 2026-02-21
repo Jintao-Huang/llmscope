@@ -11,8 +11,7 @@ from swift.infer_engine import prepare_generation_config
 from swift.ray import RayHelper
 from swift.sequence_parallel import sequence_parallel
 from swift.trainers import TrainerFactory
-from swift.utils import (append_to_jsonl, get_logger, get_model_parameter_info, is_last_rank, is_master, plot_images,
-                         stat_array)
+from swift.utils import append_to_jsonl, get_logger, get_model_parameter_info, is_master, plot_images, stat_array
 from ..base import SwiftPipeline
 from ..utils import get_cached_dataset
 from .tuner import TunerMixin
@@ -215,8 +214,8 @@ class SwiftSft(SwiftPipeline, TunerMixin):
                 state.best_model_checkpoint = best_checkpoint
         else:
             state.last_model_checkpoint = None
-        logger.info_if(f'last_model_checkpoint: {state.last_model_checkpoint}', cond=is_last_rank())
-        logger.info_if(f'best_model_checkpoint: {state.best_model_checkpoint}', cond=is_last_rank())
+        logger.info(f'last_model_checkpoint: {state.last_model_checkpoint}')
+        logger.info(f'best_model_checkpoint: {state.best_model_checkpoint}')
 
         # Visualization
         if is_master():
