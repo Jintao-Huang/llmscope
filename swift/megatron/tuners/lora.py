@@ -103,7 +103,7 @@ class LoraParallelLinear(MegatronModule, LoraLayer):
             'config': self.config,
             'is_expert': self.is_expert,
         }
-        if mcore_013 and not mcore_016 and not self.is_grouped:
+        if mcore_013 and not (mcore_016 and self.is_grouped):
             kwargs['tp_group'] = self.base_layer.tp_group
         if isinstance(self.base_layer, TopKRouter):
             router_shape = self.base_layer.weight.shape
