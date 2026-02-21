@@ -2,16 +2,15 @@
 # Part of the implementation is borrowed from huggingface/transformers.
 import inspect
 import os
-from contextlib import contextmanager, nullcontext
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import torch
+from contextlib import contextmanager, nullcontext
 from peft import PeftModel
 from torch import nn
 from torch.nn.utils.rnn import pad_sequence
 from transformers import Seq2SeqTrainer as HfSeq2SeqTrainer
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 from transformers.utils import is_peft_available
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from swift.infer_engine import InferRequest, RequestConfig, TransformersEngine
 from swift.sequence_parallel import sequence_parallel

@@ -1,8 +1,6 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from contextlib import nullcontext
-from typing import List, Optional, Union
-
 import torch
+from contextlib import nullcontext
 from megatron.core import parallel_state, tensor_parallel
 from megatron.core.enums import Fp8Recipe
 from megatron.core.fp8_utils import get_fp8_context
@@ -11,6 +9,7 @@ from megatron.core.models.gpt import gpt_model
 from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.utils import WrappedTensor, deprecate_inference_params, make_viewless_tensor
 from PIL import Image
+from typing import List, Optional, Union
 
 from swift.megatron.utils import split_cp_inputs
 from swift.model import ModelType

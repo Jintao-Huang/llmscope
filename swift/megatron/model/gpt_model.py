@@ -1,13 +1,11 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import math
-import os
-from collections import OrderedDict
-from copy import deepcopy
-from typing import Optional, Tuple
-
 import megatron.core
+import os
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
+from copy import deepcopy
 from megatron.core import parallel_state
 from megatron.core.config_logger import has_config_logger_enabled, log_config_to_disk
 from megatron.core.dist_checkpointing.mapping import ShardedStateDict
@@ -22,6 +20,7 @@ from megatron.core.transformer.multi_token_prediction import MTPLossAutoScaler, 
 from megatron.core.transformer.spec_utils import ModuleSpec
 from megatron.core.utils import WrappedTensor, deprecate_inference_params
 from packaging import version
+from typing import Optional, Tuple
 
 from swift.megatron.utils import split_cp_inputs
 from swift.utils import get_logger

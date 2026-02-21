@@ -1,16 +1,16 @@
 """Functionality for CPU offloading of tensors saved for backward pass."""
 from __future__ import annotations
+
 import functools
 import logging
 import os
-from contextlib import nullcontext
-from typing import Any, Dict, Optional
-
 import torch
+from contextlib import nullcontext
 from torch.distributed.fsdp import FSDPModule as FSDP2
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from transformers.trainer_callback import TrainerControl, TrainerState
 from transformers.training_args import TrainingArguments
+from typing import Any, Dict, Optional
 
 from swift.utils import get_logger
 from .base import TrainerCallback

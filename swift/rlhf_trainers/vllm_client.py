@@ -1,18 +1,17 @@
 import atexit
 import logging
+import requests
 import threading
 import time
+import torch
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
-from typing import List, Optional, Union
-from urllib.parse import urlparse
-
-import requests
-import torch
 from packaging import version
 from pydantic import ValidationError
 from requests import ConnectionError
 from torch import nn
+from typing import List, Optional, Union
+from urllib.parse import urlparse
 
 from swift.infer_engine import AdapterRequest, RequestConfig
 from swift.infer_engine.protocol import ChatCompletionResponse, RolloutInferRequest, RolloutOutput

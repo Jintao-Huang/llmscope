@@ -1,14 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 # Code borrowed from huggingface/peft
 import math
-import warnings
-from contextlib import contextmanager, nullcontext
-from typing import Any, List, Optional, Tuple
-
 import megatron.core
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import warnings
+from contextlib import contextmanager, nullcontext
 from megatron.core import parallel_state
 from megatron.core.dist_checkpointing.mapping import ShardedStateDict
 from megatron.core.extensions.transformer_engine import (TEColumnParallelGroupedLinear, TEColumnParallelLinear,
@@ -26,6 +24,7 @@ from peft.tuners.lora.layer import LoraLayer
 from peft.tuners.tuners_utils import BaseTunerLayer, check_adapters_to_merge
 from peft.utils.other import transpose
 from transformers.utils import is_torch_npu_available
+from typing import Any, List, Optional, Tuple
 
 from swift.utils import get_current_device
 from ..utils import tuners_sharded_state_dict

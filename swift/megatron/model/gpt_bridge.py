@@ -1,18 +1,17 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import math
-from copy import copy
-from typing import List, Literal, Optional, Union
-
 import megatron.core
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 import transformers
+from copy import copy
 from megatron.core import mpu
 from packaging import version
 from peft.utils import ModulesToSaveWrapper
 from tqdm import tqdm
 from transformers.modeling_utils import custom_object_save
+from typing import List, Literal, Optional, Union
 
 from swift.megatron.utils import unwrap_model
 from swift.model import get_model_processor, save_checkpoint
@@ -243,8 +242,8 @@ class GPTBridge:
     @property
     def fp8_quantizer(self):
         if self._fp8_quantizer is None:
-            from transformer_engine_torch import DType as TE_DType
             from transformer_engine.pytorch import Float8BlockQuantizer
+            from transformer_engine_torch import DType as TE_DType
             self._fp8_quantizer = Float8BlockQuantizer(TE_DType.kFloat8E4M3, rowwise=True, columnwise=True)
         return self._fp8_quantizer
 

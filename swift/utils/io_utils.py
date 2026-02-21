@@ -1,12 +1,11 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
+import json
 import os
+import torch.distributed as dist
+from accelerate.utils import gather_object
 from queue import Queue
 from threading import Thread
 from typing import Any, Dict, List, Literal, Union
-
-import json
-import torch.distributed as dist
-from accelerate.utils import gather_object
 
 from .env import is_last_rank, is_master
 from .logger import get_logger

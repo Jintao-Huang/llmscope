@@ -1,15 +1,14 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-import os
-from dataclasses import dataclass, field, fields
-from typing import Any, Dict, List, Literal, Optional, Union
-
 import json
 import megatron.core
+import os
 import torch
+from dataclasses import dataclass, field, fields
 from megatron.core import mpu
 from megatron.core.transformer.enums import AttnBackend
 from packaging import version
 from transformers.utils.versions import require_version
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from swift.arguments import ModelArguments
 from swift.megatron.model import get_megatron_model_meta
@@ -662,6 +661,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     def _init_vpp_size(self):
         if self.pipeline_model_parallel_layout is not None:
             from megatron.core.transformer.pipeline_parallel_layer_layout import PipelineParallelLayerLayout
+
             # Parse the input flattened layout to a list and get the vpp size.
             # We will validate the layout more carefully in the TransformerConfig constructor.
             num_stages = PipelineParallelLayerLayout.get_num_stages_from_str(self.pipeline_model_parallel_layout)

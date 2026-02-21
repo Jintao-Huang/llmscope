@@ -1,9 +1,7 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from copy import deepcopy
-from typing import Optional, Tuple, Union
-
 import megatron.core
 import torch
+from copy import deepcopy
 from megatron.core.extensions.transformer_engine import TEColumnParallelLinear, _get_extra_te_kwargs
 from megatron.core.inference.contexts import BaseInferenceContext
 from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
@@ -18,6 +16,7 @@ from megatron.core.transformer.spec_utils import build_module
 from megatron.core.transformer.transformer_block import TransformerBlockSubmodules
 from megatron.core.utils import deprecate_inference_params, is_fa_min_version
 from packaging import version
+from typing import Optional, Tuple, Union
 
 from swift.megatron.utils import get_local_layer_specs
 from swift.model import ModelType

@@ -1,14 +1,13 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from collections import defaultdict
-from functools import partial
-from typing import List, Optional
-
 import torch
 import torch.distributed as dist
 import torch.nn
+from collections import defaultdict
+from functools import partial
 from megatron.core import mpu
 from torch.distributed.nn import all_reduce
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+from typing import List, Optional
 
 from swift.utils import get_logger
 from .base import BaseMegatronTrainer

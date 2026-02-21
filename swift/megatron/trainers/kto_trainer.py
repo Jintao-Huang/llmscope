@@ -1,11 +1,10 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
+import torch
 from collections import namedtuple
 from functools import partial
-from typing import Any, Dict
-
-import torch
 from megatron.core import mpu
 from trl import KTOTrainer
+from typing import Any, Dict
 
 from swift.utils import get_current_device, get_logger
 from .rlhf_mixin import MegatronRLHFTrainer

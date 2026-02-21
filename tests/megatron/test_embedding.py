@@ -4,7 +4,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 
 def test_embedding():
-    from swift.megatron import megatron_sft_main, MegatronSftArguments
+    from swift.megatron import MegatronSftArguments, megatron_sft_main
     megatron_sft_main(
         MegatronSftArguments(
             model='Qwen/Qwen3-Embedding-0.6B',
@@ -30,7 +30,7 @@ def test_embedding():
 
 
 def test_reranker():
-    from swift.megatron import megatron_sft_main, MegatronSftArguments
+    from swift.megatron import MegatronSftArguments, megatron_sft_main
     megatron_sft_main(
         MegatronSftArguments(
             model='Qwen/Qwen3-Reranker-4B',

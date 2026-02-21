@@ -1,11 +1,11 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from abc import ABC, abstractmethod
+import torch
 from typing import TYPE_CHECKING
 
-import torch
+from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
-    from swift.trainers import TrainingArguments, Trainer
+    from swift.trainers import Trainer, TrainingArguments
 
 
 class BaseLoss(ABC):

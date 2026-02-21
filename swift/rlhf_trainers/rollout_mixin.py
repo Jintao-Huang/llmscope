@@ -2,29 +2,28 @@
 import base64
 import concurrent.futures
 import inspect
+import json
 import os
 import re
 import time
+import torch
+import torch.nn as nn
 import uuid
+from accelerate.utils import broadcast_object_list, gather_object, is_peft_model, set_seed
 from collections import OrderedDict
 from concurrent.futures import Future
 from contextlib import contextmanager, nullcontext
 from copy import copy, deepcopy
+from dacite import from_dict
 from dataclasses import asdict, dataclass
 from math import ceil
-from queue import Queue
-from types import MethodType
-from typing import Any, Dict, List, Optional, Union
-
-import json
-import torch
-import torch.nn as nn
-from accelerate.utils import broadcast_object_list, gather_object, is_peft_model, set_seed
-from dacite import from_dict
 from peft.utils.save_and_load import get_peft_model_state_dict
+from queue import Queue
 from torch.nn import ModuleList
 from torch.utils.data import DataLoader
 from transformers import PreTrainedModel, TrainerCallback
+from types import MethodType
+from typing import Any, Dict, List, Optional, Union
 
 from swift.infer_engine import RequestConfig
 from swift.infer_engine.protocol import ChatCompletionResponse, RolloutInferRequest, RolloutOutput

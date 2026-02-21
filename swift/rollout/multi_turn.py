@@ -1,10 +1,10 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 # Multi-turn Rollout Schedulers for GRPO training.
 import asyncio
-from abc import ABC
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Union
 
+from abc import ABC
 from swift.infer_engine import GRPOVllmEngine
 from swift.infer_engine.protocol import (ChatCompletionResponse, ChatCompletionResponseChoice, RequestConfig,
                                          RolloutInferRequest, RolloutOutput)

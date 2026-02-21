@@ -9,6 +9,7 @@ try:
         from vllm.sampling_params import GuidedDecodingParams
     except ImportError:
         import vllm.sampling_params
+
         # removed in https://github.com/vllm-project/vllm/pull/22772
         vllm.sampling_params.GuidedDecodingParams = vllm.sampling_params.StructuredOutputsParams
 except ImportError:
@@ -19,20 +20,19 @@ import inspect
 import multiprocessing
 import os
 import time
+import torch
+import torch.distributed.distributed_c10d as c10d
 import traceback
+import uvicorn
+from aiohttp import ClientConnectorError
 from collections.abc import Sequence
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import asdict
+from fastapi import FastAPI
 from itertools import chain
 from multiprocessing import Pipe, Process
 from multiprocessing.connection import Connection
 from typing import Dict, List, Optional, Union
-
-import torch
-import torch.distributed.distributed_c10d as c10d
-import uvicorn
-from aiohttp import ClientConnectorError
-from fastapi import FastAPI
 
 from swift.arguments import RolloutArguments
 from swift.infer_engine import GRPOVllmEngine, InferClient
@@ -51,9 +51,9 @@ try:
         from vllm.utils.network_utils import get_open_port
     else:
         from vllm.utils import get_open_port
+    from vllm.distributed.device_communicators.pynccl import PyNcclCommunicator
     from vllm.distributed.parallel_state import get_world_group
     from vllm.distributed.utils import StatelessProcessGroup
-    from vllm.distributed.device_communicators.pynccl import PyNcclCommunicator
     if is_vllm_ascend_available():
         from vllm_ascend.distributed.device_communicators.pyhccl import PyHcclCommunicator as PyNcclCommunicator  # noqa
 

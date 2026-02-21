@@ -1,10 +1,9 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-import warnings
-from typing import Optional, Union
-
 import torch.nn as nn
+import warnings
 from transformers import PreTrainedModel
 from trl import CPOTrainer as HFCPOTrainer
+from typing import Optional, Union
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin

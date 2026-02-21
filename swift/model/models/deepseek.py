@@ -1,8 +1,7 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import sys
-from typing import Any, Dict
-
 from transformers import AutoModel, PretrainedConfig, PreTrainedModel
+from typing import Any, Dict
 
 from swift.template import TemplateType
 from swift.utils import Processor, git_clone_github
@@ -310,6 +309,7 @@ class DeepseekOCRLoader(ModelLoader):
 
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
         from transformers import AutoProcessor, AutoTokenizer
+
         # When not loading model (e.g., vllm backend), avoid triggering AutoConfig which would execute
         # trust_remote_code and cause transformers version compatibility issues
         # For vllm backend, we only need the processor/tokenizer

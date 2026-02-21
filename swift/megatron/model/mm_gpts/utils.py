@@ -1,12 +1,11 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from abc import ABC, abstractmethod
-from contextlib import contextmanager
-
 import torch
+from contextlib import contextmanager
 from megatron.core.models.huggingface import HuggingFaceModule as _HuggingFaceModule
 from transformers import PreTrainedModel
 from transformers.utils import ContextManagers
 
+from abc import ABC, abstractmethod
 from swift.model import get_model_processor
 from swift.utils import deep_getattr, disable_safe_ddp_context_use_barrier
 

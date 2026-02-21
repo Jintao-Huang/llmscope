@@ -1,12 +1,11 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import re
-from dataclasses import dataclass, fields
-from typing import Any, Dict, List, Literal, Optional, Union
-
 import torch.nn.functional as F
+from dataclasses import dataclass, fields
 from megatron.core import mpu
 from megatron.core.transformer import TransformerConfig
 from transformers.utils import is_torch_npu_available
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from swift.utils import get_logger, json_parse_to_dict
 

@@ -4,7 +4,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 
 def test_kto():
-    from swift.megatron import megatron_rlhf_main, MegatronRLHFArguments
+    from swift.megatron import MegatronRLHFArguments, megatron_rlhf_main
     megatron_rlhf_main(
         MegatronRLHFArguments(
             mcore_model='Qwen2.5-7B-Instruct-mcore',

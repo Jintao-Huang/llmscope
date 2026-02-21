@@ -4,20 +4,19 @@ import importlib.metadata
 import inspect
 import logging
 import os
+import peft
 import subprocess
 import sys
-from contextlib import contextmanager
-from copy import copy
-from functools import partial
-from typing import List, Optional, Tuple
-
-import peft
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from contextlib import contextmanager
+from copy import copy
+from functools import partial
 from packaging import version
 from tqdm import tqdm
 from transformers.utils import is_torch_npu_available
+from typing import List, Optional, Tuple
 
 from swift.utils import get_logger, is_flash_attn_3_available, split_list
 
@@ -58,14 +57,12 @@ def _patch__batched_p2p_ops():
 def _patch_mla_attention():
     # support thd
     import megatron.core
-    from megatron.core.utils import deprecate_inference_params
     from megatron.core import parallel_state, tensor_parallel
-    from megatron.core.transformer.multi_latent_attention import MultiLatentAttention, MLASelfAttention
-    from megatron.core.tensor_parallel.mappings import (
-        gather_from_sequence_parallel_region,
-        gather_from_tensor_model_parallel_region,
-        scatter_to_sequence_parallel_region,
-    )
+    from megatron.core.tensor_parallel.mappings import (gather_from_sequence_parallel_region,
+                                                        gather_from_tensor_model_parallel_region,
+                                                        scatter_to_sequence_parallel_region)
+    from megatron.core.transformer.multi_latent_attention import MLASelfAttention, MultiLatentAttention
+    from megatron.core.utils import deprecate_inference_params
     mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
 
     # Code borrowed from NVIDIA/Megatron-LM
@@ -297,6 +294,7 @@ def _patch_mla_attention():
             k_no_pe, value = torch.split(kv, [self.config.qk_head_dim, self.config.v_head_dim], dim=-1)
             # This function will be patched and supports mscale.
             from megatron.core.transformer.attention import apply_rotary_pos_emb
+
             # q_pos_emb: [num_tokens, n, qk_pos_emb_head_dim]
             q_pos_emb = apply_rotary_pos_emb(
                 q_pos_emb,
@@ -382,8 +380,8 @@ def _patch_TEGroupedLinear():
 
 def _patch_mtp():
     from megatron.core import InferenceParams
-    from megatron.core.transformer.multi_token_prediction import MultiTokenPredictionLayer
     from megatron.core.packed_seq_params import PackedSeqParams
+    from megatron.core.transformer.multi_token_prediction import MultiTokenPredictionLayer
 
     def forward(
         self,
@@ -481,6 +479,7 @@ def _patch_peft_ModulesToSaveWrapper():
     else:
         from peft.tuners import tuners_utils as peft_module
     from megatron.core.dist_checkpointing.mapping import ShardedStateDict
+
     from .utils import tuners_sharded_state_dict
 
     OriginModulesToSaveWrapper = peft_module.ModulesToSaveWrapper
@@ -653,11 +652,11 @@ def _patch__write_item():
 
 
 def _patch_mrope():
-    from megatron.core.models.common.embeddings.rotary_pos_embedding import MultimodalRotaryEmbedding
     import megatron.core
     from megatron.core import mpu
-    from megatron.core.models.common.embeddings.rope_utils import _apply_rotary_pos_emb_bshd
     from megatron.core.models.common.embeddings import rope_utils
+    from megatron.core.models.common.embeddings.rope_utils import _apply_rotary_pos_emb_bshd
+    from megatron.core.models.common.embeddings.rotary_pos_embedding import MultimodalRotaryEmbedding
 
     mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
 

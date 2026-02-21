@@ -1,18 +1,17 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import gc
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
-
 import megatron.core
 import torch
 from accelerate.utils import gather as hf_gather
 from accelerate.utils import gather_object as hf_gather_object
+from dataclasses import dataclass
 from megatron.core import mpu
 from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.optimizer import ChainedOptimizer
 from megatron.core.packed_seq_params import PackedSeqParams
 from packaging import version
 from transformers.utils import is_torch_npu_available
+from typing import Any, Dict, Optional
 
 from swift.dataloader import DataLoaderDispatcher
 from swift.megatron.utils import split_cp_inputs
@@ -304,8 +303,8 @@ def offload_megatron_optimizer(optimizers):
 
 
 def log_gpu_memory(prefix: str = '', info_once: bool = False):
-    log_msg = (f'{prefix} GPU memory: {torch.cuda.memory_allocated()/1024**3:.2f}GB allocated, '
-               f'{torch.cuda.memory_reserved()/1024**3:.2f}GB reserved')
+    log_msg = (f'{prefix} GPU memory: {torch.cuda.memory_allocated() / 1024**3:.2f}GB allocated, '
+               f'{torch.cuda.memory_reserved() / 1024**3:.2f}GB reserved')
     if info_once:
         logger.info_once(log_msg, hash_id=prefix)
     else:

@@ -1,14 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import asyncio
 import inspect
+import lmdeploy
 import os
 import time
+import torch
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
-
-import lmdeploy
-import torch
 from lmdeploy import PytorchEngineConfig, TurbomindEngineConfig, VisionConfig, pipeline
 from lmdeploy.api import autoget_backend_config
 from lmdeploy.serve import async_engine
@@ -16,6 +14,7 @@ from packaging import version
 from PIL import Image
 from transformers import GenerationConfig
 from transformers.utils.versions import require_version
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 from swift.metrics import Metric
 from swift.model import get_model_info_meta, get_processor

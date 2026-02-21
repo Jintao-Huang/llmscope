@@ -1,30 +1,27 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 # Part of the implementation is borrowed from huggingface/transformers.
 import collections
+import datasets
 import inspect
+import json
 import logging
+import numpy as np
 import os
 import random
 import re
+import safetensors
 import shutil
 import time
-import warnings
-from contextlib import contextmanager
-from copy import copy
-from functools import partial, wraps
-from types import MethodType
-from typing import Callable, Dict, List, Optional
-
-import datasets
-import json
-import numpy as np
-import safetensors
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.utils.checkpoint
 import transformers
+import warnings
+from contextlib import contextmanager
+from copy import copy
 from datasets import Dataset as HfDataset
+from functools import partial, wraps
 from modelscope import check_local_model_is_latest
 from packaging import version
 from peft import PeftModel
@@ -36,6 +33,8 @@ from transformers.trainer import OPTIMIZER_NAME, PREFIX_CHECKPOINT_DIR, SCHEDULE
 from transformers.trainer import Trainer as HfTrainer
 from transformers.trainer import reissue_pt_warnings
 from transformers.trainer_utils import IntervalStrategy
+from types import MethodType
+from typing import Callable, Dict, List, Optional
 
 from swift.callbacks import callbacks_map
 from swift.dataloader import BatchSamplerShard, DataLoaderDispatcher, DataLoaderShard
@@ -548,9 +547,9 @@ class SwiftMixin:
         return result
 
     def _save_flash_checkpoint(self, model, trial, metrics=None):
+        from dlrover.trainer.torch.flash_checkpoint.hf_trainer import HfDdpCheckpointer, HfDeepSpeedCheckpointer
         from transformers.trainer import DeepSpeedSchedulerWrapper
         from transformers.trainer_utils import SaveStrategy
-        from dlrover.trainer.torch.flash_checkpoint.hf_trainer import HfDdpCheckpointer, HfDeepSpeedCheckpointer
         run_dir = self._get_output_dir(trial=trial)
 
         torch_native_save = torch.save
@@ -1076,8 +1075,9 @@ class SwiftMixin:
 
     @torch.no_grad()
     def _evalscope_eval(self):
-        from ..pipelines.eval.utils import EvalModel
         from evalscope import TaskConfig, run_task
+
+        from ..pipelines.eval.utils import EvalModel
 
         self.model.eval()
         template = copy(self.template)

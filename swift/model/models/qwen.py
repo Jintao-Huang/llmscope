@@ -1,9 +1,6 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import importlib.metadata
 import os
-from types import MethodType
-from typing import Any, Dict, Optional, Tuple, Type, Union
-
 import torch
 import transformers
 from packaging import version
@@ -12,6 +9,8 @@ from transformers import AutoTokenizer, BitsAndBytesConfig, PretrainedConfig, Pr
 from transformers.dynamic_module_utils import get_class_from_dynamic_module
 from transformers.models.auto.tokenization_auto import get_tokenizer_config
 from transformers.utils.versions import require_version
+from types import MethodType
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 from swift.template import TemplateType
 from swift.utils import (Processor, get_device_count, get_dist_setting, get_env_args, get_logger, is_deepspeed_enabled,
@@ -950,8 +949,8 @@ def _patch_deepstack_process(model):
 def _compat_qwen3_vl_mixed_data(model, processor, is_moe: bool = False):
     if hasattr(model, 'origin_forward'):
         return
-    from transformers.models.qwen3_vl.modeling_qwen3_vl import (Qwen3VLModelOutputWithPast, TransformersKwargs, Unpack,
-                                                                check_model_inputs, Cache)
+    from transformers.models.qwen3_vl.modeling_qwen3_vl import (Cache, Qwen3VLModelOutputWithPast, TransformersKwargs,
+                                                                Unpack, check_model_inputs)
     from transformers.models.qwen3_vl_moe.modeling_qwen3_vl_moe import Qwen3VLMoeModelOutputWithPast
     output_cls = Qwen3VLMoeModelOutputWithPast if is_moe else Qwen3VLModelOutputWithPast
 
@@ -1177,8 +1176,8 @@ class Qwen2_5OmniLoader(ModelLoader):
         return model
 
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
-        from transformers import Qwen2_5OmniProcessor
         from qwen_omni_utils import vision_process
+        from transformers import Qwen2_5OmniProcessor
         processor = Qwen2_5OmniProcessor.from_pretrained(model_dir, trust_remote_code=True)
         global_vars = patch_qwen_vl_utils(vision_process)
         processor.global_vars = global_vars
@@ -1375,8 +1374,8 @@ class Qwen3OmniLoader(ModelLoader):
         return model
 
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
-        from transformers import Qwen3OmniMoeProcessor
         from qwen_omni_utils import vision_process
+        from transformers import Qwen3OmniMoeProcessor
         processor = Qwen3OmniMoeProcessor.from_pretrained(model_dir, trust_remote_code=True)
         config.thinker_config.audio_token_id = processor.tokenizer.encode('<|audio_pad|>')[0]
         global_vars = patch_qwen_vl_utils(vision_process)

@@ -1,8 +1,6 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Type, Union
-
 import megatron.core
+from dataclasses import dataclass
 from megatron.core import mpu
 from megatron.core.enums import ModelType
 from megatron.core.models.gpt.gpt_layer_specs import (get_gpt_decoder_block_spec,
@@ -10,6 +8,7 @@ from megatron.core.models.gpt.gpt_layer_specs import (get_gpt_decoder_block_spec
                                                       get_gpt_mtp_block_spec)
 from packaging import version
 from torch import nn
+from typing import TYPE_CHECKING, List, Optional, Type, Union
 
 from swift.model import MODEL_MAPPING
 from swift.utils import get_logger

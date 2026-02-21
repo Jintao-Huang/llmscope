@@ -7,12 +7,11 @@ that support tool calling in conversational AI systems. It includes support
 for various agent formats like ReAct, function calling, and parallel execution.
 """
 import ast
-from abc import ABC, abstractmethod
+import json
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
-import json
-
+from abc import ABC, abstractmethod
 from swift.infer_engine import Function
 from swift.template import Prompt, split_str_parts_by
 

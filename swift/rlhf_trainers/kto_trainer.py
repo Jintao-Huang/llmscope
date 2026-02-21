@@ -1,11 +1,10 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from typing import Dict, Optional, Union
-
 import torch
 import torch.nn as nn
 from peft import PeftModel
 from transformers import PreTrainedModel
 from trl import KTOTrainer as HFKTOTrainer
+from typing import Dict, Optional, Union
 
 from swift.trainers import SwiftMixin, disable_gradient_checkpointing
 from swift.utils import get_logger

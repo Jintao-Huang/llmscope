@@ -1,7 +1,7 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from abc import ABC, abstractmethod
 from typing import AsyncIterator, Iterator, List, Optional, Union
 
+from abc import ABC, abstractmethod
 from swift.metrics import Metric
 from .protocol import ChatCompletionResponse, ChatCompletionStreamResponse, InferRequest, RequestConfig
 

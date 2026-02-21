@@ -1,19 +1,18 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import math
 import os
-from contextlib import contextmanager, nullcontext
-from functools import partial
-from types import MethodType
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
-
 import torch
 import transformers
+from contextlib import contextmanager, nullcontext
+from functools import partial
 from packaging import version
 from peft import PeftModel
 from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM, AutoModelForSequenceClassification,
                           AutoTokenizer, GenerationConfig, PretrainedConfig, PreTrainedModel, PreTrainedTokenizerBase)
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils import strtobool
+from types import MethodType
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from swift.utils import (HfConfigFactory, Processor, get_generative_reranker_logits, get_logger, is_unsloth_available,
                          patch_getattr)
@@ -55,7 +54,7 @@ def load_by_unsloth(args):
 
     @contextmanager
     def _patch_distributed_function():
-        from unsloth_zoo import utils, compiler
+        from unsloth_zoo import compiler, utils
 
         def distributed_function(n=1, function=None, *args, **kwargs):
             return function(*args, **kwargs)
@@ -102,8 +101,8 @@ def _patch_awq_compat(model_info):
 
     try:
         # compat transformers>=4.50 (autoawq)
-        from transformers.quantizers.quantizer_awq import AwqQuantizer
         from transformers.integrations import get_keys_to_not_convert
+        from transformers.quantizers.quantizer_awq import AwqQuantizer
         _process_model_before_weight_loading = AwqQuantizer._process_model_before_weight_loading
 
         def _new_process_model_before_weight_loading(self, model, *args, **kwargs):

@@ -1,10 +1,9 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
+import json
 import os
 from dataclasses import dataclass, field, fields
-from typing import Any, Dict, List, Literal, Optional, Union
-
-import json
 from packaging import version
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import swift
 from swift.hub import get_hub

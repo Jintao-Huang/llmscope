@@ -1,13 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import inspect
+import numpy as np
 import os
 import tempfile
-from typing import Any, Callable, Dict, Optional, Union
-
-import numpy as np
 from datasets import Dataset as HfDataset
 from modelscope.hub.utils.utils import get_cache_dir
 from torch.utils.data import Dataset
+from typing import Any, Callable, Dict, Optional, Union
 
 from swift.template import Template
 from swift.utils import get_logger

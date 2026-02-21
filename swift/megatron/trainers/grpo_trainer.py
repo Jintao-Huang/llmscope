@@ -4,22 +4,21 @@ import atexit
 import base64
 import concurrent.futures
 import inspect
-import os
-import uuid
-from collections import defaultdict
-from contextlib import contextmanager, nullcontext
-from copy import copy, deepcopy
-from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import json
+import os
 import pandas as pd
 import torch
 import torch.nn as nn
+import uuid
 from accelerate.utils import broadcast_object_list
+from collections import defaultdict
+from contextlib import contextmanager, nullcontext
+from copy import copy, deepcopy
 from dacite import from_dict
+from functools import partial
 from megatron.core import mpu
 from megatron.core.rerun_state_machine import RerunDataIterator
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from swift.dataset import RowPreprocessor
 from swift.infer_engine.protocol import RequestConfig, RolloutInferRequest, RolloutOutput
@@ -1675,8 +1674,9 @@ class MegatronGRPOTrainer(MegatronRolloutMixin, MegatronRLHFTrainer):
 
     def _prepare_metrics(self):
         args = self.args
-        from swift.utils import JsonlWriter
         from collections import deque
+
+        from swift.utils import JsonlWriter
         self.log_completions = args.log_completions
         self.wandb_log_unique_prompts = args.wandb_log_unique_prompts
         self.jsonl_writer = JsonlWriter(os.path.join(args.output_dir, 'completions.jsonl'), write_on_rank='last')

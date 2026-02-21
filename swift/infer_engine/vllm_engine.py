@@ -2,16 +2,15 @@
 import asyncio
 import inspect
 import os
+import torch
 from contextlib import nullcontext
 from copy import deepcopy
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
-
-import torch
 from packaging import version
 from PIL import Image
 from tqdm import tqdm
 from transformers import GenerationConfig
 from transformers.utils import is_torch_npu_available
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 from swift.metrics import Metric
 from swift.model import get_model_info_meta, get_processor
@@ -30,7 +29,7 @@ try:
     os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
     os.environ['VLLM_ENGINE_ITERATION_TIMEOUT_S'] = '86400'
     import vllm
-    from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams, EngineArgs, LLMEngine
+    from vllm import AsyncEngineArgs, AsyncLLMEngine, EngineArgs, LLMEngine, SamplingParams
     from vllm.pooling_params import PoolingParams
     try:
         # vLLM v0.12+ uses StructuredOutputsParams

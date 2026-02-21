@@ -1,14 +1,13 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import random
+import torch
+import torch.nn.functional as F
 from contextlib import contextmanager
 from enum import Enum
 from functools import partial
-from typing import Dict, List, Optional
-
-import torch
-import torch.nn.functional as F
 from megatron.core import mpu
 from megatron.core.rerun_state_machine import RerunDataIterator
+from typing import Dict, List, Optional
 
 from swift.megatron.arguments import MegatronArguments
 from swift.megatron.model import get_mcore_model

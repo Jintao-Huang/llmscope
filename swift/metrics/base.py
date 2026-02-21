@@ -1,12 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict
-
 import torch
 from transformers.trainer_utils import EvalPrediction
+from typing import TYPE_CHECKING, Dict
+
+from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
-    from swift.trainers import TrainingArguments, Trainer
+    from swift.trainers import Trainer, TrainingArguments
 
 
 class EvalMetrics(ABC):

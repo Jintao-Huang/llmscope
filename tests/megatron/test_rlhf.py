@@ -4,7 +4,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 
 def test_dpo():
-    from swift.megatron import megatron_rlhf_main, MegatronRLHFArguments
+    from swift.megatron import MegatronRLHFArguments, megatron_rlhf_main
     megatron_rlhf_main(
         MegatronRLHFArguments(
             mcore_model='Qwen2.5-3B-Instruct-mcore',
@@ -20,7 +20,7 @@ def test_dpo():
 
 
 def test_hf():
-    from swift import rlhf_main, RLHFArguments
+    from swift import RLHFArguments, rlhf_main
     rlhf_main(
         RLHFArguments(
             model='Qwen/Qwen2.5-3B-Instruct',

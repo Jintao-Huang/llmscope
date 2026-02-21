@@ -2,16 +2,14 @@
 # Parts of the functions in this file are code borrowed from NVIDIA/Megatron-LM
 import copy
 import dataclasses
+import megatron.core
+import numpy as np
 import os
 import random
+import torch
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import timedelta
-from typing import Optional
-
-import megatron.core
-import numpy as np
-import torch
 from megatron.core import dist_checkpointing, mpu, tensor_parallel
 from megatron.core.dist_checkpointing.mapping import ShardedObject
 from megatron.core.dist_checkpointing.serialization import (get_default_load_sharded_strategy,
@@ -25,6 +23,7 @@ from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
 from megatron.core.utils import get_torch_version, is_torch_min_version
 from packaging import version
+from typing import Optional
 
 from swift.utils import check_json_format, get_logger, init_process_group, is_master, seed_everything, set_device
 from .patcher import patch_merge_fn

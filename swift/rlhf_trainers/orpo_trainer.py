@@ -1,9 +1,8 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-from typing import Optional, Union
-
 import torch.nn as nn
 from transformers import PreTrainedModel
 from trl import ORPOTrainer as HFORPOTrainer
+from typing import Optional, Union
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin

@@ -1,10 +1,9 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import os
-from dataclasses import asdict
-from typing import List, Optional, Union
-
 import torch
+from dataclasses import asdict
 from transformers.utils import is_torch_npu_available
+from typing import List, Optional, Union
 
 from swift.megatron.arguments import MegatronSftArguments
 from swift.megatron.trainers import MegatronEmbeddingTrainer, MegatronRerankerTrainer, MegatronTrainer
