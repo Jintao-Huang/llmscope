@@ -1124,6 +1124,7 @@ register_model(
         MLLMModelType.qwen3_5_moe, [
             ModelGroup([
                 Model('Qwen/Qwen3.5-397B-A17B', 'Qwen/Qwen3.5-397B-A17B'),
+                Model('Qwen/Qwen3.5-397B-A17B-FP8', 'Qwen/Qwen3.5-397B-A17B-FP8'),
             ], TemplateType.qwen3_5),
         ],
         Qwen3_5MoeLoader,
