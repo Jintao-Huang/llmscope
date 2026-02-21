@@ -561,7 +561,6 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
             os.environ['NVTE_APPLY_QK_LAYER_SCALING'] = '1'
 
     def __post_init__(self):
-        require_version('numpy<2.0', 'Please install numpy<2.0 by running: `pip install "numpy<2.0"`.')
         if self.tuner_type == 'lora':
             require_version('peft>=0.15')
         RLHFMegatronArgumentsMixin.__post_init__(self)
