@@ -578,7 +578,8 @@ class BaseMegatronTrainer(ABC):
             self.optimizer,
             self.opt_param_scheduler,
             iteration=iteration,
-            is_peft_format=args.tuner_type == 'lora')
+            is_peft_format=args.tuner_type == 'lora',
+            output_dir=output_dir)
         state.last_model_checkpoint = output_dir
         if state.best_global_step:
             best_model_checkpoint = os.path.join(args.output_dir, f'checkpoint-{state.best_global_step}')
