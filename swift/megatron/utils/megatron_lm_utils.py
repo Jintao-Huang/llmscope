@@ -115,7 +115,7 @@ def initialize_megatron(args):
         from megatron.core.transformer.moe.router import MoEAuxLossAutoScaler
         MoEAuxLossAutoScaler.set_loss_scale(torch.ones(1, device=torch.cuda.current_device()))
 
-    # TODO: tp_comm_overlap, _compile_dependencies
+    # TODO: tp_comm_overlap
 
 
 def _get_rng_state():
@@ -303,7 +303,6 @@ def save_mcore_checkpoint(
     if is_master():
 
         def iter_finalize_fn():
-            # TODO: save_total_limit
             if models:
                 logger.info(f'Successfully saved Megatron model weights in `{output_dir}`.')
 

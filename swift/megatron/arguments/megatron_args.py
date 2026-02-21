@@ -404,7 +404,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     async_save: bool = False
     save_total_limit: Optional[int] = None
     metric_for_best_model: Optional[str] = None
-    greater_is_better: Optional[str] = None
+    greater_is_better: Optional[bool] = None
 
     use_persistent_ckpt_worker: bool = False
     dist_ckpt_save_pre_mcore_014: bool = False
