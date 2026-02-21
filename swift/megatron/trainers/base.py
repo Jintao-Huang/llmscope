@@ -1,11 +1,13 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import dataclasses
 import logging
+import operator
 import os
 import shutil
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext
 from functools import partial
+from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import megatron.core
@@ -523,27 +525,46 @@ class BaseMegatronTrainer(ABC):
                 self.on_log(logs=train_metrics)
                 train_metrics = {}
 
+            eval_metrics = None
             if state.should_eval:
                 state.should_eval = False
-                self.evaluate(val_data_iterator)
+                eval_metrics = self.evaluate(val_data_iterator)
                 for m in self.wrapped_models:
                     m.train()
 
             if state.should_save:
+                if eval_metrics is not None and is_last_rank():
+                    self._determine_best_metric(eval_metrics)
                 state.should_save = False
                 self.save_checkpoint()
 
         self.call_event('on_train_end')
         maybe_finalize_async_save(args, blocking=True, terminate=True)
 
+    def _determine_best_metric(self, metrics) -> bool:
+        args = self.args
+        state = self.state
+        if args.metric_for_best_model is None:
+            return False
+        metric_value = metrics[args.metric_for_best_model]
+        op = operator.gt if args.greater_is_better else operator.lt
+        if state.best_metric is None:
+            state.best_metric = float('-inf') if args.greater_is_better else float('inf')
+
+        is_new_best_metric = False
+        if op(metric_value, state.best_metric):
+            state.best_metric = metric_value
+            state.best_global_step = state.global_step
+            is_new_best_metric = True
+        return is_new_best_metric
+
     def save_checkpoint(self):
         args = self.args
-        args.consumed_train_samples = self.state.consumed_train_samples
-        iteration = self.state.iteration
+        state = self.state
+        args.consumed_train_samples = state.consumed_train_samples
+        iteration = state.iteration
         output_dir = os.path.join(args.output_dir, f'checkpoint-{iteration}')
         os.makedirs(output_dir, exist_ok=True)
-        origin_output_dir = args.output_dir
-        args.output_dir = output_dir
         args_path = os.path.join(os.path.dirname(output_dir), 'args.json')
         self.copy_path(args_path, os.path.join(output_dir, 'args.json'))
         save_peft_format = args.tuner_type == 'lora' and not args.merge_lora
@@ -558,7 +579,11 @@ class BaseMegatronTrainer(ABC):
             self.opt_param_scheduler,
             iteration=iteration,
             is_peft_format=args.tuner_type == 'lora')
-        args.output_dir = origin_output_dir
+        state.last_model_checkpoint = output_dir
+        if state.best_global_step:
+            best_model_checkpoint = os.path.join(args.output_dir, f'checkpoint-{state.best_global_step}')
+            if os.path.exists(best_model_checkpoint):
+                state.best_model_checkpoint = best_model_checkpoint
         # safetensors
         if args.save_safetensors:
             # merge-lora does not store lora, lora saving may report an error (Qwen3-VL-Moe)
@@ -583,6 +608,46 @@ class BaseMegatronTrainer(ABC):
                 hf_config=self.template.config)
             if args.tuner_type == 'lora' and args.merge_lora:
                 self.unmerge_lora_adapters()
+
+        self._rotate_checkpoints(args.output_dir)
+
+    def _rotate_checkpoints(self, output_dir: str):
+        # Code borrowed from huggingface/transformers
+        args = self.args
+        if args.save_total_limit is None or args.save_total_limit <= 0:
+            return
+
+        checkpoints_sorted = self._sorted_checkpoints(output_dir)
+        if len(checkpoints_sorted) <= args.save_total_limit:
+            return
+
+        number_of_checkpoints_to_delete = max(0, len(checkpoints_sorted) - args.save_total_limit)
+        checkpoints_to_be_deleted = checkpoints_sorted[:number_of_checkpoints_to_delete]
+        for checkpoint in checkpoints_to_be_deleted:
+            shutil.rmtree(checkpoint, ignore_errors=True)
+            if os.path.exists(f'{checkpoint}-merged'):
+                shutil.rmtree(f'{checkpoint}-merged', ignore_errors=True)
+
+    def _sorted_checkpoints(self, output_dir: str):
+        # Code borrowed from huggingface/transformers
+        state = self.state
+        ordering_and_checkpoint_path = []
+
+        glob_checkpoints = [str(x) for x in Path(output_dir).glob('checkpoint-*') if os.path.isdir(x)]
+
+        for path in glob_checkpoints:
+            ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
+        checkpoints_sorted = sorted(ordering_and_checkpoint_path)
+        checkpoints_sorted = [
+            checkpoint[1] for checkpoint in checkpoints_sorted if not checkpoint[1].endswith('-merged')
+        ]
+
+        # Make sure we don't delete the best model.
+        if (state.best_model_checkpoint is not None and state.best_model_checkpoint in checkpoints_sorted):
+            best_model_index = checkpoints_sorted.index(state.best_model_checkpoint)
+            checkpoints_sorted.pop(best_model_index)
+            checkpoints_sorted.append(state.best_model_checkpoint)
+        return checkpoints_sorted
 
     def training_log(self, metrics, grad_norm):
         learning_rate = None
@@ -616,6 +681,7 @@ class BaseMegatronTrainer(ABC):
         self.compute_eval_metrics(eval_metrics)
         self.on_log(logs=eval_metrics, prefix='eval_')
         self.call_event('on_eval_end')
+        return eval_metrics
 
     def compute_eval_metrics(self, metrics):
         if self.eval_metrics is not None:

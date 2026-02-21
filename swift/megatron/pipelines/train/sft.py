@@ -66,6 +66,9 @@ class MegatronSft(SwiftSft):
         try:
             trainer.train(train_dataset, val_dataset)
         finally:
+            state = trainer.state
+            logger.info(f'last_model_checkpoint: {state.last_model_checkpoint}')
+            logger.info(f'best_model_checkpoint: {state.best_model_checkpoint}')
             # Visualization
             if is_last_rank():
                 images_dir = os.path.join(args.output_dir, 'images')

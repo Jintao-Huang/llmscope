@@ -608,8 +608,13 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
                 self.gradient_accumulation_fusion = False
         self.callbacks += ['print', 'default_flow']
         self.callbacks += self.report_to
+        if self.save_total_limit is not None:
+            if self.async_save:
+                raise ValueError('async_save is not supported with save_total_limit.')
+            if self.save_total_limit == 1:
+                raise ValueError('save_total_limit must be greater than 1')
         if self.metric_for_best_model is None:
-            self.metric_for_best_model = 'loss'
+            self.metric_for_best_model = 'reward' if self.rlhf_type == 'grpo' else 'loss'
         if self.greater_is_better is None and self.metric_for_best_model is not None:
             self.greater_is_better = 'loss' not in self.metric_for_best_model
         if isinstance(self.ref_adapters, str):

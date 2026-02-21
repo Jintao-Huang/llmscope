@@ -7,6 +7,7 @@ import random
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import timedelta
+from typing import Optional
 
 import megatron.core
 import numpy as np
@@ -242,13 +243,17 @@ def get_sharded_sd_metadata(args):
     return sharded_sd_metadata
 
 
-def save_mcore_checkpoint(args,
-                          models,
-                          optimizer=None,
-                          opt_param_scheduler=None,
-                          iteration=1,
-                          is_peft_format: bool = False):
-    output_dir = args.output_dir
+def save_mcore_checkpoint(
+    args,
+    models,
+    optimizer=None,
+    opt_param_scheduler=None,
+    iteration=1,
+    output_dir: Optional[str] = None,
+    is_peft_format: bool = False,
+):
+    if output_dir is None:
+        output_dir = args.output_dir
     models = unwrap_model(models)
     rng_state = _get_rng_state() if models else None
     checkpoint_dir = os.path.join(output_dir, f'iter_{iteration:07d}')

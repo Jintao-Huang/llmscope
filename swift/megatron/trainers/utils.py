@@ -324,6 +324,11 @@ class TrainerState:
     # compat transformers
     max_steps: Optional[int] = None
 
+    best_metric: Optional[float] = None
+    best_global_step: Optional[int] = None
+    last_model_checkpoint: Optional[str] = None
+    best_model_checkpoint: Optional[str] = None
+
     @property
     def global_step(self) -> int:
         return self.iteration
