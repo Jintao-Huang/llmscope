@@ -533,8 +533,7 @@ class BaseMegatronTrainer(ABC):
                     m.train()
 
             if state.should_save:
-                if eval_metrics is not None and is_last_rank():
-                    self._determine_best_metric(eval_metrics)
+                self._determine_best_metric(eval_metrics)
                 state.should_save = False
                 self.save_checkpoint()
 
@@ -544,7 +543,8 @@ class BaseMegatronTrainer(ABC):
     def _determine_best_metric(self, metrics) -> bool:
         args = self.args
         state = self.state
-        if args.metric_for_best_model is None:
+        if (args.metric_for_best_model is None or metrics is None or not is_last_rank()
+                or args.metric_for_best_model not in metrics):
             return False
         metric_value = metrics[args.metric_for_best_model]
         op = operator.gt if args.greater_is_better else operator.lt
@@ -663,10 +663,10 @@ class BaseMegatronTrainer(ABC):
         self.call_event('on_eval_begin')
         with torch.no_grad():
             for _ in range(args.eval_iters):
-                val_data_iterator = self._replace_data_iterator(val_data_iterator)
+                data_iterator = self._replace_data_iterator(val_data_iterator)
                 metrics = forward_backward_func(
                     forward_step_func=self.forward_step,
-                    data_iterator=val_data_iterator,
+                    data_iterator=data_iterator,
                     model=self.wrapped_models,
                     num_microbatches=self.args.num_microbatches,
                     seq_length=args.max_length,
@@ -697,10 +697,10 @@ class BaseMegatronTrainer(ABC):
             m.zero_grad_buffer()
         self.optimizer.zero_grad()
         # TODO: refactor _replace_data_iterator
-        train_data_iterator = self._replace_data_iterator(train_data_iterator)
+        data_iterator = self._replace_data_iterator(train_data_iterator)
         metrics = forward_backward_func(
             forward_step_func=self.forward_step,
-            data_iterator=train_data_iterator,
+            data_iterator=data_iterator,
             model=self.wrapped_models,
             num_microbatches=args.num_microbatches,
             seq_length=args.max_length,

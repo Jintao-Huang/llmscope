@@ -81,7 +81,7 @@ class MegatronSft(SwiftSft):
 
                 jsonl_path = os.path.join(args.output_dir, 'logging.jsonl')
                 append_to_jsonl(jsonl_path, self.train_msg, strict=False, write_on_rank='last')
-            return self.train_msg
+        return self.train_msg
 
 
 def megatron_sft_main(args: Optional[Union[List[str], MegatronSftArguments]] = None):
