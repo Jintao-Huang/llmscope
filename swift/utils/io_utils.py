@@ -96,8 +96,13 @@ class JsonlWriter:
             logger.error(f'Cannot write content to jsonl file. text: {text}')
 
 
-def append_to_jsonl(fpath: str, obj: Union[Dict, List[Dict]], *, encoding: str = 'utf-8', strict: bool = True) -> None:
-    jsonl_writer = JsonlWriter(fpath, encoding=encoding, strict=strict)
+def append_to_jsonl(fpath: str,
+                    obj: Union[Dict, List[Dict]],
+                    *,
+                    encoding: str = 'utf-8',
+                    strict: bool = True,
+                    write_on_rank: Literal['master', 'last'] = 'master') -> None:
+    jsonl_writer = JsonlWriter(fpath, encoding=encoding, strict=strict, write_on_rank=write_on_rank)
     jsonl_writer.append(obj)
 
 

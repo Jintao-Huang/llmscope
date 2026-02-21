@@ -9,7 +9,7 @@ from transformers.utils import is_torch_npu_available
 from swift.megatron.arguments import MegatronSftArguments
 from swift.megatron.trainers import MegatronEmbeddingTrainer, MegatronRerankerTrainer, MegatronTrainer
 from swift.pipelines import SwiftSft
-from swift.utils import get_logger, is_last_rank, plot_images
+from swift.utils import append_to_jsonl, get_logger, is_last_rank, plot_images
 
 if is_torch_npu_available():
     # Enable Megatron on Ascend NPU
@@ -67,13 +67,20 @@ class MegatronSft(SwiftSft):
             trainer.train(train_dataset, val_dataset)
         finally:
             state = trainer.state
-            logger.info_if(f'last_model_checkpoint: {state.last_model_checkpoint}', cond=is_last_rank())
-            logger.info_if(f'best_model_checkpoint: {state.best_model_checkpoint}', cond=is_last_rank())
+            self._handle_trainer_state(trainer, is_last_rank())
+            self.train_msg.update({
+                'last_model_checkpoint': state.last_model_checkpoint,
+                'best_model_checkpoint': state.best_model_checkpoint,
+                'best_metric': state.best_metric,
+            })
             # Visualization
             if is_last_rank():
                 images_dir = os.path.join(args.output_dir, 'images')
                 logger.info(f'images_dir: {images_dir}')
                 plot_images(images_dir, args.tensorboard_dir)
+
+                jsonl_path = os.path.join(args.output_dir, 'logging.jsonl')
+                append_to_jsonl(jsonl_path, self.train_msg, strict=False, write_on_rank='last')
 
 
 def megatron_sft_main(args: Optional[Union[List[str], MegatronSftArguments]] = None):

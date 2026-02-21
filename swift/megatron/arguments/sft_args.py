@@ -13,6 +13,7 @@ logger = get_logger()
 @dataclass
 class MegatronSftArguments(MegatronBaseArguments):
     add_version: bool = True
+    create_checkpoint_symlink: bool = False
     load_args: bool = False
 
     def _init_output_dir(self):
