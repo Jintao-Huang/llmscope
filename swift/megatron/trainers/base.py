@@ -547,7 +547,7 @@ class BaseMegatronTrainer(ABC):
                 or args.metric_for_best_model not in metrics):
             return False
         metric_value = metrics[args.metric_for_best_model]
-        op = operator.gt if args.greater_is_better else operator.lt
+        op = operator.ge if args.greater_is_better else operator.le
         if state.best_metric is None:
             state.best_metric = float('-inf') if args.greater_is_better else float('inf')
 
