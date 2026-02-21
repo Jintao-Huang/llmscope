@@ -13,7 +13,7 @@ import torch
 import torch.nn
 from megatron.core import mpu
 from megatron.core.distributed import finalize_model_grads
-from megatron.core.optimizer import OptimizerConfig, _update_min_and_max_lr_in_param_groups, get_megatron_optimizer
+from megatron.core.optimizer import OptimizerConfig, get_megatron_optimizer
 from megatron.core.pipeline_parallel import get_forward_backward_func
 from megatron.core.transformer.module import MegatronModule
 from megatron.core.transformer.moe.moe_utils import track_moe_metrics
@@ -101,7 +101,9 @@ class BaseMegatronTrainer(ABC):
     def on_log(self, logs, prefix=''):
         n_steps = logs.pop('n_steps')
         self._log_callback(logs, n_steps)
-        if prefix:
+        if not mpu.is_pipeline_last_stage(ignore_virtual=True):
+            logs = {}
+        elif prefix:
             logs = {f'{prefix}{k}': v for k, v in logs.items()}
         self.call_event('on_log', logs=logs)
 
@@ -243,7 +245,7 @@ class BaseMegatronTrainer(ABC):
         Returns:
             List of parameter groups.
         """
-        args = self.args
+        from megatron.core.optimizer import _update_min_and_max_lr_in_param_groups
         is_multimodal = args.megatron_model_meta.is_multimodal
         if args.vit_lr is not None or args.aligner_lr is not None:
             assert is_multimodal, 'vit_lr and aligner_lr are only supported for multimodal models.'
@@ -508,16 +510,15 @@ class BaseMegatronTrainer(ABC):
             maybe_finalize_async_save(args, blocking=False)
             state.iteration += 1
             self.call_event('on_step_end')
-            if mpu.is_pipeline_last_stage(ignore_virtual=True):
-                self._aggregated_metrics(metrics, train_metrics)
-                train_metrics['grad_norm'] = grad_norm
-                learning_rate = None
-                for param_group in self.optimizer.param_groups:
-                    if len(param_group['params']) == 0:
-                        continue
-                    learning_rate = param_group['lr']
-                if learning_rate is not None:
-                    train_metrics['learning_rate'] = learning_rate
+            self._aggregated_metrics(metrics, train_metrics)
+            train_metrics['grad_norm'] = grad_norm
+            learning_rate = None
+            for param_group in self.optimizer.param_groups:
+                if len(param_group['params']) == 0:
+                    continue
+                learning_rate = param_group['lr']
+            if learning_rate is not None:
+                train_metrics['learning_rate'] = learning_rate
             if state.should_log:
                 state.should_log = False
                 self.on_log(logs=train_metrics)
@@ -612,8 +613,7 @@ class BaseMegatronTrainer(ABC):
                     forward_only=True,
                 )
                 self.call_event('on_eval_step')
-                if mpu.is_pipeline_last_stage(ignore_virtual=True):
-                    self._aggregated_metrics(metrics, eval_metrics)
+                self._aggregated_metrics(metrics, eval_metrics)
         self.compute_eval_metrics(eval_metrics)
         self.on_log(logs=eval_metrics, prefix='eval_')
         self.call_event('on_eval_end')
@@ -656,6 +656,8 @@ class BaseMegatronTrainer(ABC):
         if 'n_steps' not in total_metrics:
             total_metrics['n_steps'] = 0
         total_metrics['n_steps'] += 1
+        if not metrics:
+            return
         for key in metrics[0].keys():
             val = [x[key].view(-1) for x in metrics if key in x]
             val = torch.stack(val, dim=0)
