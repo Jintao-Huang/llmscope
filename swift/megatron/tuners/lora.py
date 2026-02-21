@@ -31,6 +31,7 @@ from swift.utils import get_current_device
 from ..utils import tuners_sharded_state_dict
 
 mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
+mcore_016 = version.parse(megatron.core.__version__) >= version.parse('0.16.0rc0')
 
 
 class LoraParallelLinear(MegatronModule, LoraLayer):
@@ -102,7 +103,7 @@ class LoraParallelLinear(MegatronModule, LoraLayer):
             'config': self.config,
             'is_expert': self.is_expert,
         }
-        if mcore_013:
+        if mcore_013 and not (mcore_016 and self.is_grouped):
             kwargs['tp_group'] = self.base_layer.tp_group
         if isinstance(self.base_layer, TopKRouter):
             router_shape = self.base_layer.weight.shape

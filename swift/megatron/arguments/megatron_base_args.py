@@ -12,16 +12,15 @@ logger = get_logger()
 @dataclass
 class MegatronBaseArguments(MegatronArguments, BaseArguments):
 
-    def _init_output_dir(self):
-        pass
+    def _init_megatron_args(self):
+        MegatronArguments.__post_init__(self)
 
     def __post_init__(self):
         self.sequence_parallel_size = self.context_parallel_size
         if self.packing:
             self.padding_free = True
         BaseArguments.__post_init__(self)
-        self._init_output_dir()
-        MegatronArguments.__post_init__(self)
+        self._init_megatron_args()
         if self.streaming:
             if self.dataloader_num_workers > 1:
                 self.dataloader_num_workers = 1

@@ -189,7 +189,7 @@ gradient_checkpointing: true
 
 This list inherits from the Transformers `Seq2SeqTrainingArguments`, with ms-swift overriding certain default values. For arguments not listed here, please refer to the [official HF documentation](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.Seq2SeqTrainingArguments).
 
-- 🔥output_dir: Default is `None`, automatically set to `'output/<model_name>'`.
+- 🔥output_dir: The output directory where the model predictions and checkpoints will be written. Default is `None`, automatically set to `'output/<model_name>'`.
 - 🔥gradient_checkpointing: Whether to use gradient checkpointing. Default is `True`. This significantly reduces GPU memory usage but slows down training.
 - 🔥vit_gradient_checkpointing: For multimodal model training, whether to enable gradient checkpointing for the ViT (Vision Transformer) component. Default is `None`, meaning it follows the value of `gradient_checkpointing`. For an example, please refer to [here](https://github.com/modelscope/ms-swift/blob/main/examples/train/multimodal/vit_gradient_checkpointing.sh).
   - Note: When training multimodal models with LoRA and `--freeze_vit false`, if you see the warning: `UserWarning: None of the inputs have requires_grad=True. Gradients will be None`, try setting `--vit_gradient_checkpointing false` or open an issue. This issue does not occur in full-parameter training. (If this warning comes from the `ref_model` during RLHF LoRA training, it is normal.)
@@ -202,8 +202,9 @@ This list inherits from the Transformers `Seq2SeqTrainingArguments`, with ms-swi
 - 🔥gradient_accumulation_steps: Gradient accumulation steps. Default is `None`, meaning `gradient_accumulation_steps` is automatically calculated so that `total_batch_size >= 16`. Total batch size is computed as `per_device_train_batch_size * gradient_accumulation_steps * world_size`. In GRPO training, default is 1.
   - In CPT/SFT training, gradient accumulation has equivalent effects to using a larger batch size, but this equivalence does not hold in RLHF training.
 - weight_decay:  Weight decay coefficient. Default is 0.1.
-- adam_beta1: Default is 0.9.
-- adam_beta2: Default is 0.95.
+- adam_beta1: The exponential decay rate for the first moment estimates (momentum) in Adam-based optimizers. Defaults to 0.9.
+- adam_beta2: The exponential decay rate for the second moment estimates (variance) in Adam-based optimizers. Defaults to 0.95.
+- adam_epsilon: Epsilon value for numerical stability in Adam-based optimizers. Defaults to 1e-8.
 - 🔥learning_rate:  Learning rate. **Default is `1e-5` for full-parameter training, and `1e-4` for LoRA and other tuners**.
   - Tip: If you want to set `min_lr`, you can pass the arguments `--lr_scheduler_type cosine_with_min_lr --lr_scheduler_kwargs '{"min_lr": 1e-6}'`.
 - 🔥vit_lr: Specifies the learning rate for the ViT module when training multimodal models. Default is `None`, same as `learning_rate`. Typically used together with `--freeze_vit` and `--freeze_aligner`.

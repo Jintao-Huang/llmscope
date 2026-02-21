@@ -15,12 +15,14 @@ from megatron.core import dist_checkpointing, mpu, tensor_parallel
 from megatron.core.dist_checkpointing.mapping import ShardedObject
 from megatron.core.dist_checkpointing.serialization import (get_default_load_sharded_strategy,
                                                             get_default_save_sharded_strategy)
+from megatron.core.dist_checkpointing.strategies.async_utils import AsyncCallsQueue, AsyncRequest
 from megatron.core.dist_checkpointing.strategies.fully_parallel import (FullyParallelLoadStrategyWrapper,
                                                                         FullyParallelSaveStrategyWrapper)
 from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.distributed import DistributedDataParallelConfig
 from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
+from megatron.core.utils import get_torch_version, is_torch_min_version
 from packaging import version
 
 from swift.utils import check_json_format, get_logger, init_process_group, is_master, seed_everything, set_device
@@ -220,15 +222,37 @@ def _preprocess_common_before_consistancy_check(common_state_dict):
     return preprocessed_common_state_dict
 
 
-def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None, iteration=1):
+def get_sharded_sd_metadata(args):
+    sharded_sd_metadata = {'singleton_local_shards': False, 'chained_optim_avoid_prefix': True}
+    force_pre_mcore_014 = not is_torch_min_version('2.6a0')
+    if force_pre_mcore_014 and not args.dist_ckpt_save_pre_mcore_014:
+        args.dist_ckpt_save_pre_mcore_014 = True
+        logger.warning(f'PyTorch version {get_torch_version()} below 2.6 detected.'
+                       f' Forcing dist_ckpt_save_pre_mcore_014 behavior.')
+
+    if args.dist_ckpt_save_pre_mcore_014:
+        sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_sharded_model_space'
+    else:
+        if args.dist_ckpt_optim_fully_reshardable:
+            sharded_sd_metadata['distrib_optim_sharding_type'] = 'fully_reshardable'
+            sharded_sd_metadata[
+                'distrib_optim_fully_reshardable_mem_efficient'] = args.distrib_optim_fully_reshardable_mem_efficient
+        else:
+            sharded_sd_metadata['distrib_optim_sharding_type'] = 'dp_reshardable'
+    return sharded_sd_metadata
+
+
+def save_mcore_checkpoint(args,
+                          models,
+                          optimizer=None,
+                          opt_param_scheduler=None,
+                          iteration=1,
+                          is_peft_format: bool = False):
+    output_dir = args.output_dir
     models = unwrap_model(models)
-    rng_state = _get_rng_state()
-    checkpoint_dir = os.path.join(args.output_dir, f'iter_{iteration:07d}')
-    sharded_sd_metadata = {
-        'distrib_optim_sharding_type': 'dp_reshardable',
-        'singleton_local_shards': False,
-        'chained_optim_avoid_prefix': True
-    }
+    rng_state = _get_rng_state() if models else None
+    checkpoint_dir = os.path.join(output_dir, f'iter_{iteration:07d}')
+    sharded_sd_metadata = get_sharded_sd_metadata(args)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     state_dict = _generate_state_dict(
@@ -241,9 +265,7 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
         model_sd_kwargs={'metadata': sharded_sd_metadata},
         optim_sd_kwargs={'metadata': sharded_sd_metadata},
     )
-
-    if args.tuner_type == 'lora':
-        _filter_adapter_state_dict(state_dict, not args.merge_lora)
+    _filter_adapter_state_dict(state_dict, is_peft_format)
 
     save_strategy = get_default_save_sharded_strategy()
     save_strategy = FullyParallelSaveStrategyWrapper(
@@ -259,9 +281,15 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
         validate_access_integrity=True,
         preprocess_common_before_consistancy_check=_preprocess_common_before_consistancy_check,
         **kwargs)
+    tracker_path = os.path.join(output_dir, 'latest_checkpointed_iteration.txt')
+    try:
+        from megatron.core.msc_utils import open_file
+    except ImportError:
+        open_file = open
+    with open_file(tracker_path, 'w') as f:
+        f.write(str(iteration))
 
     if not args.async_save:
-        # TODO: test async_save
         assert async_save_request is None
         # Wait so everyone is done (necessary)
         if torch.distributed.is_initialized():
@@ -271,21 +299,62 @@ def save_mcore_checkpoint(args, models, optimizer=None, opt_param_scheduler=None
 
         def iter_finalize_fn():
             # TODO: save_total_limit
-            tracker_path = os.path.join(args.output_dir, 'latest_checkpointed_iteration.txt')
-            try:
-                from megatron.core.msc_utils import open_file
-            except ImportError:
-                open_file = open
-            with open_file(tracker_path, 'w') as f:
-                f.write(str(iteration))
             if models:
-                logger.info(f'Successfully saved Megatron model weights in `{args.output_dir}`.')
+                logger.info(f'Successfully saved Megatron model weights in `{output_dir}`.')
 
         if args.async_save:
             assert async_save_request is not None
             async_save_request.add_finalize_fn(iter_finalize_fn)
         else:
             iter_finalize_fn()
+
+    if args.async_save:
+        schedule_async_save(async_save_request)
+
+
+# Singleton manager of async calls
+# The default is `TemporalAsyncCaller`
+_async_calls_queue = AsyncCallsQueue()
+
+
+def init_persistent_async_worker():
+    global _async_calls_queue
+    # Recreate the async_calls_queue for persistent worker
+    # This duplicate step is for backward compatiblity
+    _async_calls_queue = AsyncCallsQueue(persistent=True)
+
+
+def schedule_async_save(async_request: AsyncRequest):
+    """Schedule the async save request.
+
+    Args:
+        async_request (AsyncRequest): the async save request.
+    """
+    _async_calls_queue.schedule_async_request(async_request)
+
+
+def maybe_finalize_async_save(args, blocking: bool = False, terminate=False):
+    """Finalizes active async save calls.
+
+    Args:
+        blocking (bool, optional): if True, will wait until all active requests
+            are done. Otherwise, finalizes only the async request that already
+            finished. Defaults to False.
+        terminate (bool, optional): if True, the asynchronous queue will
+                be closed as the last action of this function.
+    """
+    if not args.async_save:
+        return
+
+    _async_calls_queue.maybe_finalize_async_calls(blocking, no_dist=False)
+
+    if terminate:
+        _async_calls_queue.close()
+
+
+def is_empty_async_queue() -> bool:
+    """Check if async calls queue is empty. This result is consistent across ranks."""
+    return _async_calls_queue.get_num_unfinalized_calls() == 0
 
 
 def _load_iteration(tracker_path: str):
@@ -344,12 +413,17 @@ def load_mcore_checkpoint(args,
         gen_sd_rng_state = None
         if ckpt_tp_pp != run_tp_pp:
             logger.info(f'{mismatch_msg}: RNG state will be ignored')
-    sharded_sd_metadata = dist_checkpointing.load_content_metadata(preloaded_state_dict=state_dict)
+    sharded_sd_metadata = state_dict.get('content_metadata')
     if (not finetune and not no_load_optim and not getattr(state_dict['args'], 'no_save_optim', False)):
         gen_sd_optim = optimizer
         gen_sd_opt_param_scheduler = opt_param_scheduler
 
-        if args.use_distributed_optimizer and ckpt_tp_pp != run_tp_pp:
+        if (args.use_distributed_optimizer and ckpt_tp_pp != run_tp_pp
+                and (sharded_sd_metadata or {}).get('distrib_optim_sharding_type') not in {
+                    'fully_reshardable',
+                    'fully_sharded_model_space',
+                    'fsdp_dtensor',
+                }):
             raise RuntimeError(f'{mismatch_msg}: not supported for DistributedOptimizer')
     else:
         gen_sd_optim, gen_sd_opt_param_scheduler = None, None

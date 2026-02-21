@@ -36,6 +36,10 @@ class MegatronSftArguments(MegatronBaseArguments):
                 old_args = json.load(f)
             self.model = old_args.get('model')
 
+    def _init_megatron_args(self):
+        self._init_output_dir()
+        super()._init_megatron_args()
+
     def __post_init__(self):
         self.mcore_model = to_abspath(self.mcore_model, check_path_exist=True)
         super().__post_init__()

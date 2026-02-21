@@ -139,7 +139,7 @@ class MegatronGRPOTrainer(MegatronRolloutMixin, MegatronRLHFTrainer):
     def _prepare_rewards(self):
         # TODO: reward model
         args = self.args
-        reward_funcs = args.reward_funcs
+        reward_funcs = args.reward_funcs.copy()
         if not isinstance(reward_funcs, list):
             reward_funcs = [reward_funcs]
 

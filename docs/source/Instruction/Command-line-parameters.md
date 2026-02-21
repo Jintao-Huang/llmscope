@@ -186,7 +186,7 @@ gradient_checkpointing: true
 
 该参数列表继承自transformers `Seq2SeqTrainingArguments`，ms-swift对其默认值进行了覆盖。未列出的请参考[HF官方文档](https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.Seq2SeqTrainingArguments)。
 
-- 🔥output_dir: 默认为None，设置为`'output/<model_name>'`。
+- 🔥output_dir: 模型预测结果和检查点将被写入的输出目录。默认为None，设置为`'output/<model_name>'`。
 - 🔥gradient_checkpointing: 是否使用gradient_checkpointing，默认为True。该参数可以显著降低显存占用，但降低训练速度。
 - 🔥vit_gradient_checkpointing: 多模态模型训练时，是否对vit部分开启gradient_checkpointing。默认为None，即设置为`gradient_checkpointing`。例子参考[这里](https://github.com/modelscope/ms-swift/blob/main/examples/train/multimodal/vit_gradient_checkpointing.sh)。
   - 注意：多模态模型且是LoRA训练时，当设置了`--freeze_vit false`，且命令行中出现以下警告：`UserWarning: None of the inputs have requires_grad=True. Gradients will be None`，请设置`--vit_gradient_checkpointing false`，或提相关issue。全参数训练则不会出现该问题。（如果RLHF LoRA训练中，ref_model抛出来的警告，则是正常的）
@@ -199,8 +199,9 @@ gradient_checkpointing: true
 - 🔥gradient_accumulation_steps: 梯度累加。**默认为None，即设置gradient_accumulation_steps使得total_batch_size>=16**。total_batch_size等于`per_device_train_batch_size * gradient_accumulation_steps * world_size`。在GRPO训练中，默认为1。
   - 在CPT/SFT训练中，梯度累加的训练效果等价使用更大的batch_size，但在RLHF训练中，训练效果并不等价。
 - weight_decay: weight衰减系数，默认值0.1。
-- adam_beta1: 默认为0.9。
-- adam_beta2: 默认为0.95。
+- adam_beta1: Adam系列优化器中一阶矩估计（动量）的指数衰减率。默认为0.9。
+- adam_beta2: Adam系列优化器中二阶矩估计（方差）的指数衰减率。默认为0.95。
+- adam_epsilon: Adam系列优化器中用于数值稳定性的epsilon值。默认为1e-8。
 - 🔥learning_rate: 学习率，**全参数训练默认为1e-5，LoRA训练等tuners为1e-4**。
   - 提示：若要设置`min_lr`，您可以传入参数`--lr_scheduler_type cosine_with_min_lr --lr_scheduler_kwargs '{"min_lr": 1e-6}'`。
 - 🔥vit_lr: 当训练多模态大模型时，该参数指定vit的学习率，默认为None，等于learning_rate。通常与`--freeze_vit`、`--freeze_aligner`参数结合使用。

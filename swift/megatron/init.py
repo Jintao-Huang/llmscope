@@ -608,11 +608,19 @@ def _patch_torch_FileSystemReader():
 def _patch_validate_non_overlapping_shards_metadata():
     # too slow
     from torch.distributed._shard.sharded_tensor import api
+    from torch.distributed._shard.sharding_spec import api as api2
+    from torch.distributed.checkpoint import default_planner
 
     def validate_non_overlapping_shards_metadata(*args, **kwargs):
         pass
 
     api.validate_non_overlapping_shards_metadata = validate_non_overlapping_shards_metadata
+    api2.validate_non_overlapping_shards_metadata = validate_non_overlapping_shards_metadata
+
+    def _validate_global_plan(*args, **kwargs):
+        return True
+
+    default_planner._validate_global_plan = _validate_global_plan
 
 
 def _patch_TELinear():
