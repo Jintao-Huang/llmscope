@@ -401,7 +401,8 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     finetune: bool = True
     perform_initialization: bool = False
     use_cpu_initialization: bool = False
-    async_save: bool = False  # TODO
+    async_save: bool = False
+
     use_persistent_ckpt_worker: bool = False
     dist_ckpt_save_pre_mcore_014: bool = False
     dist_ckpt_optim_fully_reshardable: bool = False
