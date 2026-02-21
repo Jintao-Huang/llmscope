@@ -114,6 +114,9 @@
 - perform_initialization: Initialize the weights. Defaults to False.
 - use_cpu_initialization: Initialize weights on the CPU. Defaults to `False`. This option is used during weight conversion between Hugging Face (HF) and MCore formats. The value typically does not need to be modified.
 - 🔥async_save: Use asynchronous checkpoint saving. Currently only applicable to the `torch_dist` distributed checkpoint format. Defaults to False.
+- 🔥save_total_limit: Maximum number of checkpoints to save. Expired checkpoints will be deleted. Default is None, which saves all checkpoints. This parameter is currently not compatible with `async_save`.
+- metric_for_best_model: Default is None. For GRPO, defaults to 'reward'; for other cases, defaults to 'loss'.
+- greater_is_better: Default is None. When `metric_for_best_model` contains 'loss', it is set to False; otherwise, it is set to True.
 - use_persistent_ckpt_worker: Enable a persistent checkpoint worker process for async save. Defaults to False.
 - dist_ckpt_save_pre_mcore_014: Save in the format prior to Megatron-Core 0.14. Defaults to False.
 - dist_ckpt_optim_fully_reshardable: Make optimizer distributed checkpoint fully reshardable (TP/PP/EP/DP) as opposed to plain DP reshardability. Defaults to False.

@@ -108,6 +108,9 @@
 - perform_initialization: 对权重进行初始化，默认为False。
 - use_cpu_initialization: 在cpu上初始化权重，默认为False。在进行HF和MCore权重转换时会被使用。通常不需要修改该值。
 - 🔥async_save: 使用异步检查点保存。目前仅适用于`torch_dist`分布式检查点格式。默认为False。
+- 🔥save_total_limit: 最多保存的checkpoint数，会将过期的checkpoint进行删除。默认为None，保存所有的checkpoint。该参数暂不兼容`async_save`。
+- metric_for_best_model: 默认为None，GRPO默认为'reward'，其他情况默认为'loss'。
+- greater_is_better: 默认为None，即当`metric_for_best_model`含'loss'时，设置为False，否则设置为True。
 - use_persistent_ckpt_worker: 为异步保存启动持久化检查点工作进程。默认为False。
 - dist_ckpt_save_pre_mcore_014: 使用 Megatron-Core 0.14 之前的格式存储。默认为False。
 - dist_ckpt_optim_fully_reshardable: 使优化器分布式检查点完全可重分片（TP/PP/EP/DP），而不是仅支持普通的DP重分片。默认为False。
