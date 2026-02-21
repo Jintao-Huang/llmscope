@@ -101,9 +101,7 @@ class BaseMegatronTrainer(ABC):
     def on_log(self, logs, prefix=''):
         n_steps = logs.pop('n_steps')
         self._log_callback(logs, n_steps)
-        if not mpu.is_pipeline_last_stage(ignore_virtual=True):
-            logs = {}
-        elif prefix:
+        if prefix:
             logs = {f'{prefix}{k}': v for k, v in logs.items()}
         self.call_event('on_log', logs=logs)
 
@@ -246,6 +244,7 @@ class BaseMegatronTrainer(ABC):
             List of parameter groups.
         """
         from megatron.core.optimizer import _update_min_and_max_lr_in_param_groups
+        args = self.args
         is_multimodal = args.megatron_model_meta.is_multimodal
         if args.vit_lr is not None or args.aligner_lr is not None:
             assert is_multimodal, 'vit_lr and aligner_lr are only supported for multimodal models.'
