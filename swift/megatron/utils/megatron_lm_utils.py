@@ -20,7 +20,6 @@ from megatron.core.dist_checkpointing.strategies.fully_parallel import (FullyPar
                                                                         FullyParallelSaveStrategyWrapper)
 from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.distributed import DistributedDataParallelConfig
-from megatron.core.optimizer import DistributedOptimizer
 from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
 from megatron.core.utils import get_torch_version, is_torch_min_version
@@ -420,8 +419,11 @@ def load_mcore_checkpoint(args,
         gen_sd_opt_param_scheduler = opt_param_scheduler
 
         if (args.use_distributed_optimizer and ckpt_tp_pp != run_tp_pp
-                and sharded_sd_metadata['distrib_optim_sharding_type']
-                not in DistributedOptimizer.checkpoint_fully_reshardable_formats):
+                and sharded_sd_metadata['distrib_optim_sharding_type'] not in {
+                    'fully_reshardable',
+                    'fully_sharded_model_space',
+                    'fsdp_dtensor',
+                }):
             raise RuntimeError(f'{mismatch_msg}: not supported for DistributedOptimizer')
     else:
         gen_sd_optim, gen_sd_opt_param_scheduler = None, None
