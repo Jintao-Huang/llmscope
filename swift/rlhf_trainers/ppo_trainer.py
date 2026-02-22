@@ -1,6 +1,8 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import inspect
+import trl
 from contextlib import contextmanager
+from packaging import version
 from torch.utils.data import DataLoader
 from transformers import PreTrainedModel
 from transformers import Trainer as HfTrainer
@@ -9,9 +11,9 @@ from typing import Optional
 from swift.trainers import SwiftMixin
 from swift.utils import patch_getattr
 
-try:
+if version.parse(trl.__version__) >= version.parse('0.26.0'):
     from trl.experimental.ppo import PPOTrainer as HFPPOTrainer
-except ImportError:
+else:
     from trl import PPOTrainer as HFPPOTrainer
 
 ppo_trainer_init = HFPPOTrainer.__init__

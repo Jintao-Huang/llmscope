@@ -1,14 +1,16 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import torch.nn as nn
+import trl
+from packaging import version
 from transformers import PreTrainedModel
 from typing import Optional, Union
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin
 
-try:
+if version.parse(trl.__version__) >= version.parse('0.26.0'):
     from trl.experimental.orpo import ORPOTrainer as HFORPOTrainer
-except ImportError:
+else:
     from trl import ORPOTrainer as HFORPOTrainer
 
 del HFORPOTrainer.__init__

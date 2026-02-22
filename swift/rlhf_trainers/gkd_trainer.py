@@ -30,9 +30,9 @@ try:
 except ImportError:
     _liger_kernel_available = False
 
-try:
+if version.parse(trl.__version__) >= version.parse('0.26.0'):
     from trl.experimental.gkd import GKDTrainer as HFGKDTrainer
-except ImportError:
+else:
     from trl import GKDTrainer as HFGKDTrainer
 
 del HFGKDTrainer.__init__
