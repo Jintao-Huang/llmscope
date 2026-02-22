@@ -2,6 +2,7 @@
 from typing import TYPE_CHECKING
 
 from swift.utils.import_utils import _LazyModule
+from . import patcher
 
 if TYPE_CHECKING:
     from .arguments import Seq2SeqTrainingArguments, TrainArgumentsMixin, TrainingArguments

@@ -2,11 +2,15 @@
 import torch.nn as nn
 import warnings
 from transformers import PreTrainedModel
-from trl import CPOTrainer as HFCPOTrainer
 from typing import Optional, Union
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin
+
+try:
+    from trl.experimental.cpo import CPOTrainer as HFCPOTrainer
+except ImportError:
+    from trl import CPOTrainer as HFCPOTrainer
 
 del HFCPOTrainer.__init__
 
@@ -30,3 +34,4 @@ class CPOTrainer(RLHFTrainerMixin, SwiftMixin, HFCPOTrainer):
                               '(https://github.com/fe1ixxu/CPO_SIMPO/tree/main). '
                               'If you want to use a pure SimPO method, please set cpo_alpha to 0.')
         super().__init__(model, *_args, **kwargs)
+        self.pad_token_id = self.tokenizer.pad_token_id

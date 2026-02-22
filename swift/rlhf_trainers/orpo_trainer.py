@@ -1,11 +1,15 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import torch.nn as nn
 from transformers import PreTrainedModel
-from trl import ORPOTrainer as HFORPOTrainer
 from typing import Optional, Union
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin
+
+try:
+    from trl.experimental.orpo import ORPOTrainer as HFORPOTrainer
+except ImportError:
+    from trl import ORPOTrainer as HFORPOTrainer
 
 del HFORPOTrainer.__init__
 
