@@ -964,7 +964,11 @@ class SwiftMixin:
             self.control.should_log = False
 
             # all_gather + mean() to get average loss over all processes
-            tr_loss_scalar = self._nested_gather(tr_loss).mean().item()
+            if version.parse(transformers.__version__) >= version.parse('5.2.0'):
+                from transformers.trainer_pt_utils import nested_gather
+                tr_loss_scalar = nested_gather(tr_loss, self.args.parallel_mode).mean().item()
+            else:
+                tr_loss_scalar = self._nested_gather(tr_loss).mean().item()
             loss = tr_loss_scalar / (self.state.global_step - self._globalstep_last_logged)
             logs: Dict[str, float] = {'loss': loss}  # loss first
             if version.parse(transformers.__version__) >= version.parse('4.38'):

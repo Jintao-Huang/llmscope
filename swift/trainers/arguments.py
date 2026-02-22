@@ -148,6 +148,7 @@ class TrainArgumentsMixin:
     check_model: bool = True
     acc_strategy: Literal['token', 'seq'] = 'token'
     train_dataloader_shuffle: bool = True
+    group_by_length: bool = False
     max_epochs: Optional[int] = None
     aligner_lr: Optional[float] = None
     vit_lr: Optional[float] = None
