@@ -4,13 +4,13 @@ import os
 import platform
 import re
 import torch
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from transformers import AutoConfig, PretrainedConfig, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.utils.versions import require_version
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type
 
-from abc import ABC, abstractmethod
 from swift.utils import HfConfigFactory, get_logger, safe_snapshot_download
 from .utils import get_default_torch_dtype
 

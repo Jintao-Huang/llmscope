@@ -1,9 +1,9 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 # GYM Environment and Context Manager implementations for GRPO training.
 
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
 
-from abc import ABC, abstractmethod
 from swift.infer_engine.protocol import RolloutInferRequest
 from swift.rewards.orm import MathAccuracy
 from swift.template import Messages

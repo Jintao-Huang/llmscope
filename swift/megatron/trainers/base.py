@@ -7,6 +7,7 @@ import os
 import shutil
 import torch
 import torch.nn
+from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext
 from functools import partial
 from megatron.core import mpu
@@ -21,7 +22,6 @@ from packaging import version
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-from abc import ABC, abstractmethod
 from swift.megatron.callbacks import megatron_callbacks_map
 from swift.megatron.model import get_mcore_model
 from swift.megatron.tuners import LoraParallelLinear
