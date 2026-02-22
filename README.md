@@ -145,7 +145,7 @@ Running Environment:
 | sglang       | >=0.4.6      |          | Inference/Deployment                      |
 | lmdeploy     | >=0.5   | 0.10.1                 | Inference/Deployment                      |
 | evalscope    | >=1.0       |                     | Evaluation                                |
-| gradio       |              |               | Web-UI/App                                |
+| gradio       |              | 5.32.1              | Web-UI/App                                |
 
 For more optional dependencies, you can refer to [here](https://github.com/modelscope/ms-swift/blob/main/requirements/install_all.sh).
 

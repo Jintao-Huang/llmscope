@@ -138,7 +138,7 @@ modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:ubuntu2
 | sglang       | >=0.4.6      |          | 推理/部署              |
 | lmdeploy     | >=0.5   | 0.10.1                 | 推理/部署              |
 | evalscope    | >=1.0       |                     | 评测                 |
-| gradio       |              |               | Web-UI/App         |
+| gradio       |              | 5.32.1              | Web-UI/App         |
 
 更多可选依赖可以参考[这里](https://github.com/modelscope/ms-swift/blob/main/requirements/install_all.sh)。
 
