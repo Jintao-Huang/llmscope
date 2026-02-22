@@ -139,7 +139,6 @@ def get_temporary_cache_files_directory(prefix=None):
     if prefix is None:
         import datasets.config
         prefix = datasets.config.TEMP_CACHE_DIR_PREFIX
-    global TEMP_DIR_POOL
     if prefix in TEMP_DIR_POOL:
         TEMP_DIR = TEMP_DIR_POOL[prefix]
     else:

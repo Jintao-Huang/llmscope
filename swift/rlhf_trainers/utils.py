@@ -1355,7 +1355,6 @@ def set_expandable_segments(enable: bool) -> None:
         >>> set_expandable_segments(True)  # Enable to help with OOM issues
         >>> set_expandable_segments(False) # Disable for more predictable memory usage
     """
-    global _EXPANDABLE_SEGMENTS_SET
     if not _EXPANDABLE_SEGMENTS_SET:
         return
     if torch.cuda.is_available():

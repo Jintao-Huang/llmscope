@@ -88,7 +88,6 @@ class EvalModel(ModelAPI):
         # Extract model-specific arguments from kwargs
         # This pattern allows us to collect known arguments while preserving unknown ones
         def collect_model_arg(name: str) -> Optional[Any]:
-            nonlocal model_args
             value = model_args.get(name, None)
             if value is not None:
                 model_args.pop(name)

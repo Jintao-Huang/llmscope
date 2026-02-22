@@ -494,7 +494,6 @@ class ActivationHandler:
 
         def my_function(*inputs):
             # unpack back into args and kwargs
-            nonlocal forward_method, kwarg_keys
             unpacked_args, unpacked_kwargs = self._unpack_kwargs(inputs, kwarg_keys)
             # run original module
             return forward_method(*unpacked_args, **unpacked_kwargs)
@@ -526,7 +525,6 @@ class ActivationHandler:
 
         @functools.wraps(orig_method)
         def wrapped_method(model_self, *args, **kwargs):
-            nonlocal handler
             handler.pre_forward(model_self)
             out = handler.forward(model_self, orig_method, *args, **kwargs)
             handler.post_forward(model_self)
