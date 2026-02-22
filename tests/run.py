@@ -10,10 +10,6 @@ import subprocess
 import sys
 import tempfile
 import time
-# NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
-#         A segmentation fault may be raise by pytorch cpp library
-#         if 'import tensorflow' in front of 'import torch'.
-#         Putting a 'import torch' here can bypass this incompatibility.
 import torch
 import unittest
 import yaml

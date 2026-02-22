@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from accelerate.utils import find_device
 from functools import wraps
 from packaging import version
+from peft import PeftModel
 from torch import nn
 from transformers import PretrainedConfig, PreTrainedModel
 from transformers.integrations import is_deepspeed_zero3_enabled
@@ -62,7 +63,6 @@ def get_llm_model(model: torch.nn.Module, model_meta=None, inner_backbone=True):
 
     """
     from accelerate.utils import extract_model_from_parallel
-    from peft import PeftModel
 
     from swift.tuners import SwiftModel
     model = extract_model_from_parallel(model)
