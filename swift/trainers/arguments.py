@@ -58,7 +58,7 @@ class TrainArgumentsMixin:
             Can be 'token' for token-level accuracy or 'seq' for sequence-level accuracy. Defaults to 'token'.
         train_dataloader_shuffle (bool): Whether to shuffle the training data. Defaults to True.
         group_by_length (bool): Whether to group samples with approximately the same length together in the 
-            training dataset. (with a random factor)
+            training dataset (with a random factor).
         max_epochs (Optional[int]): The total number of training epochs to perform. Overrides `num_train_epochs`.
             Defaults to None.
         aligner_lr (Optional[float]): A specific learning rate for the aligner part of the model. Defaults to None.
