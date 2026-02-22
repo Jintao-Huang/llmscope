@@ -950,14 +950,10 @@ def _compat_qwen3_vl_mixed_data(model, processor, is_moe: bool = False):
     if hasattr(model, 'origin_forward'):
         return
     from transformers.models.qwen3_vl.modeling_qwen3_vl import (Cache, Qwen3VLModelOutputWithPast, TransformersKwargs,
-                                                                Unpack, check_model_inputs)
+                                                                Unpack)
     from transformers.models.qwen3_vl_moe.modeling_qwen3_vl_moe import Qwen3VLMoeModelOutputWithPast
     output_cls = Qwen3VLMoeModelOutputWithPast if is_moe else Qwen3VLModelOutputWithPast
 
-    if version.parse(transformers.__version__) >= version.parse('4.57.2'):
-        check_model_inputs = check_model_inputs()
-
-    @check_model_inputs
     def forward(
         self,
         input_ids: torch.LongTensor = None,
