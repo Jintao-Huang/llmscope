@@ -1,16 +1,11 @@
 """Functionality for CPU offloading of tensors saved for backward pass."""
-from __future__ import annotations
-
 import functools
-import logging
-import os
 import torch
-from contextlib import nullcontext
 from torch.distributed.fsdp import FSDPModule as FSDP2
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from transformers.trainer_callback import TrainerControl, TrainerState
 from transformers.training_args import TrainingArguments
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from swift.utils import get_logger
 from .base import TrainerCallback
@@ -90,7 +85,7 @@ class CpuOffloadHookWithOffloadHandler:
 
     def __init__(
         self,
-        offload_handler: OffloadHandler,
+        offload_handler: 'OffloadHandler',
         handler_extra_kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         if handler_extra_kwargs is None:
