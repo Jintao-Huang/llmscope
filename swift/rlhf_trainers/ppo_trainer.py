@@ -6,10 +6,14 @@ from typing import Optional
 from torch.utils.data import DataLoader
 from transformers import PreTrainedModel
 from transformers import Trainer as HfTrainer
-from trl import PPOTrainer as HFPPOTrainer
 
 from swift.trainers import SwiftMixin
 from swift.utils import patch_getattr
+
+try:
+    from trl.experimental.ppo import PPOTrainer as HFPPOTrainer
+except ImportError:
+    from trl import PPOTrainer as HFPPOTrainer
 
 ppo_trainer_init = HFPPOTrainer.__init__
 del HFPPOTrainer.__init__

@@ -5,13 +5,17 @@ import torch
 import torch.nn as nn
 from peft import PeftModel
 from transformers import PreTrainedModel
-from trl import KTOTrainer as HFKTOTrainer
 
 from swift.trainers import SwiftMixin, disable_gradient_checkpointing
 from swift.utils import get_logger
 from .rlhf_mixin import RLHFTrainerMixin
 
 logger = get_logger()
+
+try:
+    from trl.experimental.kto import KTOTrainer as HFKTOTrainer
+except ImportError:
+    from trl import KTOTrainer as HFKTOTrainer
 
 del HFKTOTrainer.__init__
 

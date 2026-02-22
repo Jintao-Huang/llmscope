@@ -15,7 +15,6 @@ import trl
 from accelerate.utils import gather_object, is_peft_model
 from packaging import version
 from transformers import PreTrainedModel
-from trl import GKDTrainer as HFGKDTrainer
 from trl import SFTTrainer as HFSFTTrainer
 
 from swift.template import TemplateInputs
@@ -31,6 +30,11 @@ try:
     _liger_kernel_available = True
 except ImportError:
     _liger_kernel_available = False
+
+try:
+    from trl.experimental.gkd import GKDTrainer as HFGKDTrainer
+except ImportError:
+    from trl import GKDTrainer as HFGKDTrainer
 
 del HFGKDTrainer.__init__
 del HFSFTTrainer.__init__

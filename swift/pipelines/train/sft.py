@@ -343,6 +343,8 @@ class SwiftSft(SwiftPipeline, TunerMixin):
                     load_from_cache_file=args.load_from_cache_file,
                     strict=args.strict,
                     batch_size=batch_size)
+                if len(dataset) == 0:
+                    dataset = None
             datasets[i] = dataset
         template.model = origin_template_model
 

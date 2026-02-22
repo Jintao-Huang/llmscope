@@ -3,10 +3,14 @@ from typing import Optional, Union
 
 import torch.nn as nn
 from transformers import PreTrainedModel
-from trl import ORPOTrainer as HFORPOTrainer
 
 from swift.trainers import SwiftMixin
 from .rlhf_mixin import RLHFTrainerMixin
+
+try:
+    from trl.experimental.orpo import ORPOTrainer as HFORPOTrainer
+except ImportError:
+    from trl import ORPOTrainer as HFORPOTrainer
 
 del HFORPOTrainer.__init__
 

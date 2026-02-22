@@ -252,7 +252,7 @@ class BaseMegatronTrainer(ABC):
             assert is_multimodal, 'vit_lr and aligner_lr are only supported for multimodal models.'
             vit_lr = args.vit_lr if args.vit_lr is not None else args.lr
             aligner_lr = args.aligner_lr if args.aligner_lr is not None else args.lr
-            logger.info(f'vit_lr: {vit_lr}, aligner_lr: {aligner_lr}, llm_lr: {args.lr}')
+            logger.info_once(f'vit_lr: {vit_lr}, aligner_lr: {aligner_lr}, llm_lr: {args.lr}')
         use_decoupled_learning_rate = decoupled_lr is not None
 
         # Map (wd_mult, lr_mult, is_expert_parallel, is_decoupled_lr) to params.
