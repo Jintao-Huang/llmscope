@@ -768,6 +768,8 @@ class GPTBridge:
         config = self.config
         if is_expert:
             hf_mlp = hf_mlp.experts
+            # When converting to_mcore, hf_grouped is determined by default from the hf_state_dict condition.
+            # When converting to_hf, it is determined by default from the hf_mlp condition.
             if to_mcore:
                 pattern = r'experts\.\d+\.down_proj'
                 hf_grouped = not any(re.match(pattern, k) is not None for k in hf_state_dict.keys())
