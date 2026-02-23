@@ -1,12 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import math
 import megatron.core
+import re
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 import transformers
 from copy import copy
-import re
 from megatron.core import mpu
 from packaging import version
 from peft.utils import ModulesToSaveWrapper
@@ -737,10 +737,9 @@ class GPTBridge:
     def _get_hf_grouped(self, is_mtp_layer: bool = False):
         if self.model_type in {
                 'qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'deepseek_v3', 'dots1', 'ernie4_5_moe', 'glm4_moe',
-                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe'
+                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe',
+                'qwen3_5_moe'
         }:
-            return False, False
-        elif self.model_type == 'qwen3_5_moe' and is_mtp_layer:
             return False, False
         return None, None
 
@@ -789,7 +788,7 @@ class GPTBridge:
             if _is_gate_up is not None:
                 is_gate_up = _is_gate_up
         need_transpose = True
-        if self.is_transformers_5:
+        if self.is_transformers_5 and hf_grouped:
             need_transpose = self._get_transpose()
 
         if to_mcore or hf_grouped:
