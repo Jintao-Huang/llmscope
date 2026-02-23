@@ -426,9 +426,9 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
 
     sequence_parallel: bool = False
     context_parallel_size: int = 1
-    tp_comm_overlap: bool = False  # TODO
-    overlap_grad_reduce: bool = False  # TODO
-    overlap_param_gather: bool = False  # TODO
+    tp_comm_overlap: bool = False
+    overlap_grad_reduce: bool = False
+    overlap_param_gather: bool = False
     virtual_pipeline_model_parallel_size: Optional[int] = None
     microbatch_group_size_per_vp_stage: Optional[int] = None
     pipeline_model_parallel_layout: Optional[str] = None
@@ -700,7 +700,6 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
         data_parallel_size = mpu.get_data_parallel_world_size()
         step_batch_size = self.micro_batch_size * data_parallel_size
         num_generations = self.num_generations if self.rlhf_type == 'grpo' else 1
-        # TODO: Check if it causes duplicate saving at the end.
         if self.save_strategy == 'epoch':
             if hasattr(train_dataset, '__len__'):
                 dataset_sample = len(train_dataset) // step_batch_size * step_batch_size * num_generations
