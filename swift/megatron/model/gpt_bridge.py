@@ -1632,7 +1632,7 @@ class GPTBridge:
                 config = self.config
                 if config.mtp_num_layers:
                     hf_config.num_nextn_predict_layers = config.mtp_num_layers
-                if config.fp8 is not None and config.fp8_recipe == 'blockwise' and config.fp8_param_gather:
+                if config.fp8 is not None and config.fp8_recipe == 'blockwise' and config.fp8_param:
                     if getattr(hf_config, 'quantization_config', None) is None:
                         from transformers.utils.quantization_config import FineGrainedFP8Config
                         modules_to_not_convert = get_modules_to_not_convert(self.hf_model)
