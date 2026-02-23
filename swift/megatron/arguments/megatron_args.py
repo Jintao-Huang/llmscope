@@ -347,7 +347,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     exp_avg_dtype: Literal['fp32', 'fp16', 'bf16', 'fp8'] = 'fp32'
     exp_avg_sq_dtype: Literal['fp32', 'fp16', 'bf16', 'fp8'] = 'fp32'
     manual_gc: bool = False
-    manual_gc_interval: int = 0
+    manual_gc_steps: int = 0
     manual_gc_eval: bool = True
 
     # data
@@ -390,7 +390,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
 
     # checkpoint
     output_dir: Optional[str] = None
-    save_interval: int = 500
+    save_steps: int = 500
     no_save_optim: bool = False
     no_save_rng: bool = False
     mcore_model: Optional[str] = None
@@ -437,7 +437,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
 
     # 'wandb', 'swanlab', 'tensorboard'
     report_to: List[str] = field(default_factory=lambda: ['tensorboard'])
-    log_interval: int = 5
+    logging_steps: int = 5
     tensorboard_dir: Optional[str] = None
     tensorboard_queue_size: int = 50
     wandb_project: str = 'megatron-swift'
@@ -447,7 +447,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
 
     # evaluate
     eval_iters: int = -1
-    eval_interval: Optional[int] = None
+    eval_steps: Optional[int] = None
 
     # fp8
     fp8_format: Literal['e4m3', 'hybrid'] = None
@@ -617,8 +617,8 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
             self.greater_is_better = 'loss' not in self.metric_for_best_model
         if isinstance(self.ref_adapters, str):
             self.ref_adapters = [self.ref_adapters]
-        if self.eval_interval is None:
-            self.eval_interval = self.save_interval
+        if self.eval_steps is None:
+            self.eval_steps = self.save_steps
         if self.merge_lora is None:
             self.merge_lora = self.save_safetensors
         if self.adapters or self.ref_adapters or self.mcore_adapter or self.mcore_ref_adapter:
@@ -704,8 +704,8 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
         if self.save_strategy == 'epoch':
             if hasattr(train_dataset, '__len__'):
                 dataset_sample = len(train_dataset) // step_batch_size * step_batch_size * num_generations
-                self.save_interval = dataset_sample // self.global_batch_size
-                self.eval_interval = self.save_interval
+                self.save_steps = dataset_sample // self.global_batch_size
+                self.eval_steps = self.save_steps
             else:
                 raise ValueError('streaming dataset is not supported with `--save_strategy epoch`.')
         if self.num_train_epochs is not None:

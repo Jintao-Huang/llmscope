@@ -12,8 +12,8 @@ def test_dpo():
             split_dataset_ratio=0.01,
             micro_batch_size=16,
             tensor_model_parallel_size=2,
-            eval_interval=5,
-            log_interval=1,
+            eval_steps=5,
+            logging_steps=1,
             finetune=True,
             num_train_epochs=1,
         ))
