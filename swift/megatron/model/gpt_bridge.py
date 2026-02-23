@@ -6,6 +6,7 @@ import torch.distributed as dist
 import torch.nn.functional as F
 import transformers
 from copy import copy
+import re
 from megatron.core import mpu
 from packaging import version
 from peft.utils import ModulesToSaveWrapper
@@ -767,12 +768,21 @@ class GPTBridge:
         hf_grouped = False
         config = self.config
         if is_expert:
-            hf_grouped = not hasattr(hf_mlp.experts, '__len__')
-            hf_mlp = hf_mlp.experts if hf_grouped else hf_mlp.experts[0]
+            hf_mlp = hf_mlp.experts
+            if to_mcore:
+                pattern = r'experts\.\d+\.down_proj'
+                hf_grouped = not any(re.match(pattern, k) is not None for k in hf_state_dict.keys())
+            else:
+                hf_grouped = not hasattr(hf_mlp, '__len__')
+            if hasattr(hf_mlp, '__len__'):
+                hf_mlp = hf_mlp[0]
             num_local_experts = config.num_moe_experts // self.ep_size
-        is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
+        if to_mcore:
+            is_gate_up = any('gate_up_proj' in k for k in hf_state_dict.keys())
+        else:
+            is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
         # transformers 5.0 compatibility
-        if self.is_transformers_5:
+        if self.is_transformers_5 and not to_mcore:
             _hf_grouped, _is_gate_up = self._get_hf_grouped(is_mtp_layer)
             if _hf_grouped is not None:
                 hf_grouped = _hf_grouped

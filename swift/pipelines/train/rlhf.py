@@ -87,7 +87,7 @@ class SwiftRLHF(SwiftSft):
             model, processor = args.get_model_processor(
                 model=model_id_or_path,
                 model_type=model_type,
-                model_revision=model_revision,
+                revision=model_revision,
                 task_type=task_type,
                 num_labels=num_labels)
 
