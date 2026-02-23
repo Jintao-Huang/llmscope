@@ -760,6 +760,8 @@ class GPTBridge:
         hf_mlp=None,
         is_mtp_layer: bool = False,
     ):
+        if to_mcore:
+            hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
         if hf_mlp is None:
             hf_mlp = self._get_hf_mlp(layer_idx)
         is_expert = ep_rank is not None
@@ -771,7 +773,7 @@ class GPTBridge:
             # When converting to_mcore, hf_grouped is determined by default from the hf_state_dict condition.
             # When converting to_hf, it is determined by default from the hf_mlp condition.
             if to_mcore:
-                pattern = r'experts\.\d+\.down_proj'
+                pattern = r'\d+\.down_proj'
                 hf_grouped = not any(re.match(pattern, k) is not None for k in hf_state_dict.keys())
             else:
                 hf_grouped = not hasattr(hf_mlp, '__len__')
@@ -783,7 +785,7 @@ class GPTBridge:
         else:
             is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
         # transformers 5.0 compatibility
-        if self.is_transformers_5 and not to_mcore:
+        if self.is_transformers_5 and not to_mcore and is_expert:
             _hf_grouped, _is_gate_up = self._get_hf_grouped(is_mtp_layer)
             if _hf_grouped is not None:
                 hf_grouped = _hf_grouped
@@ -793,10 +795,11 @@ class GPTBridge:
         if self.is_transformers_5 and hf_grouped:
             need_transpose = self._get_transpose()
 
-        if to_mcore or hf_grouped:
+        if hf_grouped and not to_mcore:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
-        else:
+        elif not to_mcore:
             hf_state_dict = {}
+
         # linear_fc1
         if to_mcore:
             has_scale_inv = any('_scale_inv' in k for k in hf_state_dict.keys())
