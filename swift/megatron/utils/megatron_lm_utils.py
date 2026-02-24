@@ -539,7 +539,7 @@ def wrap_model(args, models, wrap_with_ddp: bool = True):
             ) for (model_chunk_idx, model_chunk) in enumerate(models)
         ]
 
-        # Broadcast params from data parallel src rank to other data parallel ranks.
+    # Broadcast params from data parallel src rank to other data parallel ranks.
     if args.data_parallel_random_init:
         for m in models:
             m.broadcast_params()
@@ -588,10 +588,7 @@ def unwrap_model(models, module_instances=None):
     except ImportError:
         pass
     if module_instances is None:
-        from megatron.core.distributed import DistributedDataParallel as DDP
         from megatron.core.distributed import TorchFullyShardedDataParallel as torch_FSDP
-        from megatron.core.transformer.module import Float16Module
-
         module_instances = (DDP, torch_FSDP, Float16Module)
 
     return_list = True

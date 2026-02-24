@@ -494,3 +494,15 @@ register_model(
         architectures=['GlmOcrForConditionalGeneration'],
         requires=['transformers>=5.0.1dev0'],
     ))
+
+register_model(
+    ModelMeta(
+        LLMModelType.glm_moe_dsa,
+        [
+            ModelGroup([
+                Model('ZhipuAI/GLM-5', 'zai-org/GLM-5'),
+            ], template=TemplateType.glm4_7),
+        ],
+        architectures=['GlmMoeDsaForCausalLM'],
+        requires=['transformers>=5.2.0'],
+    ))

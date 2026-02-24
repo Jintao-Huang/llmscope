@@ -80,8 +80,11 @@ class BaseMegatronTrainer(ABC):
 
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
         self.callbacks = []
-        for callback in self.args.callbacks:
+        for callback in args.callbacks:
             self.callbacks.append(megatron_callbacks_map[callback](self))
+
+        if args.async_save and args.use_persistent_ckpt_worker:
+            init_persistent_async_worker()
 
     def _load_checkpoint(self):
         args = self.args
@@ -482,6 +485,8 @@ class BaseMegatronTrainer(ABC):
 
     def train(self, train_dataset, val_dataset):
         args = self.args
+        config = self.config
+        state = self.state
         for m in self.wrapped_models:
             m.train()
 
@@ -489,21 +494,19 @@ class BaseMegatronTrainer(ABC):
             for m in self.unwrapped_models:
                 self._prepare_vit_gradient_checkpointing(m)
 
-        self.config.finalize_model_grads_func = finalize_model_grads
-        if args.async_save and args.use_persistent_ckpt_worker:
-            init_persistent_async_worker()
+        config.grad_scale_func = self.optimizer.scale_loss
+        config.finalize_model_grads_func = finalize_model_grads
 
         self.call_event('on_train_begin')
         train_metrics = {}
-        if self.args.virtual_pipeline_model_parallel_size is not None:
+        if args.virtual_pipeline_model_parallel_size is not None:
             train_data_iterator, val_data_iterator = [], []
-            for _ in range(self.args.virtual_pipeline_model_parallel_size):
+            for _ in range(args.virtual_pipeline_model_parallel_size):
                 train_it, val_it = self._prepare_data_iterator(train_dataset, val_dataset)
                 train_data_iterator.append(train_it)
                 val_data_iterator.append(train_it)
         else:
             train_data_iterator, val_data_iterator = self._prepare_data_iterator(train_dataset, val_dataset)
-        state = self.state
         while state.iteration < args.train_iters:
             self.call_event('on_step_begin')
             metrics, grad_norm = self.train_step(train_data_iterator)
