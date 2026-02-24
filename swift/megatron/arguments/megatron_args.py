@@ -332,7 +332,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     masked_softmax_fusion: bool = True
     bias_dropout_fusion: bool = True
     bias_activation_fusion: bool = True
-    apply_rope_fusion: bool = True
+    apply_rope_fusion: bool = False
     gradient_accumulation_fusion: bool = True
     cross_entropy_loss_fusion: bool = True
     cross_entropy_fusion_impl: Literal['native', 'te'] = 'native'
@@ -502,6 +502,10 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     aligner_lr: Optional[float] = None
     attn_impl: Optional[str] = None
     gradient_checkpointing_kwargs: Optional[Union[dict, str]] = None
+
+    # dsa
+    dsa_indexer_loss_coeff: Optional[float] = None
+    dsa_indexer_use_sparse_loss: bool = False
 
     # other
     check_model: bool = True

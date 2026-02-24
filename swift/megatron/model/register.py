@@ -77,13 +77,21 @@ class MegatronModelLoader:
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
         if self.model_cls is None:
             self.model_cls = MultimodalGPTModel if self.args.is_multimodal else GPTModel
-        self._init_config()
+
+    def _replace_spec_dsa(self, layer_spec):
+        from megatron.core.models.gpt.experimental_attention_variant_module_specs import (
+            _get_backend_spec_provider, get_dsa_module_spec_for_backend)
+        backend = _get_backend_spec_provider(config=self.config)
+        layer_spec.submodules.self_attention = get_dsa_module_spec_for_backend(self.config, backend)
 
     def get_transformer_layer_spec(self, vp_stage: Optional[int] = None):
         if self.config.num_moe_experts:
             kwargs = {'qk_l2_norm': self.config.qk_l2_norm, 'vp_stage': vp_stage} if self.mcore_013 else {}
             transformer_layer_spec = get_gpt_decoder_block_spec(
                 self.config, use_transformer_engine=True, normalization=self.config.normalization, **kwargs)
+            if self.config.experimental_attention_variant == 'dsa':
+                for layer_spec in transformer_layer_spec.layer_specs:
+                    self._replace_spec_dsa(layer_spec)
         else:
             transformer_layer_spec = self._get_transformer_layer_spec()
         return transformer_layer_spec
@@ -98,6 +106,7 @@ class MegatronModelLoader:
             config.multi_latent_attention,
             **kwargs,
         )
+        # TODO: dsa
         return transformer_layer_spec
 
     def get_mtp_block_spec(self, transformer_layer_spec, vp_stage: Optional[int] = None):
@@ -137,18 +146,6 @@ class MegatronModelLoader:
             post_process=post_process,
             vp_stage=vp_stage)
         return model
-
-    def _init_config(self):
-        config = self.config
-        # apply_rope_fusion
-        if config.apply_rope_fusion is not None:
-            return
-        if config.multi_latent_attention or config.rotary_interleaved:
-            # Upgrading transformer_engine requires checking here.
-            config.apply_rope_fusion = False
-        else:
-            config.apply_rope_fusion = True
-        logger.info(f'Setting config.apply_rope_fusion: {config.apply_rope_fusion}.')
 
     def _init_model(self,
                     transformer_layer_spec,

@@ -97,7 +97,7 @@ def _patch_mla_attention():
         # Get the query, key and value tensors based on the type of attention -
         # self or cross attn.
         # query: [96, 1, 16, 128], key:[96, 1, 16, 128], value:[96, 1, 16, 128]
-        query, key, value = self.get_query_key_value_tensors(
+        query, key, value, q_compressed, kv_compressed = self.get_query_key_value_tensors(
             hidden_states,
             key_value_states,
             position_ids,
@@ -135,6 +135,12 @@ def _patch_mla_attention():
             core_attn_out = self._checkpointed_attention_forward(
                 query, key, value, attention_mask, packed_seq_params=packed_seq_params)
         else:
+            extra_kwargs = {}
+            if self.config.experimental_attention_variant == "dsa":
+                # For dsa we need to pass in the original hidden states and the compressed
+                # query representation.
+                extra_kwargs["x"] = hidden_states
+                extra_kwargs["qr"] = q_compressed
             core_attn_out = self.core_attention(
                 query,
                 key,
@@ -142,6 +148,7 @@ def _patch_mla_attention():
                 attention_mask,
                 packed_seq_params=packed_seq_params,
                 attn_mask_type=attn_mask_type,
+                **extra_kwargs,
             )
         if thd_qkv_format:
             if core_attn_out.ndim == 2:
@@ -341,7 +348,7 @@ def _patch_mla_attention():
         else:
             query, key, value = qkv_up_proj_and_rope_apply(q_compressed, kv_compressed, k_pos_emb, rotary_pos_emb)
 
-        return query, key, value
+        return query, key, value, q_compressed, kv_compressed
 
     MLASelfAttention.get_query_key_value_tensors = get_query_key_value_tensors
 

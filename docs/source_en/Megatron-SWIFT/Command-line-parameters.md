@@ -25,8 +25,7 @@
 - masked_softmax_fusion: Defaults to True. Used to enable the fusion of scaling, masking, and softmax for query_key_value.
 - bias_dropout_fusion: Defaults to True. Used to enable the fusion of bias and dropout.
 - bias_activation_fusion: If True, fuses bias addition and activation function when possible. Defaults to True.
-- apply_rope_fusion: Defaults to True. Used to enable rope fusion.
-  - **When using position encodings that don't support rope_fusion such as mrope, this parameter will be automatically set to False**.
+- apply_rope_fusion: Defaults to False. Used to enable RoPE fusion. This parameter is passed through from megatron-core. Note: RoPE fusion is not supported in all cases, for example: MLA, mrope, etc. are not supported.
 - gradient_accumulation_fusion: Defaults to True. Used to enable gradient accumulation fusion.
 - 🔥cross_entropy_loss_fusion: Enables cross-entropy loss computation fusion. Defaults to True.
 - cross_entropy_fusion_impl: Implementation of cross-entropy loss fusion. Options include 'native' and 'te'. Defaults to 'native'.

@@ -23,8 +23,7 @@ mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0
 logger = get_logger()
 
 
-# Code borrowed from NVIDIA/Megatron-LM
-def get_batch_on_this_tp_rank(args, data, vp_stage=None):
+def get_batch_on_this_pp_rank(args, data, vp_stage=None):
     if args.task_type == 'causal_lm':
         data['labels'] = torch.roll(data['labels'], -1, dims=-1)
         if 'loss_scale' in data:

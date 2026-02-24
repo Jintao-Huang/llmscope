@@ -412,7 +412,7 @@
 |[ZhipuAI/GLM-4.7](https://modelscope.cn/models/ZhipuAI/GLM-4.7)|glm4_moe|glm4_7|transformers>=4.54|&#x2714;|-|[zai-org/GLM-4.7](https://huggingface.co/zai-org/GLM-4.7)|
 |[ZhipuAI/GLM-4.7-FP8](https://modelscope.cn/models/ZhipuAI/GLM-4.7-FP8)|glm4_moe|glm4_7|transformers>=4.54|&#x2718;|-|[zai-org/GLM-4.7-FP8](https://huggingface.co/zai-org/GLM-4.7-FP8)|
 |[ZhipuAI/GLM-4.7-Flash](https://modelscope.cn/models/ZhipuAI/GLM-4.7-Flash)|glm4_moe_lite|glm4_7|transformers>=5.0.0.dev|&#x2714;|-|[zai-org/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)|
-|[ZhipuAI/GLM-5](https://modelscope.cn/models/ZhipuAI/GLM-5)|glm_moe_dsa|glm4_7|transformers>=5.2.0|&#x2718;|-|[zai-org/GLM-5](https://huggingface.co/zai-org/GLM-5)|
+|[ZhipuAI/GLM-5](https://modelscope.cn/models/ZhipuAI/GLM-5)|glm_moe_dsa|glm4_7|transformers>=5.2.0|&#x2714;|-|[zai-org/GLM-5](https://huggingface.co/zai-org/GLM-5)|
 |[ZhipuAI/glm-edge-1.5b-chat](https://modelscope.cn/models/ZhipuAI/glm-edge-1.5b-chat)|glm_edge|chatglm4|transformers>=4.46|&#x2718;|-|[zai-org/glm-edge-1.5b-chat](https://huggingface.co/zai-org/glm-edge-1.5b-chat)|
 |[ZhipuAI/glm-edge-4b-chat](https://modelscope.cn/models/ZhipuAI/glm-edge-4b-chat)|glm_edge|chatglm4|transformers>=4.46|&#x2718;|-|[zai-org/glm-edge-4b-chat](https://huggingface.co/zai-org/glm-edge-4b-chat)|
 |[codefuse-ai/CodeFuse-CodeGeeX2-6B](https://modelscope.cn/models/codefuse-ai/CodeFuse-CodeGeeX2-6B)|codefuse_codegeex2|codefuse|transformers<4.34|&#x2718;|coding|[codefuse-ai/CodeFuse-CodeGeeX2-6B](https://huggingface.co/codefuse-ai/CodeFuse-CodeGeeX2-6B)|
@@ -475,8 +475,8 @@
 |[unsloth/DeepSeek-R1-BF16](https://modelscope.cn/models/unsloth/DeepSeek-R1-BF16)|deepseek_v3|deepseek_r1|transformers>=4.39.3|&#x2714;|-|[unsloth/DeepSeek-R1-BF16](https://huggingface.co/unsloth/DeepSeek-R1-BF16)|
 |[unsloth/DeepSeek-R1-Zero-BF16](https://modelscope.cn/models/unsloth/DeepSeek-R1-Zero-BF16)|deepseek_v3|deepseek_r1|transformers>=4.39.3|&#x2714;|-|[unsloth/DeepSeek-R1-Zero-BF16](https://huggingface.co/unsloth/DeepSeek-R1-Zero-BF16)|
 |[unsloth/DeepSeek-R1-0528-BF16](https://modelscope.cn/models/unsloth/DeepSeek-R1-0528-BF16)|deepseek_v3|deepseek_r1|transformers>=4.39.3|&#x2714;|-|[unsloth/DeepSeek-R1-0528-BF16](https://huggingface.co/unsloth/DeepSeek-R1-0528-BF16)|
-|[moonshotai/Moonlight-16B-A3B](https://modelscope.cn/models/moonshotai/Moonlight-16B-A3B)|deepseek_v3|moonlight|transformers>=4.39.3|&#x2714;|-|[moonshotai/Moonlight-16B-A3B](https://huggingface.co/moonshotai/Moonlight-16B-A3B)|
-|[moonshotai/Moonlight-16B-A3B-Instruct](https://modelscope.cn/models/moonshotai/Moonlight-16B-A3B-Instruct)|deepseek_v3|moonlight|transformers>=4.39.3|&#x2714;|-|[moonshotai/Moonlight-16B-A3B-Instruct](https://huggingface.co/moonshotai/Moonlight-16B-A3B-Instruct)|
+|[moonshotai/Moonlight-16B-A3B](https://modelscope.cn/models/moonshotai/Moonlight-16B-A3B)|deepseek_v3|moonlight|transformers<4.49|&#x2714;|-|[moonshotai/Moonlight-16B-A3B](https://huggingface.co/moonshotai/Moonlight-16B-A3B)|
+|[moonshotai/Moonlight-16B-A3B-Instruct](https://modelscope.cn/models/moonshotai/Moonlight-16B-A3B-Instruct)|deepseek_v3|moonlight|transformers<4.49|&#x2714;|-|[moonshotai/Moonlight-16B-A3B-Instruct](https://huggingface.co/moonshotai/Moonlight-16B-A3B-Instruct)|
 |[moonshotai/Kimi-K2-Base](https://modelscope.cn/models/moonshotai/Kimi-K2-Base)|deepseek_v3|kimi_k2|transformers>=4.39.3|&#x2714;|-|[moonshotai/Kimi-K2-Base](https://huggingface.co/moonshotai/Kimi-K2-Base)|
 |[moonshotai/Kimi-K2-Instruct](https://modelscope.cn/models/moonshotai/Kimi-K2-Instruct)|deepseek_v3|kimi_k2|transformers>=4.39.3|&#x2714;|-|[moonshotai/Kimi-K2-Instruct](https://huggingface.co/moonshotai/Kimi-K2-Instruct)|
 |[moonshotai/Kimi-K2-Instruct-0905](https://modelscope.cn/models/moonshotai/Kimi-K2-Instruct-0905)|deepseek_v3|kimi_k2|transformers>=4.39.3|&#x2714;|-|[moonshotai/Kimi-K2-Instruct-0905](https://huggingface.co/moonshotai/Kimi-K2-Instruct-0905)|
