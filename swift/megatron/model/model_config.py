@@ -419,6 +419,7 @@ def convert_hf_config(config) -> Dict[str, Any]:
             res['moe_layer_freq'] = f"[{','.join(moe_layer_freq)}]"
     elif hf_model_type == 'glm4v':
         res['rotary_interleaved'] = True
+
     if 'partial_rotary_factor' not in res and 'partial_rotary_factor' in rope_scaling:
         res['partial_rotary_factor'] = rope_scaling['partial_rotary_factor']
     if 'rotary_base' not in res and 'rope_theta' in rope_scaling:
