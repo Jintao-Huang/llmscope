@@ -2,15 +2,14 @@
 # Parts of the functions in this file are code borrowed from NVIDIA/Megatron-LM
 import copy
 import dataclasses
+import megatron.core
+import numpy as np
 import os
 import random
+import torch
 from argparse import Namespace
 from contextlib import contextmanager
 from datetime import timedelta
-
-import megatron.core
-import numpy as np
-import torch
 from megatron.core import dist_checkpointing, mpu, tensor_parallel
 from megatron.core.dist_checkpointing.mapping import ShardedObject
 from megatron.core.dist_checkpointing.serialization import (get_default_load_sharded_strategy,
@@ -24,6 +23,7 @@ from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
 from megatron.core.utils import get_torch_version, is_torch_min_version
 from packaging import version
+from typing import Optional
 
 from swift.utils import check_json_format, get_logger, init_process_group, is_master, seed_everything, set_device
 from .patcher import patch_merge_fn
@@ -114,7 +114,7 @@ def initialize_megatron(args):
         from megatron.core.transformer.moe.router import MoEAuxLossAutoScaler
         MoEAuxLossAutoScaler.set_loss_scale(torch.ones(1, device=torch.cuda.current_device()))
 
-    # TODO: tp_comm_overlap, _compile_dependencies
+    # TODO: tp_comm_overlap
 
 
 def _get_rng_state():
@@ -242,13 +242,17 @@ def get_sharded_sd_metadata(args):
     return sharded_sd_metadata
 
 
-def save_mcore_checkpoint(args,
-                          models,
-                          optimizer=None,
-                          opt_param_scheduler=None,
-                          iteration=1,
-                          is_peft_format: bool = False):
-    output_dir = args.output_dir
+def save_mcore_checkpoint(
+    args,
+    models,
+    optimizer=None,
+    opt_param_scheduler=None,
+    iteration=1,
+    output_dir: Optional[str] = None,
+    is_peft_format: bool = False,
+):
+    if output_dir is None:
+        output_dir = args.output_dir
     models = unwrap_model(models)
     rng_state = _get_rng_state() if models else None
     checkpoint_dir = os.path.join(output_dir, f'iter_{iteration:07d}')
@@ -298,7 +302,6 @@ def save_mcore_checkpoint(args,
     if is_master():
 
         def iter_finalize_fn():
-            # TODO: save_total_limit
             if models:
                 logger.info(f'Successfully saved Megatron model weights in `{output_dir}`.')
 
@@ -418,7 +421,12 @@ def load_mcore_checkpoint(args,
         gen_sd_optim = optimizer
         gen_sd_opt_param_scheduler = opt_param_scheduler
 
-        if args.use_distributed_optimizer and ckpt_tp_pp != run_tp_pp:
+        if (args.use_distributed_optimizer and ckpt_tp_pp != run_tp_pp
+                and (sharded_sd_metadata or {}).get('distrib_optim_sharding_type') not in {
+                    'fully_reshardable',
+                    'fully_sharded_model_space',
+                    'fsdp_dtensor',
+                }):
             raise RuntimeError(f'{mismatch_msg}: not supported for DistributedOptimizer')
     else:
         gen_sd_optim, gen_sd_opt_param_scheduler = None, None

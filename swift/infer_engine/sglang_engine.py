@@ -2,15 +2,14 @@
 import asyncio
 import inspect
 import os
-from copy import deepcopy
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
-
 import sglang as sgl
 import torch
+from copy import deepcopy
 from PIL import Image
 from sglang.srt.sampling.sampling_params import SamplingParams
 from sglang.srt.server_args import ServerArgs
 from transformers import GenerationConfig
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 from swift.metrics import Metric
 from swift.model import get_model_info_meta, get_processor

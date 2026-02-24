@@ -1,8 +1,7 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
+import torch
 from collections import namedtuple
 from functools import partial
-
-import torch
 from megatron.core import mpu
 from torch.distributed.nn import all_reduce
 

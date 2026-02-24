@@ -4,22 +4,21 @@ import atexit
 import base64
 import concurrent.futures
 import inspect
-import os
-import uuid
-from collections import defaultdict
-from contextlib import contextmanager, nullcontext
-from copy import copy, deepcopy
-from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import json
+import os
 import pandas as pd
 import torch
 import torch.nn as nn
+import uuid
 from accelerate.utils import broadcast_object_list
+from collections import defaultdict, deque
+from contextlib import contextmanager, nullcontext
+from copy import copy, deepcopy
 from dacite import from_dict
+from functools import partial
 from megatron.core import mpu
 from megatron.core.rerun_state_machine import RerunDataIterator
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from swift.dataset import RowPreprocessor
 from swift.infer_engine.protocol import RequestConfig, RolloutInferRequest, RolloutOutput
@@ -32,7 +31,7 @@ from swift.rlhf_trainers.utils import (aggressive_empty_cache, nanstd, pad_logps
                                        set_expandable_segments)
 from swift.rollout import MultiTurnScheduler, multi_turns
 from swift.template import Template, TemplateInputs
-from swift.utils import (get_logger, get_packed_seq_params, remove_response, shutdown_event_loop_in_daemon,
+from swift.utils import (JsonlWriter, get_logger, get_packed_seq_params, remove_response, shutdown_event_loop_in_daemon,
                          start_event_loop_in_daemon, to_device)
 from .rlhf_mixin import MegatronRLHFTrainer
 from .rollout_mixin import MegatronRolloutMixin
@@ -1675,8 +1674,7 @@ class MegatronGRPOTrainer(MegatronRolloutMixin, MegatronRLHFTrainer):
 
     def _prepare_metrics(self):
         args = self.args
-        from swift.utils import JsonlWriter
-        from collections import deque
+
         self.log_completions = args.log_completions
         self.wandb_log_unique_prompts = args.wandb_log_unique_prompts
         self.jsonl_writer = JsonlWriter(os.path.join(args.output_dir, 'completions.jsonl'), write_on_rank='last')

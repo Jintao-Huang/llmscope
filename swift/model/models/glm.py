@@ -1,13 +1,12 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import inspect
-from typing import Any, Dict, Type
-
 import torch
 import transformers
 from packaging import version
 from transformers import AutoTokenizer, PretrainedConfig, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.dynamic_module_utils import get_class_from_dynamic_module
 from transformers.models.auto.tokenization_auto import get_tokenizer_config
+from typing import Any, Dict, Type
 
 from swift.template import TemplateType
 from swift.utils import Processor, get_device_count, get_dist_setting, get_logger, safe_snapshot_download

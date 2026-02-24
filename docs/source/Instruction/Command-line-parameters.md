@@ -39,7 +39,7 @@
 - attn_impl: attention类型，可选项为'sdpa', 'eager', 'flash_attn', 'flash_attention_2', 'flash_attention_3'等。默认使用None，读取'config.json'。
   - 注意：这几种attention实现并不一定都支持，这取决于对应模型transformers实现的支持情况。
   - 若设置为'flash_attn'（兼容旧版本），则使用'flash_attention_2'。
-- experts_impl: 专家实现类型，可选项为'grouped_mm', 'batched_mm', 'eager'。默认为None。该特性需要"transformers>=5.0.0"。
+- 🔥experts_impl: 专家实现类型，可选项为'grouped_mm', 'batched_mm', 'eager'。默认为None。该特性需要"transformers>=5.0.0"。
 - new_special_tokens: 需要新增的特殊tokens。默认为`[]`。例子参考[这里](https://github.com/modelscope/ms-swift/tree/main/examples/train/new_special_tokens)。
   - 注意：你也可以传入以`.txt`结尾的文件路径，每行为一个special token。
 - num_labels: 分类模型（即`--task_type seq_cls`）需要指定该参数。代表标签数量，默认为None。
@@ -233,7 +233,7 @@ gradient_checkpointing: true
   - 若不使用`val_dataset`和`eval_dataset`且`split_dataset_ratio`为0，则默认为'no'。
 - 🔥eval_steps: 默认为None，如果存在评估数据集，则跟随`save_steps`的策略。
 - eval_on_start: 是否在训练前执行一次评估步骤，以确保验证步骤能正常工作。默认为False。
-- 🔥save_total_limit: 最多保存的checkpoint数，会将过期的checkpoint进行删除。默认为None，保存所有的checkpoint。
+- 🔥save_total_limit: 最多保存的checkpoint数，会将过期的checkpoint进行删除。默认为None，保存所有的checkpoint。若设置为2，则保存best checkpoint和last checkpoint。
 - max_steps: 最大训练的steps数。在数据集为流式时需要被设置。默认为-1。
 - 🔥warmup_ratio: 默认为0.。
 - save_on_each_node: 在每一个节点都进行权重保存。默认为False。该参数在多机训练时需要被考虑。

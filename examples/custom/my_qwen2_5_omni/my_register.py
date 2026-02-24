@@ -1,9 +1,8 @@
-from functools import partial
-from typing import Any, Dict, List, Literal, Optional
-
 import torch
+from functools import partial
 from transformers import PretrainedConfig, PreTrainedModel
 from transformers.integrations import is_deepspeed_zero3_enabled
+from typing import Any, Dict, List, Literal, Optional
 
 from swift.model import (Model, ModelGroup, ModelLoader, ModelMeta, MultiModelKeys, get_model_processor, register_model,
                          register_model_arch)
@@ -44,8 +43,8 @@ class Qwen2_5OmniLoader(ModelLoader):
         return config
 
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
-        from transformers import Qwen2_5OmniProcessor
         from qwen_omni_utils import vision_process
+        from transformers import Qwen2_5OmniProcessor
         processor = Qwen2_5OmniProcessor.from_pretrained(model_dir, trust_remote_code=True)
         # Control constants in qwen_omni_utils library via environment variables,
         # e.g., `MAX_PIXELS`, etc.
