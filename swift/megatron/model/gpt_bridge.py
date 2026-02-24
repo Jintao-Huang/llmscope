@@ -1,6 +1,7 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import math
 import megatron.core
+import re
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -736,10 +737,9 @@ class GPTBridge:
     def _get_hf_grouped(self, is_mtp_layer: bool = False):
         if self.model_type in {
                 'qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'deepseek_v3', 'dots1', 'ernie4_5_moe', 'glm4_moe',
-                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe'
+                'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe',
+                'qwen3_5_moe'
         }:
-            return False, False
-        elif self.model_type == 'qwen3_5_moe' and is_mtp_layer:
             return False, False
         return None, None
 
@@ -760,6 +760,8 @@ class GPTBridge:
         hf_mlp=None,
         is_mtp_layer: bool = False,
     ):
+        if to_mcore:
+            hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
         if hf_mlp is None:
             hf_mlp = self._get_hf_mlp(layer_idx)
         is_expert = ep_rank is not None
@@ -767,25 +769,37 @@ class GPTBridge:
         hf_grouped = False
         config = self.config
         if is_expert:
-            hf_grouped = not hasattr(hf_mlp.experts, '__len__')
-            hf_mlp = hf_mlp.experts if hf_grouped else hf_mlp.experts[0]
+            hf_mlp = hf_mlp.experts
+            # When converting to_mcore, hf_grouped is determined by default from the hf_state_dict condition.
+            # When converting to_hf, it is determined by default from the hf_mlp condition.
+            if to_mcore:
+                pattern = r'\d+\.down_proj'
+                hf_grouped = not any(re.match(pattern, k) is not None for k in hf_state_dict.keys())
+            else:
+                hf_grouped = not hasattr(hf_mlp, '__len__')
+            if hasattr(hf_mlp, '__len__'):
+                hf_mlp = hf_mlp[0]
             num_local_experts = config.num_moe_experts // self.ep_size
-        is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
+        if to_mcore:
+            is_gate_up = any('gate_up_proj' in k for k in hf_state_dict.keys())
+        else:
+            is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
         # transformers 5.0 compatibility
-        if self.is_transformers_5:
+        if self.is_transformers_5 and not to_mcore and is_expert:
             _hf_grouped, _is_gate_up = self._get_hf_grouped(is_mtp_layer)
             if _hf_grouped is not None:
                 hf_grouped = _hf_grouped
             if _is_gate_up is not None:
                 is_gate_up = _is_gate_up
         need_transpose = True
-        if self.is_transformers_5:
+        if self.is_transformers_5 and hf_grouped:
             need_transpose = self._get_transpose()
 
-        if to_mcore or hf_grouped:
+        if hf_grouped and not to_mcore:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
-        else:
+        elif not to_mcore:
             hf_state_dict = {}
+
         # linear_fc1
         if to_mcore:
             has_scale_inv = any('_scale_inv' in k for k in hf_state_dict.keys())
@@ -1623,7 +1637,7 @@ class GPTBridge:
                 config = self.config
                 if config.mtp_num_layers:
                     hf_config.num_nextn_predict_layers = config.mtp_num_layers
-                if config.fp8 is not None and config.fp8_recipe == 'blockwise' and config.fp8_param_gather:
+                if config.fp8 is not None and config.fp8_recipe == 'blockwise' and config.fp8_param:
                     if getattr(hf_config, 'quantization_config', None) is None:
                         from transformers.utils.quantization_config import FineGrainedFP8Config
                         modules_to_not_convert = get_modules_to_not_convert(self.hf_model)
