@@ -535,11 +535,11 @@ def wrap_model(args, models, wrap_with_ddp: bool = True):
                 module=model_chunk,
                 # Turn off bucketing for model_chunk 2 onwards, since communication for these
                 # model chunks is overlapped with compute anyway.
-                disable_bucketing=model_chunk_idx > 0,
+                disable_bucketing=(model_chunk_idx > 0) or args.overlap_param_gather_with_optimizer_step,
             ) for (model_chunk_idx, model_chunk) in enumerate(models)
         ]
 
-        # Broadcast params from data parallel src rank to other data parallel ranks.
+    # Broadcast params from data parallel src rank to other data parallel ranks.
     if args.data_parallel_random_init:
         for m in models:
             m.broadcast_params()
@@ -606,3 +606,20 @@ def unwrap_model(models, module_instances=None):
     if not return_list:
         return unwrapped_model[0]
     return unwrapped_model
+
+
+def should_disable_forward_pre_hook(args):
+    """Block forward pre-hook for certain configurations."""
+    return args.use_distributed_optimizer and args.overlap_param_gather
+
+
+def enable_forward_pre_hook(model_chunks):
+    for model_chunk in model_chunks:
+        assert isinstance(model_chunk, DDP)
+        model_chunk.enable_forward_pre_hook()
+
+
+def disable_forward_pre_hook(model_chunks, param_sync=True):
+    for model_chunk in model_chunks:
+        assert isinstance(model_chunk, DDP)
+        model_chunk.disable_forward_pre_hook(param_sync=param_sync)

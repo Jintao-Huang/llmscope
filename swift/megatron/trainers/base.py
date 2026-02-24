@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext
 from functools import partial
 from megatron.core import mpu
+from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.distributed import finalize_model_grads
 from megatron.core.optimizer import OptimizerConfig, get_megatron_optimizer
 from megatron.core.pipeline_parallel import get_forward_backward_func
@@ -25,10 +26,11 @@ from typing import Callable, Dict, List, Optional
 from swift.megatron.callbacks import megatron_callbacks_map
 from swift.megatron.model import get_mcore_model
 from swift.megatron.tuners import LoraParallelLinear
-from swift.megatron.utils import (copy_original_module_weight, get_optimizer_param_scheduler, get_padding_to,
-                                  init_persistent_async_worker, load_mcore_checkpoint, maybe_finalize_async_save,
-                                  prepare_mcore_model, reduce_max_stat_across_model_parallel_group,
-                                  save_mcore_checkpoint, wrap_model)
+from swift.megatron.utils import (copy_original_module_weight, disable_forward_pre_hook, enable_forward_pre_hook,
+                                  get_optimizer_param_scheduler, get_padding_to, init_persistent_async_worker,
+                                  load_mcore_checkpoint, maybe_finalize_async_save, prepare_mcore_model,
+                                  reduce_max_stat_across_model_parallel_group, save_mcore_checkpoint,
+                                  should_disable_forward_pre_hook, wrap_model)
 from swift.template import Template
 from swift.trainers import dynamic_gradient_checkpointing
 from swift.trainers.utils import patch_modelscope_hub_timeout
@@ -80,8 +82,11 @@ class BaseMegatronTrainer(ABC):
 
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
         self.callbacks = []
-        for callback in self.args.callbacks:
+        for callback in args.callbacks:
             self.callbacks.append(megatron_callbacks_map[callback](self))
+
+        if args.async_save and args.use_persistent_ckpt_worker:
+            init_persistent_async_worker()
 
     def _load_checkpoint(self):
         args = self.args
@@ -482,6 +487,8 @@ class BaseMegatronTrainer(ABC):
 
     def train(self, train_dataset, val_dataset):
         args = self.args
+        config = self.config
+        state = self.state
         for m in self.wrapped_models:
             m.train()
 
@@ -489,21 +496,44 @@ class BaseMegatronTrainer(ABC):
             for m in self.unwrapped_models:
                 self._prepare_vit_gradient_checkpointing(m)
 
-        self.config.finalize_model_grads_func = finalize_model_grads
-        if args.async_save and args.use_persistent_ckpt_worker:
-            init_persistent_async_worker()
+        config.grad_scale_func = self.optimizer.scale_loss
+        if isinstance(self.wrapped_models[0], DDP) and args.overlap_grad_reduce:
+            assert config.no_sync_func is None, ('When overlap_grad_reduce is True, config.no_sync_func must be None; '
+                                                 'a custom no_sync_func is not supported when overlapping grad-reduce')
+            config.no_sync_func = [model_chunk.no_sync for model_chunk in self.wrapped_models]
+            if len(self.wrapped_models) == 1:
+                config.no_sync_func = config.no_sync_func[0]
+            if args.align_grad_reduce:
+                config.grad_sync_func = [model_chunk.start_grad_sync for model_chunk in self.wrapped_models]
+                if len(self.wrapped_models) == 1:
+                    config.grad_sync_func = config.grad_sync_func[0]
+        if args.overlap_param_gather and args.align_param_gather:
+            config.param_sync_func = [model_chunk.start_param_sync for model_chunk in self.wrapped_models]
+            if len(self.wrapped_models) == 1:
+                config.param_sync_func = config.param_sync_func[0]
+        config.finalize_model_grads_func = finalize_model_grads
+
+        # Disable forward pre-hook to start training to ensure that errors in checkpoint loading
+        # or random initialization don't propagate to all ranks in first all-gather (which is a
+        # no-op if things work correctly).
+        if should_disable_forward_pre_hook(args):
+            disable_forward_pre_hook(model, param_sync=False)
+            # Also remove param_sync_func temporarily so that sync calls made in
+            # `forward_backward_func` are no-ops.
+            param_sync_func = config.param_sync_func
+            config.param_sync_func = None
+            pre_hook_enabled = False
 
         self.call_event('on_train_begin')
         train_metrics = {}
-        if self.args.virtual_pipeline_model_parallel_size is not None:
+        if args.virtual_pipeline_model_parallel_size is not None:
             train_data_iterator, val_data_iterator = [], []
-            for _ in range(self.args.virtual_pipeline_model_parallel_size):
+            for _ in range(args.virtual_pipeline_model_parallel_size):
                 train_it, val_it = self._prepare_data_iterator(train_dataset, val_dataset)
                 train_data_iterator.append(train_it)
                 val_data_iterator.append(train_it)
         else:
             train_data_iterator, val_data_iterator = self._prepare_data_iterator(train_dataset, val_dataset)
-        state = self.state
         while state.iteration < args.train_iters:
             self.call_event('on_step_begin')
             metrics, grad_norm = self.train_step(train_data_iterator)
