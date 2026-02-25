@@ -108,8 +108,7 @@ class MegatronTrainer(BaseMegatronTrainer):
         new_metrics = {}
         for key in sorted(set().union(*all_keys)):
             new_metrics[key] = metrics[key]
-
-        return metrics
+        return new_metrics
 
     def forward_step(self, data_iterator, model):
         # Get the batch.
