@@ -58,6 +58,7 @@ def _patch_mla_attention():
     # support thd
     import megatron.core
     from megatron.core import parallel_state, tensor_parallel
+    from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
     from megatron.core.tensor_parallel.mappings import (gather_from_sequence_parallel_region,
                                                         gather_from_tensor_model_parallel_region,
                                                         scatter_to_sequence_parallel_region)
@@ -136,17 +137,17 @@ def _patch_mla_attention():
                 query, key, value, attention_mask, packed_seq_params=packed_seq_params)
         else:
             extra_kwargs = {}
-            if self.config.experimental_attention_variant == "dsa":
+            if self.config.experimental_attention_variant == 'dsa':
                 # For dsa we need to pass in the original hidden states and the compressed
                 # query representation.
-                extra_kwargs["x"] = hidden_states
-                extra_kwargs["qr"] = q_compressed
+                extra_kwargs['x'] = hidden_states
+                extra_kwargs['qr'] = q_compressed
             core_attn_out = self.core_attention(
                 query,
                 key,
                 value,
                 attention_mask,
-                packed_seq_params=packed_seq_params,
+                packed_seq_params=(packed_seq_params, rotary_pos_emb),  # for easy injection of rotary_pos_emb
                 attn_mask_type=attn_mask_type,
                 **extra_kwargs,
             )
@@ -300,8 +301,6 @@ def _patch_mla_attention():
             # value: [num_tokens, n, v_head_dim]
             k_no_pe, value = torch.split(kv, [self.config.qk_head_dim, self.config.v_head_dim], dim=-1)
             # This function will be patched and supports mscale.
-            from megatron.core.transformer.attention import apply_rotary_pos_emb
-
             # q_pos_emb: [num_tokens, n, qk_pos_emb_head_dim]
             q_pos_emb = apply_rotary_pos_emb(
                 q_pos_emb,
@@ -662,7 +661,6 @@ def _patch_mrope():
     import megatron.core
     from megatron.core import mpu
     from megatron.core.models.common.embeddings import rope_utils
-    from megatron.core.models.common.embeddings.rope_utils import _apply_rotary_pos_emb_bshd
     from megatron.core.models.common.embeddings.rotary_pos_embedding import MultimodalRotaryEmbedding
 
     mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
@@ -761,7 +759,7 @@ def _patch_mrope():
                 **kwargs,
             )
 
-        return _apply_rotary_pos_emb_bshd(
+        return rope_utils._apply_rotary_pos_emb_bshd(
             t.unsqueeze(1),
             freqs,
             rotary_interleaved=rotary_interleaved,
@@ -798,6 +796,147 @@ def _patch_unified_memory():
         cpp_extension.load_inline = load_inline
 
 
+def _patch_dsa():
+    from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
+    from megatron.core.models.gpt import experimental_attention_variant_module_specs
+    from megatron.core.packed_seq_params import PackedSeqParams
+    from megatron.core.tensor_parallel.mappings import gather_from_sequence_parallel_region
+    from megatron.core.transformer.experimental_attention_variant.dsa import fused_qk_topk_naive, rotate_activation
+    DSAIndexer = experimental_attention_variant_module_specs.DSAIndexer
+
+    class NewDSAIndexer(DSAIndexer):
+
+        def forward_before_topk(
+            self,
+            x: torch.Tensor,
+            qr: torch.Tensor,
+            packed_seq_params: Optional[PackedSeqParams] = None,
+        ):
+            """All computations before topk."""
+            # =========================================
+            # Gather inputs if sp is enabled
+            # =========================================
+            packed_seq_params, rotary_pos_emb = packed_seq_params  # patch
+            assert packed_seq_params is None, 'Packed sequence is not supported for DSAttention'
+
+            if self.config.sequence_parallel and self.pg_collection.tp.size() > 1:
+                x = gather_from_sequence_parallel_region(x, group=self.pg_collection.tp)
+                qr = gather_from_sequence_parallel_region(qr, group=self.pg_collection.tp)
+
+            # =========================================
+            # Get sequence length and batch size
+            # =========================================
+            seqlen, bsz, _ = x.size()
+
+            # =========================================
+            # q linear and apply rope to q
+            # =========================================
+            # [seqlen, batch, q_lora_rank] -> [seqlen, batch, index_n_heads * index_head_dim]
+            q, _ = self.linear_wq_b(qr)
+            # [seqlen, batch, index_n_heads * index_head_dim]
+            #   -> [seqlen, batch, index_n_heads, index_head_dim]
+            q = q.reshape(seqlen, bsz, self.index_n_heads, self.index_head_dim)
+            q = self._apply_rope(q, rotary_pos_emb)  # mscale will be passed in by patch
+
+            # =========================================
+            # k linear and apply rope to k
+            # =========================================
+            # [seqlen, batch, hidden_size] -> [seqlen, batch, index_head_dim]
+            k, _ = self.linear_wk(x)
+            k = self.k_norm(k)
+            # [seqlen, batch, index_head_dim] -> [seqlen, batch, 1, index_head_dim]
+            k = k.reshape(seqlen, bsz, 1, self.index_head_dim)
+            k = self._apply_rope(k, rotary_pos_emb)
+            # [seqlen, batch, 1, index_head_dim] -> [seqlen, batch, index_head_dim]
+            k = k.reshape(seqlen, bsz, self.index_head_dim)
+
+            # =========================================
+            # Rotate activation
+            # =========================================
+            q = rotate_activation(q)
+            k = rotate_activation(k)
+
+            # =========================================
+            # Prepare weights for index scores
+            # =========================================
+            # [seqlen, batch, hidden_size] -> [seqlen, batch, index_n_heads]
+            weights, _ = self.linear_weights_proj(x)
+            weights = weights * (self.index_n_heads**-0.5) * self.softmax_scale
+
+            return q, k, weights
+
+        def _apply_rope(self, x: torch.Tensor, rotary_pos_emb: torch.Tensor):
+            """Apply RoPE to the input tensor."""
+            # x_nope [seqlen, batch, *, index_head_dim - qk_pos_emb_head_dim]
+            # x_pe   [seqlen, batch, *, qk_pos_emb_head_dim]
+            x_pe, x_nope = torch.split(
+                x, [self.index_head_dim - self.qk_pos_emb_head_dim, self.qk_pos_emb_head_dim], dim=-1)
+            x_pe = apply_rotary_pos_emb(
+                x_pe,
+                rotary_pos_emb,
+                config=self.config,
+                cu_seqlens=None,
+                cp_group=self.pg_collection.cp,
+            )
+            # [seqlen, batch, *, index_head_dim]
+            x = torch.cat([x_pe, x_nope], dim=-1)
+            return x
+
+        def forward_with_scores(
+            self,
+            x: torch.Tensor,
+            qr: torch.Tensor,
+            mask: Optional[torch.Tensor] = None,
+            packed_seq_params: Optional[PackedSeqParams] = None,
+        ) -> Tuple[torch.Tensor, torch.Tensor]:
+            """
+            Forward pass for DSA Indexer that returns both index scores and top-k indices.
+
+            This is used when KL loss is enabled to compare indexer scores with true attention scores.
+
+            Args:
+                x: hidden states [seqlen, batch, hidden_size].
+                qr: Low-rank query tensor [seqlen, batch, q_lora_rank].
+                mask: Attention mask [batch, seqlen, seqlen].
+                packed_seq_params: Packed sequence parameters for variable length sequences.
+
+            Returns:
+                index_scores: Index scores [batch, seqlen, seqlen].
+                topk_indices: Top-k indices [batch, seqlen, index_topk].
+            """
+            # [seqlen, batch, index_n_heads * index_head_dim]
+            # [seqlen, batch, index_head_dim]
+            # [seqlen, batch, index_n_heads]
+            q, k, weights = self.forward_before_topk(x, qr, packed_seq_params)
+
+            # [batch, seqlen, seqlen], [batch, seqlen, index_topk]
+            index_scores, topk_indices = fused_qk_topk_naive(q, k, weights, self.index_topk, mask)
+
+            return index_scores, topk_indices
+
+        def forward(self,
+                    x: torch.Tensor,
+                    qr: torch.Tensor,
+                    mask: Optional[torch.Tensor] = None,
+                    packed_seq_params: Optional[PackedSeqParams] = None):
+            """
+            Forward pass for DSA Indexer.
+
+            Args:
+                x: hidden states [seqlen, batch, hidden_size].
+                qr: Low-rank query tensor [seqlen, batch, q_lora_rank].
+                mask: Attention mask [batch, seqlen, seqlen].
+                packed_seq_params: Packed sequence parameters for variable length sequences.
+
+            Returns:
+                topk_indices: Top-k indices for sparse attention [batch, seqlen, index_topk].
+            """
+            _, topk_indices = self.forward_with_scores(x, qr, mask, packed_seq_params)
+            return topk_indices
+
+    experimental_attention_variant_module_specs.DSAIndexer = NewDSAIndexer
+
+
 def init_megatron_env():
     os.environ.pop('VLLM_USE_MODELSCOPE', None)
     logging_level = logging.root.level
@@ -813,6 +952,10 @@ def init_megatron_env():
     _patch_mrope()
     _patch__write_item()
     _patch_mtp()
+    try:
+        _patch_dsa()
+    except ImportError:
+        pass
     logging.root.setLevel(logging_level)  # revert logger level
     from swift.megatron import tuners  # patch lora
     try:

@@ -82,7 +82,15 @@ class MegatronModelLoader:
         from megatron.core.models.gpt.experimental_attention_variant_module_specs import (
             _get_backend_spec_provider, get_dsa_module_spec_for_backend)
         backend = _get_backend_spec_provider(config=self.config)
-        layer_spec.submodules.self_attention = get_dsa_module_spec_for_backend(self.config, backend)
+        dsa_spec = get_dsa_module_spec_for_backend(self.config, backend)
+        if self.config.qk_layernorm:
+            linear_q_up_proj = backend.column_parallel_linear()
+            # fix megatron-core
+            dsa_spec.submodules.q_layernorm = backend.layer_norm(for_qk=True)
+            dsa_spec.submodules.kv_layernorm = backend.layer_norm(for_qk=True)
+            dsa_spec.submodules.linear_q_up_proj = linear_q_up_proj
+            dsa_spec.submodules.linear_kv_up_proj = linear_q_up_proj
+        layer_spec.submodules.self_attention = dsa_spec
 
     def get_transformer_layer_spec(self, vp_stage: Optional[int] = None):
         if self.config.num_moe_experts:

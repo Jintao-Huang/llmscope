@@ -220,7 +220,11 @@ class MegatronModelConfig(TransformerConfig):
             assert not self.swiglu
             self.gated_linear_unit = True
             self.activation_func = quick_gelu
+        _origin_rotary_interleaved = self.rotary_interleaved
+        if self.multi_latent_attention and self.rotary_interleaved:
+            self.rotary_interleaved = False
         super().__post_init__()
+        self.rotary_interleaved = _origin_rotary_interleaved
         self._check_npu()
         self.variable_seq_lengths = True
 

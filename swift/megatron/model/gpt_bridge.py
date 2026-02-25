@@ -1297,11 +1297,16 @@ class GPTBridge:
                              to_mcore)
         self._set_state_dict(mg_attn, 'linear_kv_up_proj.weight', hf_state_dict, 'kv_b_proj.weight', to_mcore)
         if self.config.qk_layernorm:
-            if self.config.q_lora_rank is not None:
-                self._set_state_dict(mg_attn, 'linear_q_up_proj.layer_norm_weight', hf_state_dict,
-                                     'q_a_layernorm.weight', to_mcore)
-            self._set_state_dict(mg_attn, 'linear_kv_up_proj.layer_norm_weight', hf_state_dict, 'kv_a_layernorm.weight',
-                                 to_mcore)
+            if self.config.experimental_attention_variant == 'dsa':
+                if self.config.q_lora_rank is not None:
+                    self._set_state_dict(mg_attn, 'q_layernorm.weight', hf_state_dict, 'q_a_layernorm.weight', to_mcore)
+                self._set_state_dict(mg_attn, 'kv_layernorm.weight', hf_state_dict, 'kv_a_layernorm.weight', to_mcore)
+            else:
+                if self.config.q_lora_rank is not None:
+                    self._set_state_dict(mg_attn, 'linear_q_up_proj.layer_norm_weight', hf_state_dict,
+                                         'q_a_layernorm.weight', to_mcore)
+                self._set_state_dict(mg_attn, 'linear_kv_up_proj.layer_norm_weight', hf_state_dict,
+                                     'kv_a_layernorm.weight', to_mcore)
         if self.config.experimental_attention_variant == 'dsa':
             hf_state_dict.update(self._set_indexer(mg_attn.core_attention.indexer, hf_state_dict, 'indexer.', to_mcore))
         if to_mcore:
