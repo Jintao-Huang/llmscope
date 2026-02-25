@@ -22,6 +22,7 @@ from packaging import version
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
+from swift.dataset import RowPreprocessor
 from swift.megatron.callbacks import megatron_callbacks_map
 from swift.megatron.model import get_mcore_model
 from swift.megatron.tuners import LoraParallelLinear
@@ -722,9 +723,9 @@ class BaseMegatronTrainer(ABC):
         total_metrics['n_steps'] += 1
         if not metrics:
             return
-        for key in metrics[0].keys():
-            val = [x[key].view(-1) for x in metrics if key in x]
-            val = torch.stack(val, dim=0)
+        metrics = RowPreprocessor.rows_to_batched(metrics)
+        for key, val in metrics.items():
+            val = torch.stack([v for v in val if v is not None], dim=0)
             if val[0].numel() == 2:
                 val = val.sum(dim=0)
                 if val[1] == 0:
