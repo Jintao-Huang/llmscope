@@ -103,8 +103,8 @@ class MegatronTrainer(BaseMegatronTrainer):
                 metrics[f'loss_{channel}'][1] += c_loss.shape[0]
 
         # Synchronize keys to avoid getting stuck.
-        all_keys = [None] * dist.get_world_size()
-        dist.all_gather_object(all_keys, list(metrics.keys()))
+        all_keys = [None] * mpu.get_data_parallel_world_size()
+        dist.all_gather_object(all_keys, list(metrics.keys()), group=mpu.get_data_parallel_group())
         new_metrics = {}
         for key in sorted(set().union(*all_keys)):
             new_metrics[key] = metrics[key]
