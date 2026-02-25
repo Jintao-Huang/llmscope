@@ -169,7 +169,7 @@ class Seq2SeqTrainer(SwiftMixin, DataLoaderMixin, HfSeq2SeqTrainer):
                     loss_scale = torch.roll(loss_scale, shifts=-1, dims=-1).view(-1)
                     outputs.loss = outputs.loss * loss_scale
 
-                if self.args.enable_channel_loss and channels is not None:
+                if self.args.enable_channel_loss:
                     mode = 'train' if self.model.training else 'eval'
                     metrics = self.custom_metrics[mode]
                     masks = torch.roll(labels, shifts=-1, dims=-1).view(-1) != -100
@@ -178,7 +178,7 @@ class Seq2SeqTrainer(SwiftMixin, DataLoaderMixin, HfSeq2SeqTrainer):
                     else:
                         cu_seqlens = torch.arange(0, labels.shape[0] + 1) * labels.shape[1]
                     for i in range(cu_seqlens.shape[0] - 1):
-                        channel = channels[i]
+                        channel = None if channels is None else channels[i]
                         slice_ = slice(cu_seqlens[i], cu_seqlens[i + 1])
                         metrics[f'loss_{channel}'].update(outputs.loss[slice_][masks[slice_]])
 

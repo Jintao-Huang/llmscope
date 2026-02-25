@@ -93,7 +93,6 @@ class MegatronKTOTrainer(MegatronRLHFTrainer):
         }
         metric.update(self._all_reduce_metric(sum_metric, torch.distributed.ReduceOp.SUM))
         # fix megatron-lm bug
-        # https://github.com/NVIDIA/Megatron-LM/blob/core_r0.12.0/megatron/core/pipeline_parallel/schedules.py#L291
         loss = loss / mpu.get_context_parallel_world_size()
         return loss, metric
 
