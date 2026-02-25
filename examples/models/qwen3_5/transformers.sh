@@ -47,7 +47,7 @@ swift sft \
 # VIDEO_MAX_PIXELS=50176 \
 # FPS_MAX_FRAMES=12 \
 # swift infer \
-#     --model /mnt/nas2/huangjintao.hjt/work/llmscope3/megatron_output/Qwen3.5-35B-A3B/v4-20260225-112241/checkpoint-218-merged \
+#     --adapters output/vx-xxx/checkpoint-xxx \
 #     --stream true \
 #     --experts_impl grouped_mm \
 #     --enable_thinking false \
