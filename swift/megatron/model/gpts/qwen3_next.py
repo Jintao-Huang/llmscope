@@ -537,7 +537,7 @@ class Qwen3NextLoader(MegatronModelLoader):
             if hasattr(layer_spec.submodules, 'pre_mlp_layernorm'):
                 layer_spec.submodules.pre_mlp_layernorm = layer_norm_impl
             # qwen3.5 dense
-            if layer_spec.submodules.mlp.submodules.linear_fc1 is TELayerNormColumnParallelLinear:
+            if config.hf_model_type == 'qwen3_5':
                 layer_spec.submodules.mlp.submodules.linear_fc1 = TEColumnParallelLinear
             # Replace qk_layernorm if present
             if hasattr(layer_spec.submodules.self_attention.submodules, 'q_layernorm'):
