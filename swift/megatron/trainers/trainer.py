@@ -108,6 +108,7 @@ class MegatronTrainer(BaseMegatronTrainer):
         new_metrics = {}
         for key in sorted(set().union(*all_keys)):
             new_metrics[key] = metrics[key]
+        new_metrics = self._all_reduce_metric(new_metrics)
         return new_metrics
 
     def forward_step(self, data_iterator, model):
