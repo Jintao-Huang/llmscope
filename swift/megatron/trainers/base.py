@@ -117,16 +117,16 @@ class BaseMegatronTrainer(ABC):
         if config.num_moe_experts is not None:
             moe_loss_scale = 1 / args.num_microbatches / n_steps
             track_names = []
-            if args.moe_router_load_balancing_type == 'aux_loss':
+            if config.moe_router_load_balancing_type == 'aux_loss':
                 track_names.append('load_balancing_loss')
-            elif args.moe_router_load_balancing_type == 'seq_aux_loss':
+            elif config.moe_router_load_balancing_type == 'seq_aux_loss':
                 if self.mcore_014:
                     track_names.append('seq_load_balancing_loss')
                 else:
                     track_names.append('load_balancing_loss')
-            elif args.moe_router_load_balancing_type == 'global_aux_loss':
+            elif config.moe_router_load_balancing_type == 'global_aux_loss':
                 track_names.append('global_load_balancing_loss')
-            if args.moe_z_loss_coeff is not None:
+            if config.moe_z_loss_coeff is not None:
                 track_names.append('z_loss')
             track_moe_kwargs = {'mtp_num_layers': args.mtp_num_layers} if self.mcore_013 else {}
             track_moe_metrics(
