@@ -1118,6 +1118,9 @@ register_model(
     ModelMeta(
         MLLMModelType.qwen3_5_moe, [
             ModelGroup([
+                Model('Qwen/Qwen3.5-35B-A3B', 'Qwen/Qwen3.5-35B-A3B'),
+                Model('Qwen/Qwen3.5-35B-A3B-Base', 'Qwen/Qwen3.5-35B-A3B-Base'),
+                Model('Qwen/Qwen3.5-122B-A10B', 'Qwen/Qwen3.5-122B-A10B'),
                 Model('Qwen/Qwen3.5-397B-A17B', 'Qwen/Qwen3.5-397B-A17B'),
                 Model('Qwen/Qwen3.5-397B-A17B-FP8', 'Qwen/Qwen3.5-397B-A17B-FP8'),
             ], TemplateType.qwen3_5),
@@ -1140,7 +1143,9 @@ class Qwen3_5Loader(Qwen3VLLoader):
 register_model(
     ModelMeta(
         MLLMModelType.qwen3_5, [
-            ModelGroup([], TemplateType.qwen3_5),
+            ModelGroup([
+                Model('Qwen/Qwen3.5-27B', 'Qwen/Qwen3.5-27B'),
+            ], TemplateType.qwen3_5),
         ],
         Qwen3_5Loader,
         model_arch=ModelArch.qwen2_vl,

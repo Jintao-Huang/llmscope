@@ -425,6 +425,12 @@ class ModelLoader(BaseModelLoader):
             elif hf_model_type == 'olmoe':
                 from transformers.models.olmoe.modeling_olmoe import OlmoeSparseMoeBlock
                 z3_leaf_modules = [OlmoeSparseMoeBlock]
+            elif hf_model_type == 'qwen3_5_moe':
+                from transformers.models.qwen3_5_moe.modeling_qwen3_5_moe import Qwen3_5MoeSparseMoeBlock
+                z3_leaf_modules = [Qwen3_5MoeSparseMoeBlock]
+            elif hf_model_type == 'glm_moe_dsa':
+                from transformers.models.glm_moe_dsa.modeling_glm_moe_dsa import GlmMoeDsaMoE
+                z3_leaf_modules = [GlmMoeDsaMoE]
 
         if z3_leaf_modules:
             from deepspeed.utils import set_z3_leaf_modules
