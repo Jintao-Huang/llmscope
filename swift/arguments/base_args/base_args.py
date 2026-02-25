@@ -246,6 +246,7 @@ class BaseArguments(GenerationArguments, QuantizeArguments, DataArguments, Templ
             'model_revision',
             'torch_dtype',
             'attn_impl',
+            'experts_impl',
             'new_special_tokens',
             'num_labels',
             'problem_type',
