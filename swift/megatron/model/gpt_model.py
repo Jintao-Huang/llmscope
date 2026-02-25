@@ -148,7 +148,7 @@ class GPTModel(McoreGPTModel):
 
         def _apply_rotary_pos_emb_bshd(*args, **kwargs):
             kwargs['mscale'] = self.attention_scaling
-            return origin_apply_rotary_pos_emb_bshd(*args, **kwargs)
+            return _origin_apply_rotary_pos_emb_bshd(*args, **kwargs)
 
         rope_utils._apply_rotary_pos_emb_bshd = _apply_rotary_pos_emb_bshd
         rope_utils._origin_apply_rotary_pos_emb_bshd = _origin_apply_rotary_pos_emb_bshd
