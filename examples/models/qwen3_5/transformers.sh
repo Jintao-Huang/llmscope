@@ -30,7 +30,6 @@ swift sft \
     --save_total_limit 2 \
     --logging_steps 5 \
     --max_length 2048 \
-    --output_dir output \
     --warmup_ratio 0.05 \
     --dataloader_num_workers 4 \
     --deepspeed zero3
