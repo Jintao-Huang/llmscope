@@ -8,10 +8,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 \
 swift sft \
     --model Qwen/Qwen3.5-35B-A3B \
     --tuner_type lora \
-    --dataset 'AI-ModelScope/alpaca-gpt4-data-zh#500' \
-              'AI-ModelScope/alpaca-gpt4-data-en#500' \
-              'swift/self-cognition#500' \
-              'AI-ModelScope/LaTeX_OCR:human_handwrite#2000' \
+    --dataset 'AI-ModelScope/LaTeX_OCR:human_handwrite#2000' \
     --load_from_cache_file true \
     --add_non_thinking_prefix true \
     --split_dataset_ratio 0.01 \
@@ -36,9 +33,7 @@ swift sft \
     --output_dir output \
     --warmup_ratio 0.05 \
     --dataloader_num_workers 4 \
-    --deepspeed zero3 \
-    --model_author swift \
-    --model_name swift-robot
+    --deepspeed zero3
 
 
 # PYTORCH_CUDA_ALLOC_CONF='expandable_segments:True' \
