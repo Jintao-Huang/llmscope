@@ -2,7 +2,8 @@
 import megatron.core
 import torch
 from copy import deepcopy
-from megatron.core.extensions.transformer_engine import TEColumnParallelLinear, _get_extra_te_kwargs
+from megatron.core.extensions.transformer_engine import (TEColumnParallelLinear, TELayerNormColumnParallelLinear,
+                                                         _get_extra_te_kwargs)
 from megatron.core.inference.contexts import BaseInferenceContext
 from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
 from megatron.core.models.gpt.gpt_layer_specs import get_gpt_layer_with_transformer_engine_spec, get_gpt_mtp_block_spec
@@ -533,9 +534,11 @@ class Qwen3NextLoader(MegatronModelLoader):
                 layer_spec.submodules.self_attention.module = Qwen3NextSelfAttention
             # Replace ALL layernorms with Qwen3NextRMSNorm (Zero-Centered)
             layer_spec.submodules.input_layernorm = layer_norm_impl
-            if hasattr(layer_spec.submodules,
-                       'pre_mlp_layernorm') and layer_spec.submodules.pre_mlp_layernorm is not IdentityOp:
+            if hasattr(layer_spec.submodules, 'pre_mlp_layernorm'):
                 layer_spec.submodules.pre_mlp_layernorm = layer_norm_impl
+            # qwen3.5 dense
+            if layer_spec.submodules.mlp.submodules.linear_fc1 is TELayerNormColumnParallelLinear:
+                layer_spec.submodules.mlp.submodules.linear_fc1 = TEColumnParallelLinear
             # Replace qk_layernorm if present
             if hasattr(layer_spec.submodules.self_attention.submodules, 'q_layernorm'):
                 layer_spec.submodules.self_attention.submodules.q_layernorm = layer_norm_impl
