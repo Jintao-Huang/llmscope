@@ -11,6 +11,7 @@ from megatron.core.config_logger import has_config_logger_enabled, log_config_to
 from megatron.core.dist_checkpointing.mapping import ShardedStateDict
 from megatron.core.extensions.transformer_engine import TELinear
 from megatron.core.inference.contexts import BaseInferenceContext
+from megatron.core.models.common.embeddings import rope_utils
 from megatron.core.models.common.embeddings.rotary_pos_embedding import RotaryEmbedding
 from megatron.core.models.gpt import GPTModel as McoreGPTModel
 from megatron.core.packed_seq_params import PackedSeqParams
@@ -141,7 +142,6 @@ class GPTModel(McoreGPTModel):
                 attention.config.apply_rope_fusion = False
 
     def _patch_apply_rotary_pos_emb(self):
-        from megatron.core.models.common.embeddings import rope_utils
         if hasattr(rope_utils, '_origin_apply_rotary_pos_emb_bshd'):
             return
         _origin_apply_rotary_pos_emb_bshd = rope_utils._apply_rotary_pos_emb_bshd
