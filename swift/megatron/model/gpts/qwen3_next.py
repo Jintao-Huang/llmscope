@@ -2,17 +2,15 @@
 import megatron.core
 import torch
 from copy import deepcopy
-from megatron.core.extensions.transformer_engine import (TEColumnParallelLinear, TELayerNormColumnParallelLinear,
-                                                         _get_extra_te_kwargs)
+from megatron.core.extensions.transformer_engine import TEColumnParallelLinear, _get_extra_te_kwargs
 from megatron.core.inference.contexts import BaseInferenceContext
 from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
-from megatron.core.models.gpt.gpt_layer_specs import get_gpt_layer_with_transformer_engine_spec, get_gpt_mtp_block_spec
+from megatron.core.models.gpt.gpt_layer_specs import get_gpt_layer_with_transformer_engine_spec
 from megatron.core.models.huggingface import HuggingFaceModule as _HuggingFaceModule
 from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.tensor_parallel import (gather_from_sequence_parallel_region,
                                            reduce_scatter_to_sequence_parallel_region)
 from megatron.core.transformer.attention import SelfAttention, SelfAttentionSubmodules
-from megatron.core.transformer.identity_op import IdentityOp
 from megatron.core.transformer.spec_utils import build_module
 from megatron.core.transformer.transformer_block import TransformerBlockSubmodules
 from megatron.core.utils import deprecate_inference_params, is_fa_min_version
