@@ -34,7 +34,7 @@ from swift.trainers import dynamic_gradient_checkpointing
 from swift.trainers.utils import patch_modelscope_hub_timeout
 from swift.utils import deep_getattr, get_last_valid_indices, get_logger, is_last_rank, ms_logger_context
 from .batch_sampler import MegatronPretrainingRandomSampler, MegatronPretrainingSampler
-from .utils import (TrainerState, build_streaming_dataloader, get_batch_on_this_cp_rank, get_batch_on_this_tp_rank,
+from .utils import (TrainerState, build_streaming_dataloader, get_batch_on_this_cp_rank, get_batch_on_this_pp_rank,
                     get_packed_seq_params)
 
 try:
@@ -787,7 +787,7 @@ class BaseMegatronTrainer(ABC):
         pass
 
     def _prepare_batch(self, data, vp_stage=None, num_samples=None):
-        batch = get_batch_on_this_tp_rank(self.args, data, vp_stage=vp_stage)
+        batch = get_batch_on_this_pp_rank(self.args, data, vp_stage=vp_stage)
         if num_samples is None:
             num_samples = batch.pop('num_samples')
         args = self.args

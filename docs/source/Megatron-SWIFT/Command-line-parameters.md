@@ -23,8 +23,7 @@
 - masked_softmax_fusion: 默认为True。用于开启query_key_value的scaling, masking, and softmax融合。
 - bias_dropout_fusion: 默认为True。用于开启bias和dropout的融合。
 - bias_activation_fusion: 如果为True，则在可能的情况下融合偏置加法和激活函数。默认为True。
-- apply_rope_fusion: 默认为True。用于开启rope融合。
-  - **当使用mrope等不支持rope_fusion的位置编码时，该参数会自动设置为False**。
+- apply_rope_fusion: 默认为False。用于开启rope融合。该参数为megatron-core参数透传。注意：并不是所有情况都支持rope融合，例如：MLA、mrope等不支持。
 - gradient_accumulation_fusion: 默认为True。用于开启梯度累加融合。
 - 🔥cross_entropy_loss_fusion: 启动交叉熵损失计算融合。默认为True。
 - cross_entropy_fusion_impl: 交叉熵损失融合的实现。可选为'native'和'te'。默认为'native'。

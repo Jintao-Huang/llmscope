@@ -77,7 +77,6 @@ class MegatronModelLoader:
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
         if self.model_cls is None:
             self.model_cls = MultimodalGPTModel if self.args.is_multimodal else GPTModel
-        self._init_config()
 
     def get_transformer_layer_spec(self, vp_stage: Optional[int] = None):
         if self.config.num_moe_experts:
@@ -137,18 +136,6 @@ class MegatronModelLoader:
             post_process=post_process,
             vp_stage=vp_stage)
         return model
-
-    def _init_config(self):
-        config = self.config
-        # apply_rope_fusion
-        if config.apply_rope_fusion is not None:
-            return
-        if config.multi_latent_attention or config.rotary_interleaved:
-            # Upgrading transformer_engine requires checking here.
-            config.apply_rope_fusion = False
-        else:
-            config.apply_rope_fusion = True
-        logger.info(f'Setting config.apply_rope_fusion: {config.apply_rope_fusion}.')
 
     def _init_model(self,
                     transformer_layer_spec,

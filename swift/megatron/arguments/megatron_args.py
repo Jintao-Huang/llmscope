@@ -332,7 +332,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
     masked_softmax_fusion: bool = True
     bias_dropout_fusion: bool = True
     bias_activation_fusion: bool = True
-    apply_rope_fusion: bool = True
+    apply_rope_fusion: bool = False
     gradient_accumulation_fusion: bool = True
     cross_entropy_loss_fusion: bool = True
     cross_entropy_fusion_impl: Literal['native', 'te'] = 'native'

@@ -104,7 +104,9 @@ register_model(
             ModelGroup([
                 Model('moonshotai/Moonlight-16B-A3B', 'moonshotai/Moonlight-16B-A3B'),
                 Model('moonshotai/Moonlight-16B-A3B-Instruct', 'moonshotai/Moonlight-16B-A3B-Instruct'),
-            ], TemplateType.moonlight),
+            ],
+                       TemplateType.moonlight,
+                       requires=['transformers<4.49']),
             ModelGroup([
                 Model('moonshotai/Kimi-K2-Base', 'moonshotai/Kimi-K2-Base'),
                 Model('moonshotai/Kimi-K2-Instruct', 'moonshotai/Kimi-K2-Instruct'),
