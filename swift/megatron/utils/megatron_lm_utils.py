@@ -21,7 +21,7 @@ from megatron.core.distributed import DistributedDataParallel as DDP
 from megatron.core.distributed import DistributedDataParallelConfig
 from megatron.core.optimizer_param_scheduler import OptimizerParamScheduler
 from megatron.core.transformer.module import Float16Module
-from megatron.core.utils import get_torch_version, is_torch_min_version
+from megatron.core.utils import get_te_version, get_torch_version, is_te_min_version, is_torch_min_version
 from packaging import version
 from typing import Optional
 
@@ -620,3 +620,33 @@ def disable_forward_pre_hook(model_chunks, param_sync=True):
     for model_chunk in model_chunks:
         assert isinstance(model_chunk, DDP)
         model_chunk.disable_forward_pre_hook(param_sync=param_sync)
+
+
+def initialize_tp_communicators(args):
+    """initializing the communicators with user buffers for high-performance tensor-model-parallel
+    communication overlap"""
+    from transformer_engine.pytorch import module as te_module
+    input_shape = [
+        (args.seq_length * args.micro_batch_size) // args.context_parallel_size,
+        args.hidden_size,
+    ]
+
+    if is_te_min_version('2.7.0'):
+        UserBufferQuantizationMode = te_module.base.UserBufferQuantizationMode
+        quantization_modes = [UserBufferQuantizationMode.FP8 if args.fp8 else UserBufferQuantizationMode.NONE]
+        if args.fp8 is not None and args.first_last_layers_bf16 and (args.num_layers_at_start_in_bf16 > 0
+                                                                     or args.num_layers_at_end_in_bf16 > 0):
+            quantization_modes.append(UserBufferQuantizationMode.NONE)
+        # The process group with the target bootstrap backend is created in Transformer Engine.
+        te_module.base.initialize_ub(
+            shape=input_shape,
+            tp_size=args.tensor_model_parallel_size,
+            quantization_modes=quantization_modes,
+        )
+    elif is_te_min_version('1.9.0'):
+        # The process group with the target bootstrap backend is created in Transformer Engine.
+        te_module.base.initialize_ub(
+            shape=input_shape,
+            tp_size=args.tensor_model_parallel_size,
+            use_fp8=(args.fp8 is not None),
+        )
