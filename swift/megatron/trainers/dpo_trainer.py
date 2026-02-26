@@ -31,7 +31,6 @@ class MegatronDPOTrainer(MegatronRLHFTrainer):
     def __init__(self, args, template):
         super().__init__(args, template)
         self.dummy_dpo_trainer = DummyDPOTrainer(args)
-        self.ref_models = []
 
     def loss_func(self, output_tensor: torch.Tensor, *, labels: torch.Tensor, packed_seq_params):
         ref_output_tensor = output_tensor[:output_tensor.shape[0] // 2].detach()
