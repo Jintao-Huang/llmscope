@@ -1,4 +1,5 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
+import re
 import megatron.core
 import torch
 import torch.distributed as dist
