@@ -135,7 +135,7 @@ class MegatronModelConfig(TransformerConfig):
     hidden_dropout: float = 0.
     kv_channels: Optional[int] = None
     qk_layernorm: bool = False
-    qk_l2_norm: Optional[bool] = None
+    qk_l2_norm: bool = False
     no_rope_freq: Optional[int] = None
     moe_apply_probs_on_input: Optional[bool] = None
 
@@ -419,6 +419,7 @@ def convert_hf_config(config) -> Dict[str, Any]:
             res['moe_layer_freq'] = f"[{','.join(moe_layer_freq)}]"
     elif hf_model_type == 'glm4v':
         res['rotary_interleaved'] = True
+
     if 'partial_rotary_factor' not in res and 'partial_rotary_factor' in rope_scaling:
         res['partial_rotary_factor'] = rope_scaling['partial_rotary_factor']
     if 'rotary_base' not in res and 'rope_theta' in rope_scaling:

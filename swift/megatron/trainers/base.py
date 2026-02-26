@@ -23,6 +23,7 @@ from packaging import version
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
+from swift.dataset import RowPreprocessor
 from swift.megatron.callbacks import megatron_callbacks_map
 from swift.megatron.model import get_mcore_model
 from swift.megatron.tuners import LoraParallelLinear
@@ -36,7 +37,7 @@ from swift.trainers import dynamic_gradient_checkpointing
 from swift.trainers.utils import patch_modelscope_hub_timeout
 from swift.utils import deep_getattr, get_last_valid_indices, get_logger, is_last_rank, ms_logger_context
 from .batch_sampler import MegatronPretrainingRandomSampler, MegatronPretrainingSampler
-from .utils import (TrainerState, build_streaming_dataloader, get_batch_on_this_cp_rank, get_batch_on_this_tp_rank,
+from .utils import (TrainerState, build_streaming_dataloader, get_batch_on_this_cp_rank, get_batch_on_this_pp_rank,
                     get_packed_seq_params)
 
 try:
@@ -81,6 +82,7 @@ class BaseMegatronTrainer(ABC):
                 check_local_model_is_latest(args.model_info.model_dir, user_agent=config_info)
 
         self.mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
+        self.mcore_014 = version.parse(megatron.core.__version__) >= version.parse('0.14.0rc0')
         self.callbacks = []
         for callback in args.callbacks:
             self.callbacks.append(megatron_callbacks_map[callback](self))
@@ -117,10 +119,16 @@ class BaseMegatronTrainer(ABC):
         if config.num_moe_experts is not None:
             moe_loss_scale = 1 / args.num_microbatches / n_steps
             track_names = []
-            # TODO: support moe_router_load_balancing_type list
-            if config.moe_router_load_balancing_type in ['aux_loss', 'seq_aux_loss']:
+            if config.moe_router_load_balancing_type == 'aux_loss':
                 track_names.append('load_balancing_loss')
-            if args.moe_z_loss_coeff is not None:
+            elif config.moe_router_load_balancing_type == 'seq_aux_loss':
+                if self.mcore_014:
+                    track_names.append('seq_load_balancing_loss')
+                else:
+                    track_names.append('load_balancing_loss')
+            elif config.moe_router_load_balancing_type == 'global_aux_loss':
+                track_names.append('global_load_balancing_loss')
+            if config.moe_z_loss_coeff is not None:
                 track_names.append('z_loss')
             track_moe_kwargs = {'mtp_num_layers': args.mtp_num_layers} if self.mcore_013 else {}
             track_moe_metrics(
@@ -749,9 +757,9 @@ class BaseMegatronTrainer(ABC):
         total_metrics['n_steps'] += 1
         if not metrics:
             return
-        for key in metrics[0].keys():
-            val = [x[key].view(-1) for x in metrics if key in x]
-            val = torch.stack(val, dim=0)
+        metrics = RowPreprocessor.rows_to_batched(metrics)
+        for key, val in metrics.items():
+            val = torch.stack([v for v in val if v is not None], dim=0)
             if val[0].numel() == 2:
                 val = val.sum(dim=0)
                 if val[1] == 0:
@@ -814,7 +822,7 @@ class BaseMegatronTrainer(ABC):
         pass
 
     def _prepare_batch(self, data, vp_stage=None, num_samples=None):
-        batch = get_batch_on_this_tp_rank(self.args, data, vp_stage=vp_stage)
+        batch = get_batch_on_this_pp_rank(self.args, data, vp_stage=vp_stage)
         if num_samples is None:
             num_samples = batch.pop('num_samples')
         args = self.args

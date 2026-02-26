@@ -588,10 +588,7 @@ def unwrap_model(models, module_instances=None):
     except ImportError:
         pass
     if module_instances is None:
-        from megatron.core.distributed import DistributedDataParallel as DDP
         from megatron.core.distributed import TorchFullyShardedDataParallel as torch_FSDP
-        from megatron.core.transformer.module import Float16Module
-
         module_instances = (DDP, torch_FSDP, Float16Module)
 
     return_list = True

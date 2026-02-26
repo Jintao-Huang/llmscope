@@ -92,6 +92,7 @@ def use_submodel_func(model, submodel_name: str, func_list: Optional[List[str]] 
     submodel = getattr(model, submodel_name)
 
     def _get_new_func(func_name: str):
+        # Please ensure the patch to submodel.forward is applied before this function.
         _old_func = getattr(submodel, func_name).__func__
 
         @wraps(_old_func)

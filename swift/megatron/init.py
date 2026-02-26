@@ -58,6 +58,7 @@ def _patch_mla_attention():
     # support thd
     import megatron.core
     from megatron.core import parallel_state, tensor_parallel
+    from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
     from megatron.core.tensor_parallel.mappings import (gather_from_sequence_parallel_region,
                                                         gather_from_tensor_model_parallel_region,
                                                         scatter_to_sequence_parallel_region)
@@ -97,7 +98,7 @@ def _patch_mla_attention():
         # Get the query, key and value tensors based on the type of attention -
         # self or cross attn.
         # query: [96, 1, 16, 128], key:[96, 1, 16, 128], value:[96, 1, 16, 128]
-        query, key, value = self.get_query_key_value_tensors(
+        query, key, value, q_compressed, kv_compressed = self.get_query_key_value_tensors(
             hidden_states,
             key_value_states,
             position_ids,
@@ -293,8 +294,6 @@ def _patch_mla_attention():
             # value: [num_tokens, n, v_head_dim]
             k_no_pe, value = torch.split(kv, [self.config.qk_head_dim, self.config.v_head_dim], dim=-1)
             # This function will be patched and supports mscale.
-            from megatron.core.transformer.attention import apply_rotary_pos_emb
-
             # q_pos_emb: [num_tokens, n, qk_pos_emb_head_dim]
             q_pos_emb = apply_rotary_pos_emb(
                 q_pos_emb,
@@ -341,7 +340,7 @@ def _patch_mla_attention():
         else:
             query, key, value = qkv_up_proj_and_rope_apply(q_compressed, kv_compressed, k_pos_emb, rotary_pos_emb)
 
-        return query, key, value
+        return query, key, value, q_compressed, kv_compressed
 
     MLASelfAttention.get_query_key_value_tensors = get_query_key_value_tensors
 
@@ -655,7 +654,6 @@ def _patch_mrope():
     import megatron.core
     from megatron.core import mpu
     from megatron.core.models.common.embeddings import rope_utils
-    from megatron.core.models.common.embeddings.rope_utils import _apply_rotary_pos_emb_bshd
     from megatron.core.models.common.embeddings.rotary_pos_embedding import MultimodalRotaryEmbedding
 
     mcore_013 = version.parse(megatron.core.__version__) >= version.parse('0.13.0rc0')
@@ -754,7 +752,7 @@ def _patch_mrope():
                 **kwargs,
             )
 
-        return _apply_rotary_pos_emb_bshd(
+        return rope_utils._apply_rotary_pos_emb_bshd(
             t.unsqueeze(1),
             freqs,
             rotary_interleaved=rotary_interleaved,

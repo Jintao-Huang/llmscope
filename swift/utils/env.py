@@ -1,5 +1,6 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
 import os
+from transformers.integrations import deepspeed_config
 from transformers.utils import strtobool
 from typing import Optional, Tuple
 
@@ -20,7 +21,7 @@ def get_hf_endpoint():
 
 
 def is_deepspeed_enabled():
-    return strtobool(os.environ.get('ACCELERATE_USE_DEEPSPEED', '0'))
+    return deepspeed_config() is not None
 
 
 def get_dist_setting() -> Tuple[int, int, int, int]:
