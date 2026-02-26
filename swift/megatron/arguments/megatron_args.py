@@ -649,6 +649,11 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
         self.data_parallel_size = self.world_size // total_model_size
         # Gradient Accumulation
         self.num_microbatches = self.global_batch_size // self.data_parallel_size // self.micro_batch_size
+        if self.num_microbatches == 0:
+            raise ValueError('global_batch_size must be >= `data_parallel_size * micro_batch_size` '
+                             f'to have at least one micro-batch. global_batch_size: {self.global_batch_size}, '
+                             f'data_parallel_size: {self.data_parallel_size}, '
+                             f'micro_batch_size: {self.micro_batch_size}.')
 
     def _init_teacher_model(self):
         if self.teacher_model is None:

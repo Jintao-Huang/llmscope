@@ -968,7 +968,7 @@ def _compat_qwen3_vl_mixed_data(model, processor, is_moe: bool = False):
         cache_position: Optional[torch.LongTensor] = None,
         **kwargs: Unpack[TransformersKwargs],
     ) -> Union[tuple, output_cls]:
-        if not self.training and not is_deepspeed_enabled():
+        if not self.training or not is_deepspeed_enabled():
             return self.origin_forward(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -1205,7 +1205,7 @@ register_model(
 
 
 def _compat_qwen3_omni_mixed_data(model, processor):
-    if not is_deepspeed_enabled() or hasattr(model, 'origin_forward'):
+    if hasattr(model, 'origin_forward'):
         return
     from transformers.models.qwen3_omni_moe.modeling_qwen3_omni_moe import (Qwen3OmniMoeThinkerCausalLMOutputWithPast,
                                                                             can_return_tuple, load_balancing_loss_func)
@@ -1234,7 +1234,7 @@ def _compat_qwen3_omni_mixed_data(model, processor):
         video_second_per_grid=None,
         **kwargs,
     ) -> Union[tuple, Qwen3OmniMoeThinkerCausalLMOutputWithPast]:
-        if not self.training and not is_deepspeed_enabled():
+        if not self.training or not is_deepspeed_enabled():
             return self.origin_forward(
                 input_ids=input_ids,
                 input_features=input_features,
@@ -1267,10 +1267,18 @@ def _compat_qwen3_omni_mixed_data(model, processor):
         if input_features is None:
             input_features = input_ids.new_zeros([1, 128, 128], dtype=self.audio_tower.dtype)
             feature_attention_mask = input_ids.new_ones([1, 128], dtype=torch.bool)
-            audio_embeds = self.get_audio_features(input_features, feature_attention_mask)
+            audio_res = self.get_audio_features(input_features, feature_attention_mask)
+            if hasattr(audio_res, 'last_hidden_state'):
+                audio_embeds = audio_res.last_hidden_state
+            else:
+                audio_embeds = audio_res
             inputs_embeds = inputs_embeds + audio_embeds.mean() * 0.
         else:
-            audio_embeds = self.get_audio_features(input_features, feature_attention_mask)
+            audio_res = self.get_audio_features(input_features, feature_attention_mask)
+            if hasattr(audio_res, 'last_hidden_state'):
+                audio_embeds = audio_res.last_hidden_state
+            else:
+                audio_embeds = audio_res
             audio_mask = (input_ids == self.config.audio_token_id).unsqueeze(-1).expand_as(inputs_embeds)
             audio_embeds = audio_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
             inputs_embeds = inputs_embeds.masked_scatter(audio_mask, audio_embeds)
@@ -1365,13 +1373,13 @@ class Qwen3OmniLoader(ModelLoader):
         from transformers import Qwen3OmniMoeForConditionalGeneration
         self.auto_model_cls = self.auto_model_cls or Qwen3OmniMoeForConditionalGeneration
         model = super().get_model(model_dir, config, processor, model_kwargs)
+        _compat_qwen3_omni_mixed_data(model.thinker, processor)
         base_model = model.model if 'AWQ' in model.__class__.__name__ else model
         use_submodel_func(base_model, 'thinker')
         base_model.config.keys_to_ignore_at_inference += ['hidden_states', 'attention_mask']
         base_model.config.talker_config.pad_token_id = None
         patch_get_input_embeddings(base_model.thinker.visual, 'patch_embed')
         patch_get_input_embeddings(base_model.thinker.audio_tower, 'conv_out')
-        _compat_qwen3_omni_mixed_data(model.thinker, processor)
         return model
 
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
