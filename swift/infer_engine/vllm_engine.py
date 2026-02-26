@@ -13,7 +13,7 @@ from transformers.utils import is_torch_npu_available
 from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 from swift.metrics import Metric
-from swift.model import get_model_info_meta, get_processor
+from swift.model import get_processor
 from swift.template import Template
 from swift.utils import get_device, get_dist_setting, get_logger, is_dist, safe_snapshot_download
 from .infer_engine import InferEngine
