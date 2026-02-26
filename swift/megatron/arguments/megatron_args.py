@@ -707,6 +707,7 @@ class MegatronArguments(RLHFMegatronArgumentsMixin, MegatronTunerMixin):
         data_parallel_size = mpu.get_data_parallel_world_size()
         step_batch_size = self.micro_batch_size * data_parallel_size
         num_generations = self.num_generations if self.rlhf_type == 'grpo' else 1
+        # TODO: Check if it causes duplicate saving at the end.
         if self.save_strategy == 'epoch':
             if hasattr(train_dataset, '__len__'):
                 dataset_sample = len(train_dataset) // step_batch_size * step_batch_size * num_generations

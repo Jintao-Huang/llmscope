@@ -525,6 +525,7 @@ class BaseMegatronTrainer(ABC):
                 config.param_sync_func = config.param_sync_func[0]
         config.finalize_model_grads_func = finalize_model_grads
         start_iteration = state.iteration
+        pre_hook_enabled = False
         # Disable forward pre-hook to start training to ensure that errors in checkpoint loading
         # or random initialization don't propagate to all ranks in first all-gather (which is a
         # no-op if things work correctly).
@@ -603,7 +604,7 @@ class BaseMegatronTrainer(ABC):
         self.call_event('on_train_end')
         # Close out pre-hooks if using distributed optimizer and overlapped param gather.
         if pre_hook_enabled:
-            disable_forward_pre_hook(model)
+            disable_forward_pre_hook(self.wrapped_models)
         maybe_finalize_async_save(args, blocking=True, terminate=True)
 
     def _determine_best_metric(self, metrics) -> bool:
