@@ -17,7 +17,7 @@ from typing import List, Literal, Optional, Union
 from swift.megatron.utils import unwrap_model
 from swift.model import get_model_processor, save_checkpoint
 from swift.utils import (MxFp4Dequantizer, SafetensorLazyLoader, StreamingSafetensorSaver, deep_getattr, gc_collect,
-                         get_logger, get_modules_to_not_convert, get_multimodal_target_regex, is_last_rank,
+                         get_logger, get_modules_to_not_convert, get_multimodal_target_regex, is_master,
                          safe_snapshot_download)
 from ..tuners import LoraParallelLinear
 
@@ -418,7 +418,7 @@ class GPTBridge:
             tensor = tensor.to(device=self._target_device)
             if mg_scale_inv is not None:
                 mg_scale_inv = mg_scale_inv.to(device=self._target_device)
-        if self._only_master_rank and not is_last_rank():
+        if self._only_master_rank and not is_master():
             tensor = None
             mg_scale_inv = None
         if is_expert and tensor is not None:
@@ -1408,7 +1408,7 @@ class GPTBridge:
             yield from list(self._add_prefix(hf_state_dict, hf_prefix).items())
             hf_state_dict = {}
         layer_idx = 0
-        disable_tqdm = self._disable_tqdm or not is_last_rank()
+        disable_tqdm = self._disable_tqdm or not is_master()
         prog_bar = tqdm(range(self.config.num_layers), dynamic_ncols=True, desc=tqdm_desc, disable=disable_tqdm)
         while layer_idx < self.config.num_layers:
             lm_model = getattr(mg_model, 'language_model') if self.is_multimodal else mg_model
@@ -1479,10 +1479,8 @@ class GPTBridge:
             origin_hf_state_dict = hf_state_dict
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
             if len(hf_state_dict) == 0:
-                logger.info_if(
-                    f'MTP Layer {mtp_layer.layer_number} safetensors weights not found, '
-                    'this part will be randomly initialized.',
-                    cond=is_last_rank())
+                logger.info(f'MTP Layer {mtp_layer.layer_number} safetensors weights not found, '
+                            'this part will be randomly initialized.')
                 for param in mtp_layer.parameters():
                     if param.ndim == 2:
                         mtp_layer.config.init_method(param.data)
@@ -1614,7 +1612,7 @@ class GPTBridge:
         if hf_config is None:
             hf_config = self.hf_model.config
         hf_config = copy(hf_config)
-        if is_last_rank():
+        if is_master():
             if is_peft_format:
                 peft_config = copy(mg_models[0].peft_config[self._adapter_name])
                 if args.task_type == 'seq_cls':
@@ -1657,7 +1655,7 @@ class GPTBridge:
                     output_dir,
                     model_dirs=[self.model_dir],
                     additional_saved_files=self.hf_model.model_meta.additional_saved_files)
-            logger.info_if(f'Successfully saved `safetensors` model weights in `{output_dir}`.', cond=is_last_rank())
+            logger.info(f'Successfully saved `safetensors` model weights in `{output_dir}`.')
         dist.barrier()  # Ensure all weights are saved completely
 
 
