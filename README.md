@@ -134,7 +134,7 @@ Running Environment:
 |--------------|--------------|---------------------|-------------------------------------------|
 | python       | >=3.9        | 3.10/3.11                |                                           |
 | cuda         |              | cuda12              | No need to install if using CPU, NPU, MPS |
-| torch        | >=2.0        | 2.8.0/2.9.1         |                                           |
+| torch        | >=2.0        | 2.8.0/2.9.1         |   torch2.9 [conv3d slow](https://swift.readthedocs.io/en/latest/BestPractices/Qwen3-VL-Best-Practice.html#environment-setup)       |
 | transformers | >=4.33       | 4.57.6              |                                           |
 | modelscope   | >=1.23       |                     |                                           |
 | peft         | >=0.11,<0.19 |                     |                                           |

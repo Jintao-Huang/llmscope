@@ -674,7 +674,6 @@ class GPTBridge:
         hf_prefix: str,
         layer_idx: int,
         to_mcore: bool,
-        is_mtp_layer: bool = False,
     ):
         if to_mcore:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
@@ -727,14 +726,14 @@ class GPTBridge:
                     layer_idx,
                     to_mcore,
                     ep_rank=ep_rank,
-                    is_mtp_layer=is_mtp_layer))
+                ))
         if to_mcore:
             hf_state_dict = {}
         else:
             hf_state_dict = self._add_prefix(hf_state_dict, hf_prefix)
         return hf_state_dict
 
-    def _get_hf_grouped(self, is_mtp_layer: bool = False):
+    def _get_hf_grouped(self):
         if self.model_type in {
                 'qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'deepseek_v3', 'dots1', 'ernie4_5_moe', 'glm4_moe',
                 'glm4_moe_lite', 'glm4v_moe', 'minimax_m2', 'olmoe', 'qwen3_next', 'kimi_vl', 'qwen3_omni_moe',
@@ -758,7 +757,6 @@ class GPTBridge:
         to_mcore: bool,
         ep_rank: Optional[int] = None,
         hf_mlp=None,
-        is_mtp_layer: bool = False,
     ):
         if to_mcore:
             hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
@@ -786,7 +784,7 @@ class GPTBridge:
             is_gate_up = hasattr(hf_mlp, 'gate_up_proj')
         # transformers 5.0 compatibility
         if self.is_transformers_5 and not to_mcore and is_expert:
-            _hf_grouped, _is_gate_up = self._get_hf_grouped(is_mtp_layer)
+            _hf_grouped, _is_gate_up = self._get_hf_grouped()
             if _hf_grouped is not None:
                 hf_grouped = _hf_grouped
             if _is_gate_up is not None:
@@ -1303,15 +1301,13 @@ class GPTBridge:
                                  'input_layernorm.weight', to_mcore)
         return hf_state_dict
 
-    def _set_layer_mlp(self, mg_layer, hf_state_dict, layer_idx: int, to_mcore: bool, is_mtp_layer: bool = False):
+    def _set_layer_mlp(self, mg_layer, hf_state_dict, layer_idx: int, to_mcore: bool):
         hf_mlp_prefix = self.get_hf_mlp_prefix(layer_idx)
         hf_mlp = self._get_hf_mlp(layer_idx)
         is_moe = self._is_moe(hf_mlp.state_dict())
         mg_mlp = None if mg_layer is None else mg_layer.mlp
         if is_moe:
-            hf_state_dict.update(
-                self._set_moe_state(
-                    mg_mlp, hf_state_dict, f'{hf_mlp_prefix}.', layer_idx, to_mcore, is_mtp_layer=is_mtp_layer))
+            hf_state_dict.update(self._set_moe_state(mg_mlp, hf_state_dict, f'{hf_mlp_prefix}.', layer_idx, to_mcore))
             self._set_state_dict(mg_layer, 'pre_mlp_layernorm.weight', hf_state_dict, 'post_attention_layernorm.weight',
                                  to_mcore)
         else:
@@ -1503,7 +1499,7 @@ class GPTBridge:
                 self._set_state_dict(lm_model, 'output_layer.weight', hf_state_dict, 'shared_head.head.weight',
                                      to_mcore)
         hf_state_dict.update(self._set_layer_attn(transformer_layer, hf_state_dict, -1, to_mcore))
-        hf_state_dict.update(self._set_layer_mlp(transformer_layer, hf_state_dict, -1, to_mcore, is_mtp_layer=True))
+        hf_state_dict.update(self._set_layer_mlp(transformer_layer, hf_state_dict, -1, to_mcore))
         if to_mcore:
             hf_state_dict = {}
         else:

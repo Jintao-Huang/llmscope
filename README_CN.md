@@ -129,7 +129,7 @@ pip install -e .
 |--------------|--------------|---------------------|--------------------|
 | python       | >=3.9        | 3.10/3.11            |                    |
 | cuda         |              | cuda12              | 使用cpu、npu、mps则无需安装 |
-| torch        | >=2.0        | 2.8.0/2.9.1           |                    |
+| torch        | >=2.0        | 2.8.0/2.9.1           |  torch2.9 [conv3d 缓慢](https://swift.readthedocs.io/zh-cn/latest/BestPractices/Qwen3-VL-Best-Practice.html#id1)   |
 | transformers | >=4.33       | 4.57.6              |                    |
 | modelscope   | >=1.23       |                     |                    |
 | peft         | >=0.11,<0.19 |                     |                    |

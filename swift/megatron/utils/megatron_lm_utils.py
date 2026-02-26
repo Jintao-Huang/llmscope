@@ -114,8 +114,6 @@ def initialize_megatron(args):
         from megatron.core.transformer.moe.router import MoEAuxLossAutoScaler
         MoEAuxLossAutoScaler.set_loss_scale(torch.ones(1, device=torch.cuda.current_device()))
 
-    # TODO: tp_comm_overlap
-
 
 def _get_rng_state():
     """Collect rng state across data parallel ranks."""
@@ -622,13 +620,13 @@ def disable_forward_pre_hook(model_chunks, param_sync=True):
         model_chunk.disable_forward_pre_hook(param_sync=param_sync)
 
 
-def initialize_tp_communicators(args):
+def initialize_tp_communicators(args, config):
     """initializing the communicators with user buffers for high-performance tensor-model-parallel
     communication overlap"""
     from transformer_engine.pytorch import module as te_module
     input_shape = [
         (args.seq_length * args.micro_batch_size) // args.context_parallel_size,
-        args.hidden_size,
+        config.hidden_size,
     ]
 
     if is_te_min_version('2.7.0'):
