@@ -92,10 +92,11 @@ def use_submodel_func(model, submodel_name: str, func_list: Optional[List[str]] 
     submodel = getattr(model, submodel_name)
 
     def _get_new_func(func_name: str):
+        _old_func = getattr(submodel, func_name).__func__
 
-        @wraps(getattr(submodel, func_name).__func__)
+        @wraps(_old_func)
         def _new_func(self, *args, **kwargs):
-            res = getattr(submodel, func_name)(*args, **kwargs)
+            res = _old_func(submodel, *args, **kwargs)
             if func_name == 'forward':
                 device = find_device(args)
                 if device is None:
