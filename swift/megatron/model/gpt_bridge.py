@@ -46,7 +46,7 @@ class GPTBridge:
         self.args = args
         self._disable_tqdm = False
         self._target_device = None
-        self._only_last_rank = False
+        self._only_master_rank = False
         self._peft_target_modules = set()
         self._peft_modules_to_save = set()
         self._is_peft_format = False
@@ -418,7 +418,7 @@ class GPTBridge:
             tensor = tensor.to(device=self._target_device)
             if mg_scale_inv is not None:
                 mg_scale_inv = mg_scale_inv.to(device=self._target_device)
-        if self._only_last_rank and not is_last_rank():
+        if self._only_master_rank and not is_last_rank():
             tensor = None
             mg_scale_inv = None
         if is_expert and tensor is not None:
@@ -1532,7 +1532,7 @@ class GPTBridge:
     def export_weights(self,
                        mg_models,
                        target_device=None,
-                       only_last_rank: bool = False,
+                       only_master_rank: bool = False,
                        is_peft_format: bool = False,
                        tqdm_desc: str = 'Exporting: ',
                        disable_tqdm: bool = True):
@@ -1545,7 +1545,7 @@ class GPTBridge:
             mg_models: List of Megatron model instances to export.
                 Note: If is_peft_format is True, you also need to pass in a GPTModel, not a PeftModel.
             target_device: Target device for exported tensors (e.g., 'cpu'). Defaults to None (current device, cuda).
-            only_last_rank: Whether to export only on the last rank in distributed settings. Defaults to False.
+            only_master_rank: Whether to export only on the last rank in distributed settings. Defaults to False.
             is_peft_format: Whether to export in PEFT (LoRA, etc.) format. Defaults to False.
                 - If True, exports only LoRA delta weights. If False, exports the complete model weights
                 (e.g., after merge-lora or full-parameter fine-tuning).
@@ -1556,7 +1556,7 @@ class GPTBridge:
             Tuple[str, torch.Tensor]: Key-value pairs of parameter names and tensors.
         """
         self._target_device = target_device
-        self._only_last_rank = only_last_rank
+        self._only_master_rank = only_master_rank
         self._is_peft_format = is_peft_format
         self._disable_tqdm = disable_tqdm
         self._adapter_name = 'default'
@@ -1603,7 +1603,7 @@ class GPTBridge:
         for k, v in self.export_weights(
                 mg_models,
                 target_device='cpu',
-                only_last_rank=True,
+                only_master_rank=True,
                 is_peft_format=is_peft_format,
                 tqdm_desc='Saving: ',
                 disable_tqdm=False):
