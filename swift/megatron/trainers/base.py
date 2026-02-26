@@ -601,6 +601,9 @@ class BaseMegatronTrainer(ABC):
                     enable_forward_pre_hook(self.wrapped_models)
 
         self.call_event('on_train_end')
+        # Close out pre-hooks if using distributed optimizer and overlapped param gather.
+        if pre_hook_enabled:
+            disable_forward_pre_hook(model)
         maybe_finalize_async_save(args, blocking=True, terminate=True)
 
     def _determine_best_metric(self, metrics) -> bool:
