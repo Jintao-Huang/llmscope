@@ -1,6 +1,6 @@
 # Copyright (c) ModelScope Contributors. All rights reserved.
-import re
 import megatron.core
+import re
 import torch
 import torch.distributed as dist
 from contextlib import contextmanager
