@@ -5,6 +5,7 @@ from dataclasses import dataclass, fields
 from megatron.core import mpu
 from megatron.core.transformer import TransformerConfig
 from transformers.utils import is_torch_npu_available
+from transformers.utils.versions import require_version
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from swift.utils import get_logger, json_parse_to_dict
@@ -201,6 +202,9 @@ class MegatronModelConfig(TransformerConfig):
 
     def __post_init__(self):
         self._format_config()
+        if self.experimental_attention_variant is not None:
+            require_version('megatron-core>=0.16.0.dev',
+                            'experimental attention variant requires megatron-core>=0.16.0')
         if self.moe_router_dtype.lower() == 'none':
             self.moe_router_dtype = None
         if self.moe_shared_expert_intermediate_size == 0:

@@ -2,7 +2,6 @@
 import torch
 from megatron.core.transformer.attention import SelfAttention
 
-
 try:
     from megatron.core.extensions.transformer_engine import SplitAlongDim
 except ImportError:
