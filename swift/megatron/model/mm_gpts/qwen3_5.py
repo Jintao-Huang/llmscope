@@ -4,7 +4,7 @@ from megatron.core.extensions.transformer_engine import _get_extra_te_kwargs
 from megatron.core.models.huggingface import HuggingFaceModule as _HuggingFaceModule
 from megatron.core.tensor_parallel import (gather_from_sequence_parallel_region,
                                            reduce_scatter_to_sequence_parallel_region)
-from megatron.core.transformer.attention import SelfAttentionSubmodules
+from megatron.core.transformer.attention import SelfAttention, SelfAttentionSubmodules
 from megatron.core.transformer.transformer_config import TransformerConfig
 from typing import Optional
 
@@ -12,6 +12,7 @@ from swift.model import ModelType
 from swift.template import Template
 from ..constant import MegatronModelType
 from ..gpt_bridge import MultimodalGPTBridge
+from ..modules import GatedSelfAttention
 from ..register import MegatronModelLoader, MegatronModelMeta, register_megatron_model
 from .utils import HuggingFaceModule
 
@@ -55,7 +56,25 @@ class Qwen3_5Loader(MegatronModelLoader):
     def get_transformer_layer_spec(self, vp_stage: Optional[int] = None):
         from megatron.core.models.gpt.experimental_attention_variant_module_specs import \
             get_transformer_block_with_experimental_attention_variant_spec
-        return get_transformer_block_with_experimental_attention_variant_spec(self.config, vp_stage)
+        layer_specs = get_transformer_block_with_experimental_attention_variant_spec(self.config, vp_stage)
+        for layer_spec in layer_specs.layer_specs:
+            attn_module = layer_spec.submodules.self_attention.module
+            if issubclass(attn_module, SelfAttention):
+                layer_spec.submodules.self_attention.module = GatedSelfAttention
+        return layer_specs
+
+    def build_model(
+        self,
+        pre_process=True,
+        post_process=True,
+        vp_stage: Optional[int] = None,
+    ):
+        model = super().build_model(pre_process, post_process, vp_stage)
+        for layer in model.language_model.decoder.layers:
+            if hasattr(layer.self_attention, 'out_norm'):
+                assert hasattr(layer.self_attention.out_norm, 'zero_centered_gamma')
+                layer.self_attention.out_norm.zero_centered_gamma = False
+        return model
 
 
 register_megatron_model(

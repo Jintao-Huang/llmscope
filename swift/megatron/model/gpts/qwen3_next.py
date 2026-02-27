@@ -499,8 +499,8 @@ class Qwen3NextBridge(GPTBridge):
             origin_hf_state_dict.update(self._add_prefix(hf_state_dict, 'mtp.'))
 
 
-class Qwen3NextLoader(MegatronModelLoader):
-    gated_delta_net = Qwen3NextGatedDeltaNet
+# class Qwen3NextLoader(MegatronModelLoader):
+#     gated_delta_net = Qwen3NextGatedDeltaNet
 
     def get_transformer_layer_spec(self, vp_stage: Optional[int] = None):
         config = self.config
