@@ -142,25 +142,27 @@ def get_examples(is_multimodal: bool) -> Dict[str, Any]:
     return data
 
 
-def broadcast_hf_logits(hf_logits=None, master_rank=0):
+def broadcast_mg_logits(mg_logits=None, src_rank=None):
     if not dist.is_initialized():
         return
     rank = dist.get_rank()
-    if rank == master_rank:
-        meta = [tuple(hf_logits.shape), str(hf_logits.dtype).split('.', 1)[1]]
+    if src_rank is None:
+        src_rank = dist.get_world_size() - 1
+    if rank == src_rank:
+        meta = [tuple(mg_logits.shape), str(mg_logits.dtype).split('.', 1)[1]]
     else:
         meta = [None, None]
 
-    dist.broadcast_object_list(meta, src=master_rank)
+    dist.broadcast_object_list(meta, src=src_rank)
     shape, dtype = meta
     dtype = getattr(torch, dtype)
 
-    if rank != master_rank:
-        hf_logits = torch.empty(shape, dtype=dtype, device='cuda')
+    if rank != src_rank:
+        mg_logits = torch.empty(shape, dtype=dtype, device='cuda')
 
-    dist.broadcast(hf_logits, src=master_rank)
+    dist.broadcast(mg_logits, src=src_rank)
 
-    return hf_logits
+    return mg_logits
 
 
 def test_convert_precision(args, hf_model, mg_model, template, test_convert_dtype=None):
@@ -175,7 +177,6 @@ def test_convert_precision(args, hf_model, mg_model, template, test_convert_dtyp
         raise ValueError('fp8 models currently do not support testing convert_precision. '
                          'Please set `--test_convert_precision false`.')
     share_embedding = mg_language_model.share_embeddings_and_output_weights
-    hf_logits = None
     if hf_model is not None:
         hf_model.eval()
         if dist.get_world_size() == 1:
@@ -224,7 +225,9 @@ def test_convert_precision(args, hf_model, mg_model, template, test_convert_dtyp
             if mg_logits is not None:
                 mg_logits = gather_from_tensor_model_parallel_region(mg_logits)
 
-    hf_logits = broadcast_hf_logits(hf_logits)
+    mg_logits = broadcast_mg_logits(mg_logits)
+    if hf_model is None:
+        return
     if args.task_type == 'seq_cls':
         mg_logits = mg_logits[:, -1]
         mean_diff = (mg_logits - hf_logits).abs().mean().item()
