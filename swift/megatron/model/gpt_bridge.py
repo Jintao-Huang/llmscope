@@ -545,8 +545,8 @@ class GPTBridge:
         if to_mcore:
             if isinstance(mg_attn.linear_qkv, LoraParallelLinear):
                 lora_A = hf_state_dict['q_proj.lora_A.weight'].load()
-                assert lora_A == hf_state_dict['k_proj.lora_A.weight'].load().all() and \
-                       lora_A == hf_state_dict['v_proj.lora_A.weight'].load().all(), \
+                assert (lora_A == hf_state_dict['k_proj.lora_A.weight'].load()).all() and \
+                       (lora_A == hf_state_dict['v_proj.lora_A.weight'].load()).all(), \
                        'Need to ensure QKV\'s lora_A are consistent'
                 q_lora_B = hf_state_dict['q_proj.lora_B.weight'].load()
                 lora_B = torch.cat([
@@ -1270,9 +1270,9 @@ class GPTBridge:
         if to_mcore:
             if isinstance(mg_attn.in_proj.weight, LoraParallelLinear):
                 lora_A = hf_state_dict['in_proj_qkv.lora_A.weight'].load()
-                assert lora_A == hf_state_dict['in_proj_z.lora_A.weight'].load().all() and \
-                       lora_A == hf_state_dict['in_proj_b.lora_A.weight'].load().all() and \
-                       lora_A == hf_state_dict['in_proj_a.lora_A.weight'].load().all(), \
+                assert (lora_A == hf_state_dict['in_proj_z.lora_A.weight'].load()).all() and \
+                       (lora_A == hf_state_dict['in_proj_b.lora_A.weight'].load()).all() and \
+                       (lora_A == hf_state_dict['in_proj_a.lora_A.weight'].load()).all(), \
                        'Need to ensure QKVZBA\'s lora_A are consistent'
                 lora_B = torch.cat([
                     hf_state_dict['in_proj_qkv.lora_B.weight'].load(),
