@@ -550,7 +550,6 @@ class Qwen3NextLoader(MegatronModelLoader):
         return block_spec
 
     def get_mtp_block_spec(self, *args, **kwargs):
-        # TODO: layernorm_zero_centered_gamma
         mtp_block_spec = super().get_mtp_block_spec(*args, **kwargs)
         for layer_spec in mtp_block_spec.layer_specs:
             layer_spec.submodules.enorm = Qwen3NextRMSNorm

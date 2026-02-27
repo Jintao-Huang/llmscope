@@ -49,6 +49,24 @@ def no_rope_freq_type(x):
         return int(x)
 
 
+def linear_attn_freq_type(x):
+    """Frequency between LA (linear attention) layers and SDPA (scaled dot-product attention) layers.
+
+    Accepts either:
+    - An integer N: Represents a (N-1):N ratio, meaning (N-1) LA layers for every 1 SDPA layer
+    - A string "N": Same as above, but provided as a string
+    - A string containing a Python list expression that defines a custom pattern, e.g.:
+      "([1]*3+[0]*1)*3" evaluates to [1,1,1,0,1,1,1,0,1,1,1,0]
+      where 1 indicates an LA layer and 0 indicates a SDPA layer.
+      This allows defining arbitrary patterns of LA and SDPA layers.
+      The pattern length must match the total number of transformer layers.
+      Examples:
+          "([0]+[1]*23)": 1 SDPA layer followed by 23 LA layers
+          "([1]*3+[0]*2)*2": Three LA layers followed by two SDPA layers, repeated twice.
+    """
+    return no_rope_freq_type(x)
+
+
 # code borrowed from NVIDIA/Megatron-LM
 def moe_freq_type(x):
     """Frequency between MoE layers and Dense layers.
@@ -141,7 +159,7 @@ class MegatronModelConfig(TransformerConfig):
 
     # moe
     num_moe_experts: Optional[int] = None
-    moe_layer_freq: str = 1
+    moe_layer_freq: str = '1'
     moe_ffn_hidden_size: Optional[int] = None
     moe_shared_expert_intermediate_size: Optional[int] = None
 
@@ -165,15 +183,16 @@ class MegatronModelConfig(TransformerConfig):
     qk_pos_emb_head_dim: int = 64
     v_head_dim: int = 128
 
-    # qwen3_next
-    linear_num_value_heads: Optional[int] = None
-    linear_num_key_heads: Optional[int] = None
+    experimental_attention_variant: Optional[Literal['gated_delta_net', 'dsa']] = None  # TODO: dsa
+    # qwen3_next/qwen3_5
+    linear_attention_freq: Optional[str] = None
+    linear_conv_kernel_dim: Optional[int] = None
     linear_key_head_dim: Optional[int] = None
     linear_value_head_dim: Optional[int] = None
-    linear_conv_kernel_dim: Optional[int] = None
-    layer_types: Optional[List[str]] = None
-
+    linear_num_key_heads: Optional[int] = None
+    linear_num_value_heads: Optional[int] = None
     layernorm_zero_centered_gamma: bool = False
+    attention_output_gate: bool = False
 
     # Override
     persist_layer_norm: bool = True
@@ -221,6 +240,8 @@ class MegatronModelConfig(TransformerConfig):
             self.no_rope_freq = no_rope_freq_type(self.no_rope_freq)
         if self.moe_layer_freq is not None:
             self.moe_layer_freq = moe_freq_type(self.moe_layer_freq)
+        if self.linear_attention_freq is not None:
+            self.linear_attention_freq = linear_attn_freq_type(self.linear_attention_freq)
 
     def _check_npu(self):
         MAX_NPU_EXPERTS_PER_EP = 128
@@ -274,12 +295,12 @@ config_mapping = {
     'moe_router_topk_scaling_factor': ['routed_scaling_factor'],
     'qk_layernorm': ['use_qk_norm'],
     # qwen3_next
-    'linear_num_value_heads': ['linear_num_value_heads'],
-    'linear_num_key_heads': ['linear_num_key_heads'],
+    'linear_attention_freq': ['full_attention_interval'],
+    'linear_conv_kernel_dim': ['linear_conv_kernel_dim'],
     'linear_key_head_dim': ['linear_key_head_dim'],
     'linear_value_head_dim': ['linear_value_head_dim'],
-    'linear_conv_kernel_dim': ['linear_conv_kernel_dim'],
-    'full_attention_interval': ['full_attention_interval'],
+    'linear_num_key_heads': ['linear_num_key_heads'],
+    'linear_num_value_heads': ['linear_num_value_heads'],
     # other
     'original_max_position_embeddings': ['original_max_position_embeddings'],
     'partial_rotary_factor': ['partial_rotary_factor'],
@@ -391,12 +412,10 @@ def convert_hf_config(config) -> Dict[str, Any]:
             res['qk_layernorm'] = True
             res.pop('num_query_groups', None)
     elif llm_model_type == 'qwen3_next' or hf_model_type in {'qwen3_5', 'qwen3_5_moe'}:
-        full_attention_interval = res.pop('full_attention_interval', 4)
-        num_layers = res['num_layers']
-        res['layer_types'] = [
-            'full_attention' if (i + 1) % full_attention_interval == 0 else 'linear_attention'
-            for i in range(num_layers)
-        ]
+        res['experimental_attention_variant'] = 'gated_delta_net'
+        res['layernorm_zero_centered_gamma'] = True
+        res['attention_output_gate'] = True
+        res.setdefault('linear_attention_freq', 4)
     elif llm_model_type == 'minimax_m2':
         res['add_qkv_bias'] = False
     elif hf_model_type == 'llama4':
