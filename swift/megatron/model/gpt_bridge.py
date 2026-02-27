@@ -545,8 +545,8 @@ class GPTBridge:
         if to_mcore:
             if isinstance(mg_attn.linear_qkv, LoraParallelLinear):
                 lora_A = hf_state_dict['q_proj.lora_A.weight'].load()
-                assert lora_A == hf_state_dict['k_proj.lora_A.weight'].load().all() and \
-                       lora_A == hf_state_dict['v_proj.lora_A.weight'].load().all(), \
+                assert (lora_A == hf_state_dict['k_proj.lora_A.weight'].load()).all() and \
+                       (lora_A == hf_state_dict['v_proj.lora_A.weight'].load()).all(), \
                        'Need to ensure QKV\'s lora_A are consistent'
                 q_lora_B = hf_state_dict['q_proj.lora_B.weight'].load()
                 lora_B = torch.cat([
@@ -1271,27 +1271,26 @@ class GPTBridge:
             if isinstance(mg_attn.in_proj.weight, LoraParallelLinear):
                 if self.model_type == 'qwen3_next':
                     lora_A = hf_state_dict['in_proj_qkvz.lora_A.weight'].load()
-                    assert lora_A == hf_state_dict['in_proj_ba.lora_A.weight'].load().all(), (
-                         'Need to ensure QKVZBA\'s lora_A are consistent'
-                    )   
+                    assert (lora_A == hf_state_dict['in_proj_ba.lora_A.weight'].load()).all(), (
+                        'Need to ensure QKVZBA\'s lora_A are consistent')
                     lora_B = torch.cat([
                         hf_state_dict['in_proj_qkvz.lora_B.weight'].load(),
                         hf_state_dict['in_proj_ba.lora_B.weight'].load(),
                     ],
-                                    dim=0)
+                                       dim=0)
                 else:
                     lora_A = hf_state_dict['in_proj_qkv.lora_A.weight'].load()
-                    assert lora_A == hf_state_dict['in_proj_z.lora_A.weight'].load().all() and \
-                        lora_A == hf_state_dict['in_proj_b.lora_A.weight'].load().all() and \
-                        lora_A == hf_state_dict['in_proj_a.lora_A.weight'].load().all(), \
-                        'Need to ensure QKVZBA\'s lora_A are consistent'
+                    assert (lora_A == hf_state_dict['in_proj_z.lora_A.weight'].load()).all() and \
+                           (lora_A == hf_state_dict['in_proj_b.lora_A.weight'].load()).all() and \
+                           (lora_A == hf_state_dict['in_proj_a.lora_A.weight'].load()).all(), \
+                           'Need to ensure QKVZBA\'s lora_A are consistent'
                     lora_B = torch.cat([
                         hf_state_dict['in_proj_qkv.lora_B.weight'].load(),
                         hf_state_dict['in_proj_z.lora_B.weight'].load(),
                         hf_state_dict['in_proj_b.lora_B.weight'].load(),
                         hf_state_dict['in_proj_a.lora_B.weight'].load(),
                     ],
-                                    dim=0)
+                                       dim=0)
                 self._set_weight(mg_attn.in_proj.lora_A[self._adapter_name].weight, lora_A, 'in_proj.lora_A.weight')
                 self._set_weight(mg_attn.in_proj.lora_B[self._adapter_name].weight, lora_B, 'in_proj.lora_B.weight')
             elif not self._is_peft_format:
@@ -1300,7 +1299,7 @@ class GPTBridge:
                         hf_state_dict['in_proj_qkvz.weight'].load(),
                         hf_state_dict['in_proj_ba.weight'].load(),
                     ],
-                                            dim=0)
+                                               dim=0)
                 else:
                     in_proj_weight = torch.cat([
                         hf_state_dict['in_proj_qkv.weight'].load(),
@@ -1308,7 +1307,7 @@ class GPTBridge:
                         hf_state_dict['in_proj_b.weight'].load(),
                         hf_state_dict['in_proj_a.weight'].load(),
                     ],
-                                            dim=0)
+                                               dim=0)
                 in_scale_inv = None
                 if 'in_proj_qkvz.weight_scale_inv' in hf_state_dict or 'in_proj_qkv.weight_scale_inv' in hf_state_dict:
                     if self.model_type == 'qwen3_next':
@@ -1316,7 +1315,7 @@ class GPTBridge:
                             hf_state_dict['in_proj_qkvz.weight_scale_inv'].load(),
                             hf_state_dict['in_proj_ba.weight_scale_inv'].load(),
                         ],
-                                                dim=0)
+                                                 dim=0)
                     else:
                         in_scale_inv = torch.cat([
                             hf_state_dict['in_proj_qkv.weight_scale_inv'].load(),
@@ -1324,7 +1323,7 @@ class GPTBridge:
                             hf_state_dict['in_proj_b.weight_scale_inv'].load(),
                             hf_state_dict['in_proj_a.weight_scale_inv'].load(),
                         ],
-                                                dim=0)
+                                                 dim=0)
                 self._set_weight(mg_attn.in_proj.weight, in_proj_weight, 'in_proj.weight', hf_scale_inv=in_scale_inv)
         else:
             key_dim = self.config.linear_key_head_dim * self.config.linear_num_key_heads
@@ -1452,7 +1451,7 @@ class GPTBridge:
         else:
             hf_state_dict.update(self._set_mlp_state(mg_mlp, hf_state_dict, f'{hf_mlp_prefix}.', layer_idx, to_mcore))
             self._set_state_dict(mg_layer, 'mlp.linear_fc1.layer_norm_weight', hf_state_dict,
-                                    'post_attention_layernorm.weight', to_mcore)
+                                 'post_attention_layernorm.weight', to_mcore)
         return hf_state_dict
 
     def _set_layer_state(self, mg_layer, hf_state_dict, hf_prefix: str, layer_idx: int, to_mcore: bool):
