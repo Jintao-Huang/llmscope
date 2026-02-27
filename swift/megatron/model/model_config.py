@@ -173,7 +173,7 @@ class MegatronModelConfig(TransformerConfig):
     moe_router_topk_scaling_factor: Optional[float] = None
     moe_router_load_balancing_type: Literal['aux_loss', 'seq_aux_loss', 'global_aux_loss', 'sinkhorn',
                                             'none'] = 'aux_loss'
-    use_shared_expert_gate: bool = False
+    moe_shared_expert_gate: bool = False
 
     # mla
     multi_latent_attention: bool = False
@@ -368,7 +368,7 @@ def convert_hf_config(config) -> Dict[str, Any]:
                           } or hf_model_type in {'qwen3_omni_moe', 'qwen3_vl_moe', 'qwen3_5_moe'}:
         res.pop('ffn_hidden_size', None)
         if llm_model_type in {'qwen2_moe', 'qwen3_next'} or hf_model_type == 'qwen3_5_moe':
-            res['use_shared_expert_gate'] = True
+            res['moe_shared_expert_gate'] = True
     if llm_model_type in {
             'deepseek',
             'deepseek_v2',

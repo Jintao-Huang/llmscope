@@ -1257,6 +1257,23 @@ class GPTBridge:
             hf_state_dict = self._add_prefix(hf_state_dict, hf_prefix)
         return hf_state_dict
 
+    def _set_linear_attn_state(self, mg_attn, hf_state_dict, hf_prefix: str, layer_idx: int, to_mcore: bool):
+        if to_mcore:
+            hf_state_dict = self._remove_prefix(hf_state_dict, hf_prefix)
+        else:
+            hf_state_dict = {}
+        self._set_state_dict(mg_attn, 'in_proj.weight', hf_state_dict, 'in_proj_qkv.weight', to_mcore)
+        self._set_state_dict(mg_attn, 'conv1d.weight', hf_state_dict, 'conv1d.weight', to_mcore)
+        self._set_state_dict(mg_attn, 'dt_bias', hf_state_dict, 'dt_bias', to_mcore)
+        self._set_state_dict(mg_attn, 'A_log', hf_state_dict, 'A_log', to_mcore)
+        self._set_state_dict(mg_attn, 'out_norm.weight', hf_state_dict, 'norm.weight', to_mcore)
+        self._set_state_dict(mg_attn, 'out_proj.weight', hf_state_dict, 'out_proj.weight', to_mcore)
+        if to_mcore:
+            hf_state_dict = {}
+        else:
+            hf_state_dict = self._add_prefix(hf_state_dict, hf_prefix)
+        return hf_state_dict
+
     def _set_mla_attn_state(
         self,
         mg_attn,

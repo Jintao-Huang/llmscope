@@ -112,7 +112,8 @@ class MegatronModelLoader:
             self.config, transformer_layer_spec_for_mtp, use_transformer_engine=True, **kwargs)
 
     def _set_shared_expert_gate(self, transformer_layer_spec):
-        if (self.config.use_shared_expert_gate and self.config.num_moe_experts
+        mcore_016 = version.parse(megatron.core.__version__) >= version.parse('0.16.0rc0')
+        if (not mcore_016 and self.config.moe_shared_expert_gate and self.config.num_moe_experts
                 and self.config.moe_shared_expert_intermediate_size):
             for layer_spec in transformer_layer_spec.layer_specs:
                 if hasattr(layer_spec.submodules.mlp.submodules, 'shared_experts'):
