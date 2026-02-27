@@ -55,7 +55,8 @@ class Qwen3NextLoader(MegatronModelLoader):
         vp_stage: Optional[int] = None,
     ):
         model = super().build_model(pre_process, post_process, vp_stage)
-        for layer in model.language_model.decoder.layers:
+        lm_model = model.language_model if hasattr(model, 'language_model') else model
+        for layer in lm_model.decoder.layers:
             if hasattr(layer.self_attention, 'out_norm'):
                 assert hasattr(layer.self_attention.out_norm, 'zero_centered_gamma')
                 layer.self_attention.out_norm.zero_centered_gamma = False
