@@ -287,6 +287,7 @@ print(f'response: {resp_list[0].choices[0].message.content}')
 |   [GRPO](https://swift.readthedocs.io/zh-cn/latest/Instruction/GRPO/GetStarted/GRPO.html)   |
 |   [支持的模型和数据集](https://swift.readthedocs.io/zh-cn/latest/Instruction/Supported-models-and-datasets.html)   |
 |   [自定义模型](https://swift.readthedocs.io/zh-cn/latest/Customization/Custom-model.html), [🔥自定义数据集](https://swift.readthedocs.io/zh-cn/latest/Customization/Custom-dataset.html)   |
+|   [大模型教程](https://github.com/modelscope/modelscope-classroom/tree/main/LLM-tutorial)   |
 
 ### 训练
 支持的训练方法：
