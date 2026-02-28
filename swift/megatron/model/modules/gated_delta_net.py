@@ -79,25 +79,29 @@ class GatedDeltaNet(_GatedDeltaNet):
             qkvz_dim = (self.qk_dim * 2 + self.v_dim * 2) // self.tp_size
             qkvz, ba = torch.split(qkvzba, [qkvz_dim, qkvzba.shape[-1] - qkvz_dim], dim=-1)
             qkvz = qkvz.view(qkvz.shape[:-1] + (self.num_key_heads, qkvz.shape[-1] // self.num_key_heads))
-            qkv, gate = torch.split(
+            num_key_heads_per_device = self.tp_size * self.num_key_heads
+            q, k, v, gate = torch.split(
                 qkvz,
                 [
-                    (self.qk_dim * 2 + self.v_dim) // self.tp_size // self.num_key_heads,
-                    self.v_dim // self.tp_size // self.num_key_heads,
+                    self.qk_dim // num_key_heads_per_device,
+                    self.qk_dim // num_key_heads_per_device,
+                    self.v_dim // num_key_heads_per_device,
+                    self.v_dim // num_key_heads_per_device,
                 ],
                 dim=-1,
             )
+            q, k, v = (x.reshape(x.shape[0], x.shape[1], -1) for x in (q, k, v))
+            qkv = torch.cat((q, k, v), dim=-1)
             ba = ba.view(ba.shape[:-1] + (self.num_key_heads, ba.shape[-1] // self.num_key_heads))
             beta, alpha = torch.split(
                 ba,
                 [
-                    self.num_value_heads // self.tp_size // self.num_key_heads,
-                    self.num_value_heads // self.tp_size // self.num_key_heads,
+                    self.num_value_heads // num_key_heads_per_device,
+                    self.num_value_heads // num_key_heads_per_device,
                 ],
                 dim=-1,
             )
         else:
-
             qkv, gate, beta, alpha = torch.split(
                 qkvzba,
                 [
@@ -108,9 +112,9 @@ class GatedDeltaNet(_GatedDeltaNet):
                 ],
                 dim=-1,
             )
-            gate = gate.reshape(batch, seq_len, -1, self.value_head_dim)
-            beta = beta.reshape(batch, seq_len, -1)
-            alpha = alpha.reshape(batch, seq_len, -1)
+        gate = gate.reshape(batch, seq_len, -1, self.value_head_dim)
+        beta = beta.reshape(batch, seq_len, -1)
+        alpha = alpha.reshape(batch, seq_len, -1)
 
         # Convolution on qkv
         qkv = qkv.transpose(1, 2).contiguous()  # b, s, d -> b, d, s

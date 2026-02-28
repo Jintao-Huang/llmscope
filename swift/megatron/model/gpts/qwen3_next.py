@@ -5,7 +5,7 @@ from typing import Optional
 from swift.model import ModelType
 from ..constant import MegatronModelType
 from ..gpt_bridge import GPTBridge
-from ..modules import GatedSelfAttention
+from ..modules import GatedDeltaNet, GatedSelfAttention
 from ..register import MegatronModelLoader, MegatronModelMeta, register_megatron_model
 
 
@@ -46,6 +46,8 @@ class Qwen3NextLoader(MegatronModelLoader):
             attn_module = layer_spec.submodules.self_attention.module
             if issubclass(attn_module, SelfAttention):
                 layer_spec.submodules.self_attention.module = GatedSelfAttention
+            else:
+                layer_spec.submodules.self_attention.module = GatedDeltaNet
         return layer_specs
 
     def build_model(
