@@ -127,13 +127,19 @@ class GPTBridge:
                 self.model_dir, model_type=self.model_type, return_dummy_model=True)
 
     def _get_tp_split_dim(self, mg_key: Optional[str]) -> Optional[int]:
-        if mg_key is None or '.' not in mg_key:
+        if mg_key is None:
             return
+        if '.' not in mg_key:
+            if mg_key in {'dt_bias', 'A_log'}:
+                return 0
+            else:
+                return
         # ColumnLinear
         dim0_keys = {
             'word_embeddings',
             'linear_qkv',
             'in_proj',
+            'conv1d',
             # mla
             'linear_q_proj',
             'linear_q_up_proj',
