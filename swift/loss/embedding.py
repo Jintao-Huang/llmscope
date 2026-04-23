@@ -11,7 +11,7 @@ from torch.nn import MSELoss
 from transformers.utils import strtobool
 
 from swift.sequence_parallel import sequence_parallel
-from swift.utils import get_dist_setting
+from swift.utils import get_dist_setting, get_env_args
 from .base import BaseLoss
 
 
@@ -110,20 +110,16 @@ def _parse_multi_negative_sentences(sentences, labels, hard_negatives=None):
     return split_tensors
 
 
-class InfonceLoss(BaseLoss):
+class InfoNCELoss(BaseLoss):
+
+    def __init__(self, args, trainer):
+        super().__init__(args, trainer)
+        self.temperature = get_env_args('INFONCE_TEMPERATURE', float, 0.1)
+        # mask out fake negatives
+        self.mask_fake_negative = get_env_args('INFONCE_MASK_FAKE_NEGATIVE', bool, False)
+        self.fake_neg_margin = get_env_args('INFONCE_FAKE_NEG_MARGIN', float, 0.1)
 
     def __call__(self, outputs, labels, **kwargs) -> torch.Tensor:
-        temperature = float(os.environ.get('INFONCE_TEMPERATURE', '0.1'))  # temperature
-        # calculate CE across the batch, meaning all samples will be negative except the matching positive
-        use_batch = strtobool(os.environ.get('INFONCE_USE_BATCH', 'True'))
-        hard_negatives = os.environ.get('INFONCE_HARD_NEGATIVES', None)  # how many negative prompts kept in one sample
-        # mask out fake negatives
-        infonce_mask_fake_negative = strtobool(os.environ.get('INFONCE_MASK_FAKE_NEGATIVE', 'False'))
-        fake_neg_margin = float(os.environ.get('INFONCE_FAKE_NEG_MARGIN', '0.1'))
-        # enhanced components to align with Qwen3-Embedding denominator; controlled individually
-        # defaults set to False for backward compatibility
-        infonce_include_qq = strtobool(os.environ.get('INFONCE_INCLUDE_QQ', 'False'))
-        infonce_include_dd = strtobool(os.environ.get('INFONCE_INCLUDE_DD', 'False'))
         if hard_negatives is not None:
             hard_negatives = int(hard_negatives)
         if self.is_megatron:

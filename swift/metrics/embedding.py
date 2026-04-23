@@ -86,7 +86,7 @@ class InfonceMetrics(EvalMetrics, EmbedddingMetricMixin):
 
     def _calculate_metrics(self, predictions, labels):
         hard_negatives = os.environ.get('INFONCE_HARD_NEGATIVES', None)
-        use_batch = strtobool(os.environ.get('INFONCE_USE_BATCH', 'True'))
+        use_batch = strtobool(os.environ.get('INFONCE_IN_BATCH_NEG', 'True'))
         if hard_negatives is not None:
             hard_negatives = int(hard_negatives)
         split_tensors = _parse_multi_negative_sentences(torch.tensor(predictions), torch.tensor(labels), hard_negatives)
