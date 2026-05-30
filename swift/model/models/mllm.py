@@ -341,6 +341,22 @@ register_model(
         requires=['keye_vl_utils>=1.5.2', 'transformers==4.52.4'],
     ))
 
+register_model(
+    ModelMeta(
+        MLLMModelType.KeyeVL2,
+        [
+            ModelGroup([
+                Model('Kwai-Keye/Keye-VL-2_0-30B-A3B', 'Kwai-Keye/Keye-VL-2_0-30B-A3B'),
+            ]),
+        ],
+        KeyeVLLoader,
+        template=TemplateType.keye_vl_1_5,
+        model_arch=ModelArch.keye_vl,
+        architectures=['KeyeVL2MoeForConditionalGeneration'],
+        tags=['vision'],
+        requires=['keye_vl_utils>=1.5.2', 'transformers==4.57.6'],
+    ))
+
 
 class DotsOCRLoader(ModelLoader):
 

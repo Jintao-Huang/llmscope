@@ -234,6 +234,7 @@ class MLLMModelType:
     kimi_k25 = 'kimi_k25'
     keye_vl = 'keye_vl'
     keye_vl_1_5 = 'keye_vl_1_5'
+    KeyeVL2 = 'KeyeVL2'
     dots_ocr = 'dots_ocr'
     sail_vl2 = 'sail_vl2'
 
