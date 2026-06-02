@@ -408,6 +408,10 @@ class ModelLoader(BaseModelLoader):
                 from transformers.models.qwen3_omni_moe.modeling_qwen3_omni_moe import \
                     Qwen3OmniMoeThinkerTextSparseMoeBlock
                 z3_leaf_modules = [Qwen3OmniMoeThinkerTextSparseMoeBlock]
+            elif hf_model_type == 'qwen3_omni_next':
+                from transformers.models.qwen3_omni_next.modeling_qwen3_omni_next import \
+                    Qwen3OmniNextThinkerTextSparseMoeBlock
+                z3_leaf_modules = [Qwen3OmniNextThinkerTextSparseMoeBlock]
             elif hf_model_type == 'qwen2_moe':
                 from transformers.models.qwen2_moe.modeling_qwen2_moe import Qwen2MoeSparseMoeBlock
                 z3_leaf_modules = [Qwen2MoeSparseMoeBlock]

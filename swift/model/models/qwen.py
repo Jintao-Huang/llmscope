@@ -1710,7 +1710,7 @@ class Qwen3OmniLoader(ModelLoader):
     def get_config(self, model_dir: str):
         from transformers import Qwen3OmniMoeConfig
         self._check_qwen_omni_utils()
-        self.auto_config_cls = Qwen3OmniMoeConfig
+        self.auto_config_cls = self.auto_config_cls or Qwen3OmniMoeConfig
         config = super().get_config(model_dir)
         enable_audio_output = get_env_args('ENABLE_AUDIO_OUTPUT', bool, None)
         if enable_audio_output is not None:
@@ -1733,7 +1733,8 @@ class Qwen3OmniLoader(ModelLoader):
     def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
         from qwen_omni_utils import vision_process
         from transformers import Qwen3OmniMoeProcessor
-        processor = Qwen3OmniMoeProcessor.from_pretrained(model_dir, trust_remote_code=True)
+        self.auto_tokenizer_cls = self.auto_tokenizer_cls or Qwen3OmniMoeProcessor
+        processor = self.auto_tokenizer_cls.from_pretrained(model_dir, trust_remote_code=True)
         config.thinker_config.audio_token_id = processor.tokenizer.encode('<|audio_pad|>')[0]
         global_vars = patch_qwen_vl_utils(vision_process)
         processor.global_vars = global_vars
@@ -1753,6 +1754,36 @@ register_model(
         Qwen3OmniLoader,
         model_arch=ModelArch.qwen3_omni,
         architectures=['Qwen3OmniMoeForConditionalGeneration'],
+        requires=['transformers>=4.57.dev0', 'soundfile', 'decord', 'qwen_omni_utils>=0.0.9'],
+        tags=['vision', 'video', 'audio'],
+    ))
+
+
+class Qwen3OmniNextLoader(Qwen3OmniLoader):
+
+    def get_model(self, model_dir: str, config, processor, model_kwargs) -> PreTrainedModel:
+        from transformers import Qwen3OmniNextForConditionalGeneration
+        self.auto_model_cls = self.auto_model_cls or Qwen3OmniNextForConditionalGeneration
+        return super().get_model(model_dir, config, processor, model_kwargs)
+
+    def get_processor(self, model_dir: str, config: PretrainedConfig) -> Processor:
+        from transformers import AutoProcessor
+        self.auto_tokenizer_cls = AutoProcessor
+        return super().get_processor(model_dir, config)
+
+    def get_config(self, model_dir: str):
+        from transformers import AutoConfig
+        self.auto_config_cls = self.auto_config_cls or AutoConfig
+        return super().get_config(model_dir)
+
+
+register_model(
+    ModelMeta(
+        MLLMModelType.qwen3_omni_next,
+        [ModelGroup([], TemplateType.qwen3_omni_next)],
+        Qwen3OmniNextLoader,
+        model_arch=ModelArch.qwen3_omni_next,
+        architectures=['Qwen3OmniNextForConditionalGeneration'],
         requires=['transformers>=4.57.dev0', 'soundfile', 'decord', 'qwen_omni_utils>=0.0.9'],
         tags=['vision', 'video', 'audio'],
     ))

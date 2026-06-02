@@ -685,6 +685,7 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
         if processor is None:
             return
         super().init_processor(processor)
+        default = None
         if self.version == 'omni_v2_5':
             from transformers.models.qwen2_5_omni.processing_qwen2_5_omni import Qwen2_5OmniProcessorKwargs
             default = Qwen2_5OmniProcessorKwargs._defaults
@@ -696,15 +697,18 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
             # so we must disable truncation. See: huggingface/transformers#41473
             default.setdefault('audio_kwargs', {})
             default['audio_kwargs']['truncation'] = False
-        self.seconds_per_chunk = default['videos_kwargs']['seconds_per_chunk']
-        self.position_id_per_seconds = default['videos_kwargs']['position_id_per_seconds']
+        if default is not None:
+            self.seconds_per_chunk = default['videos_kwargs']['seconds_per_chunk']
+            self.position_id_per_seconds = default['videos_kwargs']['position_id_per_seconds']
         self.use_audio_in_video = get_env_args('use_audio_in_video', bool, False)
         self.sampling_rate = get_env_args('sampling_rate', int, self.processor.feature_extractor.sampling_rate)
 
     def replace_tag(self, media_type: Literal['image', 'video', 'audio'], index: int,
                     inputs: StdTemplateInputs) -> List[Context]:
         from qwen_omni_utils import fetch_image, fetch_video
-        kwargs = {'image_patch_size': self.processor.image_processor.patch_size} if self.version == 'omni_v3' else {}
+        kwargs = {
+            'image_patch_size': self.processor.image_processor.patch_size
+        } if self.version in {'omni_v3', 'omni_v3_next'} else {}
         sampling_rate = inputs.chat_template_kwargs.get('sampling_rate')
         if sampling_rate is None:
             sampling_rate = self.sampling_rate
@@ -715,16 +719,18 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
             inputs.images[index] = fetch_image({'image': inputs.images[index], **inputs.chat_template_kwargs}, **kwargs)
             if self.version == 'omni_v2_5':
                 return ['<|vision_bos|><|IMAGE|><|vision_eos|>']
-            elif self.version == 'omni_v3':
+            elif self.version in {'omni_v3', 'omni_v3_next'}:
                 return ['<|vision_start|><|image_pad|><|vision_end|>']
         elif media_type == 'audio':
             if self.mode != 'vllm':
                 inputs.audios[index] = load_audio(inputs.audios[index], sampling_rate)
             if self.version == 'omni_v2_5':
                 return ['<|audio_bos|><|AUDIO|><|audio_eos|>']
-            elif self.version == 'omni_v3':
+            elif self.version == {'omni_v3', 'omni_v3_next'}:
                 return ['<|audio_start|><|audio_pad|><|audio_end|>']
         elif media_type == 'video':
+            if self.version == 'omni_v3_next':
+                kwargs['return_video_metadata'] = True
             video = inputs.videos[index]
             video_inputs = {'video': video, **inputs.chat_template_kwargs}
             if isinstance(video, list):  # image list
@@ -733,13 +739,21 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
             _video = fetch_video(video_inputs, **kwargs)
             if isinstance(_video, torch.Tensor):
                 _video = _video.to(torch.uint8)
+            if self.version == 'omni_v3_next':
+                if self.mode != 'vllm':
+                    _video, video_metadata = _video
+                    inputs.mm_processor_kwargs.setdefault('video_metadata', []).append(video_metadata)
+                inputs.mm_processor_kwargs['do_sample_frames'] = False
             inputs.videos[index] = _video
             if self.use_audio_in_video:
                 if isinstance(video, list):  # image list
                     raise ValueError('image list as video input does not support use_audio_in_video')
                 audio = load_audio(video, sampling_rate)
                 if self.mode != 'vllm':
-                    inputs.audios.insert(inputs.audio_idx, (audio, 'video'))
+                    if self.version == 'omni_v3_next':
+                        inputs.audios.insert(inputs.audio_idx, audio)
+                    else:
+                        inputs.audios.insert(inputs.audio_idx, (audio, 'video'))
                 else:
                     inputs.audios.insert(inputs.audio_idx, audio)
                     inputs.mm_processor_kwargs['use_audio_in_video'] = True
@@ -751,9 +765,11 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
                         return ['<|vision_start|><|video_pad|><|vision_end|>']
                     else:
                         return ['<|vision_start|><|audio_start|><|video_pad|><|audio_end|><|vision_end|>']
+                elif self.version == 'omni_v3_next':
+                    return ['<|vision_start|><|video_pad|><|vision_end|>'] if self.mode == 'vllm' else ['<|video_pad|>']
             if self.version == 'omni_v2_5':
                 return ['<|vision_bos|><|VIDEO|><|vision_eos|>']
-            elif self.version == 'omni_v3':
+            elif self.version == {'omni_v3', 'omni_v3_next'}:
                 return ['<|vision_start|><|video_pad|><|vision_end|>']
 
     def _get_feat_extract_output_lengths(self, input_lengths):
@@ -1001,6 +1017,71 @@ class Qwen3OmniTemplate(Qwen2_5OmniTemplate):
 register_template(
     QwenTemplateMeta(
         MLLMTemplateType.qwen3_omni, template_cls=Qwen3OmniTemplate, default_system=None, thinking_prefix='<think>\n'))
+
+
+class Qwen3OmniNextTemplate(Qwen3OmniTemplate):
+    version = 'omni_v3_next'
+
+    def _encode(self, inputs: StdTemplateInputs) -> Dict[str, Any]:
+        encoded = Template._encode(self, inputs)
+        processor = self.processor
+        config = self.config.thinker_config
+        split_token = self._tokenize(processor.eos_token)
+        media_inputs = processor(
+            text=processor.eos_token.join(
+                ['<|image_pad|>'] * len(inputs.images)
+                + ['<|vision_start|><|video_pad|><|vision_end|>'] * len(inputs.videos) + ['<|audio_pad|>']
+                * (len(inputs.audios) - len(inputs.videos) if self.use_audio_in_video else len(inputs.audios))),
+            audio=inputs.audios or None,
+            images=inputs.images or None,
+            videos=inputs.videos or None,
+            return_tensors='pt',
+            use_audio_in_video=self.use_audio_in_video,
+            do_resize=False,
+            **inputs.mm_processor_kwargs,
+        )
+        splited_tokens = self._split_list(media_inputs['input_ids'][0].tolist(), split_token)
+        media_inputs.pop('input_ids')
+        media_inputs.pop('attention_mask')
+        media_inputs = to_float_dtype(media_inputs, self.model_info.torch_dtype)
+        input_ids = encoded['input_ids']
+        labels = encoded['labels']
+        loss_scale = encoded.get('loss_scale', None)
+
+        idx_list = []
+        for key in ['image', 'video', 'audio']:
+            idx_list += findall(input_ids, getattr(config, f'{key}_token_id'))
+        sorted_order = sorted(range(len(idx_list)), key=lambda i: idx_list[i])
+        idx_list = [idx_list[i] for i in sorted_order]
+        splited_tokens = [splited_tokens[i] for i in sorted_order]
+
+        def _get_new_tokens(i):
+            return splited_tokens[i]
+
+        if idx_list:
+            input_ids, labels, loss_scale = self._extend_tokens(input_ids, labels, loss_scale, idx_list,
+                                                                _get_new_tokens)
+        encoded.update(media_inputs)
+        encoded['input_ids'] = input_ids
+        encoded['labels'] = labels
+        encoded['loss_scale'] = loss_scale
+        return encoded
+
+    def generate(self, model, *args, **kwargs):
+        from transformers.models.qwen3_omni_next.modeling_qwen3_omni_next import Qwen3OmniNextDynamicCache
+        if kwargs.get('video_grid_thw') is not None:
+            kwargs['use_audio_in_video'] = self.use_audio_in_video
+        kwargs['past_key_values'] = Qwen3OmniNextDynamicCache(model.thinker.config.text_config)
+        return super().generate(model, *args, **kwargs)
+
+
+register_template(
+    QwenTemplateMeta(
+        MLLMTemplateType.qwen3_omni_next,
+        template_cls=Qwen3OmniNextTemplate,
+        default_system=None,
+        thinking_prefix='<think>\n',
+        non_thinking_prefix='<think>\n\n</think>\n\n'))
 
 
 def _qwen3_asr_get_feat_extract_output_lengths(input_lengths):
