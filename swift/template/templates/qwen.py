@@ -726,7 +726,7 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
                 inputs.audios[index] = load_audio(inputs.audios[index], sampling_rate)
             if self.version == 'omni_v2_5':
                 return ['<|audio_bos|><|AUDIO|><|audio_eos|>']
-            elif self.version == {'omni_v3', 'omni_v3_next'}:
+            elif self.version in {'omni_v3', 'omni_v3_next'}:
                 return ['<|audio_start|><|audio_pad|><|audio_end|>']
         elif media_type == 'video':
             if self.version == 'omni_v3_next':
@@ -769,7 +769,7 @@ class Qwen2_5OmniTemplate(Qwen2_5VLTemplate):
                     return ['<|vision_start|><|video_pad|><|vision_end|>'] if self.mode == 'vllm' else ['<|video_pad|>']
             if self.version == 'omni_v2_5':
                 return ['<|vision_bos|><|VIDEO|><|vision_eos|>']
-            elif self.version == {'omni_v3', 'omni_v3_next'}:
+            elif self.version in {'omni_v3', 'omni_v3_next'}:
                 return ['<|vision_start|><|video_pad|><|vision_end|>']
 
     def _get_feat_extract_output_lengths(self, input_lengths):
