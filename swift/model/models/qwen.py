@@ -1499,9 +1499,7 @@ class Qwen2_5OmniLoader(ModelLoader):
             compat_qwen_vl_utils(image_patch_size=14)
 
     def get_config(self, model_dir):
-        from transformers import Qwen2_5OmniConfig
         self._check_qwen_omni_utils()
-        self.auto_config_cls = Qwen2_5OmniConfig
         enable_audio_output = get_env_args('ENABLE_AUDIO_OUTPUT', bool, None)
         config = super().get_config(model_dir)
         if enable_audio_output is not None:
@@ -1708,9 +1706,7 @@ class Qwen3OmniLoader(ModelLoader):
         compat_qwen_vl_utils(image_patch_size=16)
 
     def get_config(self, model_dir: str):
-        from transformers import Qwen3OmniMoeConfig
         self._check_qwen_omni_utils()
-        self.auto_config_cls = self.auto_config_cls or Qwen3OmniMoeConfig
         config = super().get_config(model_dir)
         enable_audio_output = get_env_args('ENABLE_AUDIO_OUTPUT', bool, None)
         if enable_audio_output is not None:
@@ -1770,11 +1766,6 @@ class Qwen3OmniNextLoader(Qwen3OmniLoader):
         from transformers import AutoProcessor
         self.auto_tokenizer_cls = AutoProcessor
         return super().get_processor(model_dir, config)
-
-    def get_config(self, model_dir: str):
-        from transformers import AutoConfig
-        self.auto_config_cls = self.auto_config_cls or AutoConfig
-        return super().get_config(model_dir)
 
 
 register_model(
